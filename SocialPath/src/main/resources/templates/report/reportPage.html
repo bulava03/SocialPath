@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>SocialPath</title>
+    <link rel="stylesheet" href="/style/gradientPage.css" />
+    <link rel="stylesheet" href="/style/newCommentStyle.css" />
+    <link rel="stylesheet" href="/style/backButtonStyle.css" />
+    <link rel="stylesheet" href="/style/layout.css" />
+    <link rel="stylesheet" href="/style/userIconStyle.css" />
+</head>
+<body>
+<div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
+
+<div class="container">
+    <div id="new-comment">
+        <form id="new-comment-form" action="/report/addReport" method="post">
+            <input class="field" id="login" th:value="${id}" type="hidden" name="idPage" />
+            <input class="field" value="Group" type="hidden" name="type" />
+            <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+            <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+            <div class="form-group">
+                <textarea id="comment-content" name="subject" placeholder="Введіть текст скарги..."></textarea>
+            </div>
+            <button type="submit" class="submit-btn">Поскаржитись</button>
+        </form>
+    </div>
+
+    <form action="/searchResult/getGroupPage" method="get">
+        <input class="field" th:value="${author.login}" type="hidden" name="login" />
+        <input class="field" th:value="${author.password}" type="hidden" name="password" />
+        <input class="field" th:value="${id}" type="hidden" name="groupId" />
+        <input class="backButton" type="submit" value="Назад">
+    </form>
+</div>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/dropdownUser.js"></script>
+<script src="/script/bigButton.js"></script>
+</body>
+</html>

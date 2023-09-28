@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<header id="layoutHeader">
+  <div class="navbar-header">
+    <p id="bigbuttonlink" onclick="submitBugButton()">SocialPath</p>
+    <form id="bigbutton" typeof="hidden" action="/admin/authorisation">
+      <input th:value="${admin.login}" id="login" type="hidden" name="login" />
+      <input th:value="${admin.password}" id="password" type="hidden" name="password" />
+    </form>
+  </div>
+  <div class="userIcon">
+    <img onclick="dropdownAdmin()" id="usericon" src="/usericon.png" alt="usericon">
+  </div>
+  <form id="formbackPersonnalInfo" method="get" action="/admin/getChangePasswordForm">
+    <input class="hidden" th:value="${admin.login}" id="login" type="text" name="login" />
+    <input class="hidden" th:value="${admin.password}" id="password" type="text" name="passwordOld" />
+    <input class="hidden" th:value="${admin.password}" id="password" type="text" name="password" />
+  </form>
+  <form id="formbackGroupCreation" method="get" action="/admin/getChangePasswordForm">
+    <input class="hidden" th:value="${admin.login}" id="login" type="text" name="login" />
+    <input class="hidden" th:value="${admin.password}" id="password" type="text" name="passwordOld" />
+    <input class="hidden" th:value="${admin.password}" id="password" type="text" name="password" />
+  </form>
+  <div id="dropdown" class="dropdown">
+    <a href="#" onclick="changePassword()">Змінити пароль</a>
+    <a href="/home/index">Вийти</a>
+  </div>
+</header>
+</html>

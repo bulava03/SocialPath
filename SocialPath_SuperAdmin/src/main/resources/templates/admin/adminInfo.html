@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title}"></title>
+  <link rel="stylesheet" th:href="@{/style/layout.css}" />
+  <link rel="stylesheet" th:href="@{/style/adminInfoStyle.css}" />
+  <link rel="stylesheet" th:href="@{/style/gradientPage.css}" />
+</head>
+<body>
+<header id="layoutHeader">
+  <div class="navbar-header">
+    <a class="navbar-brand" th:href="@{/}">SocialPath</a>
+  </div>
+</header>
+
+<div class="container">
+  <div class="authtitle">
+    <h1>Зміна інформації про адміністратора</h1>
+  </div>
+  <div class="authform">
+    <form id="regform" th:action="@{/update}" method="post">
+      <div class="authinput">
+        <input class="field" type="hidden" th:value="${admin.login}" name="login" />
+        <h2 class="name">Новий пароль</h2>
+        <input class="field" id="password" type="text" th:value="${admin.password}" name="password" />
+        <input class="button" type="submit" value="Змінити" />
+      </div>
+    </form>
+    <form id="backform" th:action="@{/}" method="get">
+      <input class="button" id="buttonback" type="submit" value="Назад" />
+    </form>
+    <p th:if="${errorText != null}" class="errorText" th:text="${errorText}"></p>
+    <p id="errorText" class="errorText"></p>
+  </div>
+</div>
+
+<footer id="layoutFooter">
+  <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+</body>
+</html>

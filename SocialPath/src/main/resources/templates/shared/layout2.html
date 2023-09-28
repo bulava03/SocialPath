@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <header id="layoutHeader">
+        <div class="navbar-header">
+            <p id="bigbuttonlink" onclick="submitBugButton()">SocialPath</p>
+            <form id="bigbutton" typeof="hidden" action="/user/authorisation">
+                <input th:value="${author.login}" id="login" type="hidden" name="login" />
+                <input th:value="${author.password}" id="password" type="hidden" name="password" />
+            </form>
+        </div>
+        <div class="userIcon">
+            <img onclick="dropdownUser()" id="usericon" src="/usericon.png" alt="usericon">
+        </div>
+        <form id="formbackPersonnalInfo" method="get" action="/user/getUserInfo">
+            <input class="hidden" th:value="${author.login}" id="login" type="text" name="login" />
+            <input class="hidden" th:value="${author.password}" id="password" type="text" name="password" />
+        </form>
+        <form id="formbackGroupCreation" method="get" action="/group/getGroupCreationForm">
+            <input class="hidden" th:value="${author.login}" id="login" type="text" name="login" />
+            <input class="hidden" th:value="${author.password}" id="password" type="text" name="password" />
+        </form>
+        <div id="dropdown" class="dropdown">
+            <a href="#" onclick="personalInformation()">Особиста інформація</a>
+            <a href="#" onclick="groupCreation()">Створити групу</a>
+            <a href="/">Вийти</a>
+        </div>
+    </header>
+</html>

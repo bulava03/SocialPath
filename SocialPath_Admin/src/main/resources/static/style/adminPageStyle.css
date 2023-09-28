@@ -1,0 +1,106 @@
+table {
+    border-radius: 25px;
+    width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 0;
+    border-collapse: collapse;
+}
+
+tr {
+    height: 20px;
+}
+
+td, th {
+    height: 20px;
+    border: 1px solid black;
+    text-align: center;
+    background-color: #2184c2;
+    color: #ffffff;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    font-size: 14px;
+}
+
+.buttontable {
+    border: 1px solid black;
+    background-color: #3baf9f;
+    color: #ffffff;
+    cursor: pointer;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.action-column {
+    background-color: #3baf9f;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    font-size: 14px;
+    font-weight: bold;
+    height: 20px;
+    width: 15%;
+}
+
+tr:first-of-type .action-column {
+    border-radius: 0px 25px 0px 0px;
+}
+
+tr:last-of-type .action-column {
+    border-radius: 0px 0px 25px 0px;
+}
+
+tr:first-of-type th:first-of-type {
+    border-radius: 25px 0px 0px 0px;
+}
+
+tr:last-of-type td:first-of-type {
+    border-radius: 0px 0px 0px 25px;
+}
+
+th {
+    border-top: 0;
+}
+
+tr:first-of-type th:last-of-type {
+    border-radius: 0px 25px 0px 0px;
+    border-right: 0;
+}
+
+tr:last-of-type td:last-of-type {
+    border-radius: 0px 0px 25px 0px;
+}
+
+tr td:last-of-type {
+    border-right: 0;
+}
+
+tr:last-of-type td {
+    border-bottom: 0;
+}
+
+td:first-of-type, th:first-of-type {
+    border-left: 0;
+}
+
+hr {
+    border: none;
+    background-color: #000000;
+    color: #000000;
+    height: 2px;
+}
+
+.action-column, td:first-of-type {
+    width: 15%;
+}
+
+h2 {
+    text-align: center;
+}

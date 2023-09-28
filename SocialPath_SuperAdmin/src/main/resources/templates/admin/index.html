@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}"></title>
+    <link rel="stylesheet" th:href="@{/style/layout.css}" />
+    <link rel="stylesheet" th:href="@{/style/mainPageStyle.css}" />
+    <link rel="stylesheet" th:href="@{/style/tableStyle.css}" />
+    <link rel="stylesheet" th:href="@{/style/gradientPage.css}" />
+</head>
+<body>
+<header id="layoutHeader">
+    <div class="navbar-header">
+        <a class="navbar-brand" th:href="@{/}">SocialPath</a>
+    </div>
+</header>
+
+<div class="container">
+    <form id="updateForm" th:action="@{/update}" th:method="get">
+        <input id="loginUpdate" type="hidden" value="" name="login" />
+        <input id="passwordUpdate" type="hidden" value="" name="password" />
+    </form>
+    <form id="removeForm" th:action="@{/delete}" th:method="post">
+        <input id="loginRemove" type="hidden" value="" name="login" />
+        <input id="passwordRemove" type="hidden" value="" name="password" />
+    </form>
+    <h2>Адміністратори</h2>
+    <table th:if="${not #lists.isEmpty(admins)}">
+        <tr>
+            <th class="date-column">Логін</th>
+            <th class="complaint-column">Пароль</th>
+            <th class="action-column"></th>
+            <th class="action-column"></th>
+        </tr>
+        <tr th:each="admin : ${admins}">
+            <td th:text="${admin.login}"></td>
+            <td th:text="${admin.password}"></td>
+            <td class="action-column" onclick="removeAdminConfirm(this.parentNode.getElementsByTagName('td')[0].innerText, this.parentNode.getElementsByTagName('td')[1].innerText)">Видалити</td>
+            <td class="action-column" onclick="updateAdminConfirm(this.parentNode.getElementsByTagName('td')[0].innerText, this.parentNode.getElementsByTagName('td')[1].innerText)">Змінити</td>
+        </tr>
+    </table>
+    <h2 id="noadmins" th:unless="${not #lists.isEmpty(admins)}">Список адміністраторів порожній</h2>
+    <form th:action="@{/create}" th:method="get">
+        <div class="authinput">
+            <input class="button" type="submit" value="Додати адміністратора" />
+        </div>
+    </form>
+</div>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/mainPage.js"></script>
+</body>
+</html>

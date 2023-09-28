@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialPath</title>
+    <link rel="stylesheet" href="/style/groupCreationStyle.css" />
+    <link rel="stylesheet" href="/style/gradientPage.css" />
+    <link rel="stylesheet" href="/style/layout.css" />
+    <link rel="stylesheet" href="/style/userIconStyle.css" />
+</head>
+<body>
+<div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
+
+<div class="container">
+    <div class="authTitle">
+        <h1>Створити групу</h1>
+    </div>
+    <div class="authForm">
+        <form id="regForm" method="post" action="/group/createGroup">
+            <div class="authInput">
+                <input type="hidden" th:value="${group.owner}" name="Owner">
+                <input type="hidden" th:value="${group.ownerPassword}" name="OwnerPassword">
+                <h2 class="name">Назва групи</h2>
+                <input class="field" id="name" type="text" th:value="${group.name}" name="Name" />
+                <input class="button" type="submit" value="Створити">
+            </div>
+        </form>
+        <form id="backForm" method="get" action="/user/authorisation">
+            <input type="hidden" th:value="${author.login}" name="Login">
+            <input type="hidden" th:value="${author.password}" name="Password">
+            <input class="button" id="buttonBack" type="submit" value="Назад">
+        </form>
+        <p class="errorText" th:text="${errorText}" th:if="${errorText}"></p>
+        <p id="errorText" class="errorText"></p>
+    </div>
+</div>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/dropdownUser.js"></script>
+<script src="/script/bigButton.js"></script>
+</body>
+</html>

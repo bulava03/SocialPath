@@ -1,0 +1,21 @@
+package com.example.SocialPath_Admin.extraClasses;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.bson.types.ObjectId;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PublicationPresentable {
+    private ObjectId id;
+    private String authorLogin;
+    private String authorName;
+    private String text;
+    private LocalDateTime createdAt;
+    private List<PublicationPresentable> publications;
+}

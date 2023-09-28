@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SocialPath</title>
+  <link rel="stylesheet" href="/style/layout.css">
+  <link rel="stylesheet" href="/style/userIconStyle.css">
+  <link rel="stylesheet" href="/style/personalInfoStyle.css">
+  <link rel="stylesheet" href="/style/gradientPage.css">
+</head>
+<body>
+<div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
+
+<div class="container">
+  <div class="authtitle"><h1>Особиста інформація</h1></div>
+  <div class="authform">
+    <form id="regform" method="post" action="/user/changeUserInfo">
+      <div class="authinput">
+        <input type="hidden" th:value="${user.login}" name="login" />
+        <input type="hidden" th:value="${user.password}" name="passwordOld" />
+        <h2 class="name">Пароль</h2>
+        <input class="field" id="password" type="text" th:value="${user.password}" name="password" />
+        <h2 class="name">Ім'я</h2>
+        <input class="field" id="name" th:value="${user.firstName}" type="text" name="firstName">
+        <h2 class="name">Прізвище</h2>
+        <input class="field" id="surname" th:value="${user.lastName}" type="text" name="lastName">
+        <h2 class="name">Номер телефону</h2>
+        <input class="field" id="phone" th:value="${user.phoneNumber}" type="text" name="phoneNumber">
+        <h2 class="name">Електронна пошта</h2>
+        <input class="field" id="email" th:value="${user.email}" type="text" name="email">
+        <h2 class="name">День народження</h2>
+        <input class="field" id="dob-day" th:value="${user.year != -1 ? user.day : ''}" type="text" name="day">
+        <h2 class="name">Місяць народження</h2>
+        <select id="dob-month" name="month">
+          <option value="" th:selected="${user.month == null}" th:disabled="${user.month == null}">Місяць</option>
+          <option value="1" th:selected="${user.month == 'Січень'}">Січень</option>
+          <option value="2" th:selected="${user.month == 'Лютий'}">Лютий</option>
+          <option value="3" th:selected="${user.month == 'Березень'}">Березень</option>
+          <option value="4" th:selected="${user.month == 'Квітень'}">Квітень</option>
+          <option value="5" th:selected="${user.month == 'Травень'}">Травень</option>
+          <option value="6" th:selected="${user.month == 'Червень'}">Червень</option>
+          <option value="7" th:selected="${user.month == 'Липень'}">Липень</option>
+          <option value="8" th:selected="${user.month == 'Серпень'}">Серпень</option>
+          <option value="9" th:selected="${user.month == 'Вересень'}">Вересень</option>
+          <option value="10" th:selected="${user.month == 'Жовтень'}">Жовтень</option>
+          <option value="11" th:selected="${user.month == 'Листопад'}">Листопад</option>
+          <option value="12" th:selected="${user.month == 'Грудень'}">Грудень</option>
+        </select>
+        <h2 class="name">Рік народження</h2>
+        <select id="dob-year" name="year">
+          <option th:value="${user.year != 0 && user.year != -1 ? user.year : ''}"
+                  th:selected="${user.year != 0 && user.year != -1}"
+                  th:disabled="${user.year == 0 || user.year == -1}"
+                  th:text="${user.year != 0 && user.year != -1 ? user.year : 'Рік'}"></option>
+        </select>
+        <input type="hidden" id="dateOfBirth" name="dateOfBirth" value="">
+        <h2 class="name">Країна</h2>
+        <input class="field" id="country" th:value="${user.country}" type="text" name="country">
+        <h2 class="name">Регіон</h2>
+        <input class="field" id="region" th:value="${user.region}" type="text" name="region">
+        <h2 class="name">Місто</h2>
+        <input class="field" id="city" th:value="${user.city}" type="text" name="city">
+        <h2 class="name">Освіта</h2>
+        <input class="field" id="education" th:value="${user.education}" type="text" name="education">
+        <h2 class="name">Місце роботи</h2>
+        <input class="field" id="workplace" th:value="${user.workplace}" type="text" name="workplace">
+        <input onclick="registerUser()" class="button" type="submit" value="Оновити" />
+      </div>
+    </form>
+    <form id="backform" method="get" action="/user/authorisation">
+      <input type="hidden" th:value="${user.login}" name="login" />
+      <input type="hidden" th:value="${user.password}" name="password" />
+      <input class="button" id="buttonback" type="submit" value="На мою сторінку" />
+    </form>
+    <p class="errortext" id="errortext"></p>
+    <p class="errortext" th:text="${errorText}"></p>
+  </div>
+</div>
+
+<footer id="layoutFooter">
+  <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/generateYears.js"></script>
+<script src="/script/dateValidation.js"></script>
+<script src="/script/dropdownUser.js"></script>
+<script src="/script/bigButton.js"></script>
+</body>
+</html>

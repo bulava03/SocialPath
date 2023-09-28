@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>SocialPath</title>
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/userIconStyle.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/leftFrameResultStyle.css">
+    <link rel="stylesheet" href="/style/backButtonStyle.css">
+</head>
+<body>
+<div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
+
+<form id="userToSubmit" th:action="@{/searchResult/getUserPage}" method="get">
+    <input class="field" id="login" th:value="${author.login}" type="hidden" name="login" />
+    <input class="field" id="password" th:value="${author.password}" type="hidden" name="password" />
+    <input class="field" id="anotherUserLogin" value="" type="hidden" name="anotherUserLogin" />
+</form>
+
+<div class="table-container">
+    <div class="table-wrapper" th:each="elem : ${admins}">
+        <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
+            <tr>
+                <td class="photo-cell">
+                    <img src="/usericon.png" alt="usericon">
+                </td>
+            </tr>
+            <tr>
+                <td class="content-row">
+                    <div class="content-cell"></div>
+                    <div class="content-cell"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}">Name</b></div>
+                    <div class="content-cell"></div>
+                    <div class="content-cell" th:text="'Електронна пошта: ' + ${elem.email}">Email</div>
+                    <div class="content-cell" th:if="${elem.phoneNumber != null and elem.phoneNumber != ''}" th:text="'Номер телефону: ' + ${elem.phoneNumber}">Phone Number</div>
+                    <div class="content-cell" th:if="${elem.country != null and elem.country != ''}" th:text="'Країна: ' + ${elem.country}">Country</div>
+                    <div class="content-cell" th:if="${elem.region != null and elem.region != ''}" th:text="'Регіон: ' + ${elem.region}">Region</div>
+                    <div class="content-cell" th:if="${elem.city != null and elem.city != ''}" th:text="'Населений пункт: ' + ${elem.city}">City</div>
+                    <div class="content-cell" th:if="${elem.education != null and elem.education != ''}" th:text="'Освіта: ' + ${elem.education}">Education</div>
+                    <div class="content-cell" th:if="${elem.workplace != null and elem.workplace != ''}" th:text="'Місце роботи: ' + ${elem.workplace}">Workplace</div>
+                    <form th:if="${author.login == owner and elem.anotherUserLogin != owner and admins.contains(elem)}"
+                          th:action="@{/group/removeFromAdminsAdminsList}" method="post">
+                        <input class="field" th:value="${author.login}" type="hidden" name="Login" />
+                        <input class="field" th:value="${author.password}" type="hidden" name="Password" />
+                        <input class="field" th:value="${groupId}" type="hidden" name="groupId" />
+                        <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="userId" />
+                        <input class="userButton" type="submit" value="Видалити з адміністраторів">
+                    </form>
+                    <div class="content-cell"></div>
+                    <div class="content-cell"></div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div style="margin-left: 20px; margin-right: 20px;">
+    <form th:action="@{/searchResult/getGroupPage}" method="get">
+        <input class="field" th:value="${author.login}" type="hidden" name="login" />
+        <input class="field" th:value="${author.password}" type="hidden" name="password" />
+        <input class="field" id="groupId"  th:value="${groupId}" type="hidden" name="groupId" />
+        <input class="backButton" type="submit" value="Назад">
+    </form>
+</div>
+
+<br><br>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/search.js"></script>
+<script src="/script/submitInSearchResultPage.js"></script>
+<script src="/script/dropdownUser.js"></script>
+<script src="/script/bigButton.js"></script>
+</body>
+</html>

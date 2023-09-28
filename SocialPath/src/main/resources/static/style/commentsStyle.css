@@ -1,0 +1,88 @@
+.comment {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: #f0f0f0;
+    margin-bottom: 10px;
+    padding: 10px;
+    padding-left: 30px;
+    padding-right: 60px;
+    border-radius: 5px;
+}
+
+.user-photo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-bottom: -50px;
+}
+
+.username {
+    font-weight: bold;
+    margin-right: 10px;
+    margin-top: -40px;
+    text-decoration: none;
+    color: #333;
+    margin-left: 60px;
+}
+
+.commentText {
+    margin-left: 60px;
+}
+
+.reply-btn,
+.delete-btn,
+.report-btn-t1,
+.report-btn-t2,
+.report-btn-t3 {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.reply-btn,
+.report-btn-t3 {
+    margin-left: 60px;
+}
+
+.delete-btn,
+.report-btn-t2 {
+    margin-left: 123px;
+    margin-top: -25px;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+}
+
+.report-btn-t1 {
+    margin-left: 190px;
+    margin-top: -25px;
+}
+
+.report-btn-t1,
+.report-btn-t2,
+.report-btn-t3 {
+    background-color: #dc3545;
+}
+
+.reply-btn:hover,
+.delete-btn:hover,
+.report-btn-t1:hover,
+.report-btn-t2:hover,
+.report-btn-t3:hover {
+    opacity: 0.8;
+}
+
+.reply-btn:disabled,
+.delete-btn:disabled,
+.report-btn-t1:disabled,
+.report-btn-t2:disabled,
+.report-btn-t3:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}

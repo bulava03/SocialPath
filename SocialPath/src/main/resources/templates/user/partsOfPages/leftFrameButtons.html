@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <form typeof="hidden" method="get" action="/user/getUsersGroups">
+        <input class="field" th:value="${user.login}" type="hidden" name="id" />
+        <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+        <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+        <input class="leftFrameButton" type="submit" value="Групи">
+    </form>
+
+    <form typeof="hidden" method="get" action="/user/getUsersFriends">
+        <input class="field" th:value="${user.login}" type="hidden" name="id" />
+        <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+        <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+        <input class="leftFrameButton" type="submit" value="Друзі">
+    </form>
+
+    <div th:if="${user.login == author.login}">
+        <form method="get" action="/user/getInvitationsToFriends">
+            <input class="field" th:value="${user.login}" type="hidden" name="id" />
+            <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+            <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+            <input class="leftFrameButton" type="submit" value="Запити на дружбу">
+        </form>
+    </div>
+
+    <div th:if="${user.Login != author.Login}">
+        <div th:if="${InRequests == 0}">
+            <form method="post" action="/user/inviteToFriends">
+                <input class="field" th:value="${user.login}" type="hidden" name="id" />
+                <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+                <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+                <input class="leftFrameButton" type="submit" value="Запросити в друзі">
+            </form>
+        </div>
+
+        <div th:if="${InRequests == 1}">
+            <form method="post" action="/user/removeInviteToFriends">
+                <input class="field" th:value="${user.login}" type="hidden" name="id" />
+                <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+                <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+                <input class="leftFrameButton" type="submit" value="Скасувати запит на дружбу">
+            </form>
+        </div>
+
+        <div th:if="${InRequests == 2}">
+            <form method="post" action="/user/acceptToFriends">
+                <input class="field" th:value="${user.login}" type="hidden" name="id" />
+                <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+                <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+                <input class="leftFrameButton" type="submit" value="Прийняти запит на дружбу">
+            </form>
+            <form method="post" action="/user/rejectInvitationToFriends">
+                <input class="field" th:value="${user.login}" type="hidden" name="id" />
+                <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+                <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+                <input class="leftFrameButton" type="submit" value="Відхилити запит на дружбу">
+            </form>
+        </div>
+
+        <div th:if="${InRequests == 3}">
+            <form method="post" action="/user/removeFromFriends">
+                <input class="field" th:value="${user.login}" type="hidden" name="id" />
+                <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+                <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+                <input class="leftFrameButton" type="submit" value="Видалити з друзів">
+            </form>
+        </div>
+    </div>
+</html>

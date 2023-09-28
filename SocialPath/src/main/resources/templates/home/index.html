@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialPath</title>
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/authFormStyle.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+</head>
+<body>
+<div th:insert="~{/shared/layout :: #layoutHeader}"></div>
+
+<div class="container">
+    <div class="authtitle">
+        <h1>SocialPath</h1>
+    </div>
+    <div class="authform">
+        <form action="/user/authorisation" method="get">
+            <div class="authinput">
+                <h2 class="name">Логін</h2>
+                <input class="field" id="login" type="text" name="login">
+                <h2 class="name">Пароль</h2>
+                <input class="field" id="password" type="text" name="password">
+                <input class="button" type="submit" value="Увійти">
+            </div>
+        </form>
+        <form method="get" action="/registration">
+            <input class="button" type="submit" value="Реєстрація">
+        </form>
+        <p class="errortext" th:text="${errorText}"></p>
+    </div>
+</div>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/layout.js"></script>
+</body>
+</html>

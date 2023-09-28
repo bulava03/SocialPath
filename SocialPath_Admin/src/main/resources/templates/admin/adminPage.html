@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SocialPath</title>
+  <link rel="stylesheet" href="/style/layout.css">
+  <link rel="stylesheet" href="/style/userIconStyle.css">
+  <link rel="stylesheet" href="/style/adminPageStyle.css">
+  <link rel="stylesheet" href="/style/gradientPage.css">
+</head>
+<body>
+<div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
+
+<form id="ReportResult" action="/admin/getDecisionPage" method="get">
+  <input class="field" type="hidden" th:value="${admin.login}" name="login" />
+  <input class="field" type="hidden" th:value="${admin.password}" name="password" />
+  <input class="field" id="myReport" type="hidden" value="" name="report" />
+</form>
+
+<form id="NewReport" action="/admin/getReport" method="post">
+  <input class="field" type="hidden" th:value="${admin.login}" name="login" />
+  <input class="field" type="hidden" th:value="${admin.password}" name="password" />
+  <input class="field" id="freeReport" type="hidden" value="" name="report" />
+</form>
+
+<div th:if="${errorText != null and errorText != ''}">
+  <p th:text="${errorText}"></p>
+</div>
+
+<div th:if="${report != null}">
+  <h2>Скарга на розгляді</h2>
+  <table>
+    <tr>
+      <th class="date-column">Дата скарги</th>
+      <th class="report-type">Тип скарги</th>
+      <th class="complaint-column">Сутність скарги</th>
+      <th class="action-column"></th>
+    </tr>
+    <tr>
+      <td th:text="${report.date}"></td>
+      <td th:if="${report.type != 'Group'}">Коментар</td>
+      <td th:unless="${report.type != 'Group'}">Група</td>
+      <td th:text="${report.subject}"></td>
+      <td th:attr="onclick='setReportResult(\'' + ${report.id} + '\')'" class="buttontable">Розглянути</td>
+    </tr>
+  </table>
+</div>
+<div th:unless="${report != null}">
+  <h2>Скарга на розгляді відсутня</h2>
+</div>
+
+<div th:if="${reports != null and reports.size() > 0}">
+  <h2>Скарги</h2>
+  <table>
+    <tr>
+      <th class="date-column">Дата скарги</th>
+      <th class="report-type">Тип скарги</th>
+      <th class="complaint-column">Сутність скарги</th>
+      <th class="action-column"></th>
+    </tr>
+    <tr th:each="elem : ${reports}">
+      <td th:text="${elem.date}"></td>
+      <td th:if="${elem.type != 'Group'}">Коментар</td>
+      <td th:unless="${elem.type != 'Group'}">Група</td>
+      <td th:text="${elem.subject}"></td>
+      <td th:attr="onclick='getNewReport(\'' + ${elem.id} + '\')'" class="buttontable">Взяти на розгляд</td>
+    </tr>
+  </table>
+  <br><br>
+</div>
+<div th:unless="${reports != null and reports.size() > 0}">
+  <h2>Вільних скарг немає</h2>
+</div>
+
+<footer id="layoutFooter">
+  <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/dropdownAdmin.js"></script>
+<script src="/script/bigButton.js"></script>
+<script src="/script/report.js"></script>
+</body>
+</html>

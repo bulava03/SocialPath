@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title}"></title>
+  <link rel="stylesheet" th:href="@{/style/layout.css}" />
+</head>
+<body>
+<header id="layoutHeader">
+  <div class="navbar-header">
+    <a class="navbar-brand" th:href="@{/}">SocialPath</a>
+  </div>
+</header>
+
+<div class="container" th:insert="${contentTemplate} :: content"></div>
+
+<footer id="layoutFooter">
+  <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/layout.js"></script>
+<th:block th:replace="~{layout/scripts :: scripts}"></th:block>
+</body>
+</html>

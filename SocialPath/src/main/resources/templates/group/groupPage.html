@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialPath</title>
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/userIconStyle.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/userPageStyle.css">
+    <link rel="stylesheet" href="/style/searchStyle.css">
+    <link rel="stylesheet" href="/style/commentsStyle.css">
+    <link rel="stylesheet" href="/style/newCommentStyle.css">
+    <link rel="stylesheet" href="/style/commentAddStyle.css">
+</head>
+<body>
+<div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
+
+<div id="page">
+    <div th:replace="~{/group/partsOfPages/leftFrame}"></div>
+    <div th:replace="~{/group/partsOfPages/rightFrame}"></div>
+</div>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/addComment.js"></script>
+<script src="/script/getAddingCommentForm.js"></script>
+<script src="/script/removeComment.js"></script>
+<script src="/script/search.js"></script>
+<script src="/script/reportComment.js"></script>
+<script src="/script/getReportingCommentForm.js"></script>
+<script src="/script/dropdownUser.js"></script>
+<script src="/script/bigButton.js"></script>
+</body>
+</html>

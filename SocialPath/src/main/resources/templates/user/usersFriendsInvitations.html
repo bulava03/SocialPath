@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>SocialPath</title>
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/leftFrameResultStyle.css">
+    <link rel="stylesheet" href="/style/backButtonStyle.css">
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/userIconStyle.css">
+</head>
+<body>
+<div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
+
+<div class="container">
+    <form id="userToSubmit" th:action="@{/searchResult/getUserPage}" method="get">
+        <input class="field" th:value="${author.login}" type="hidden" name="login" />
+        <input class="field" th:value="${author.password}" type="hidden" name="password" />
+        <input class="field" id="anotherUserLogin" value="" type="hidden" name="anotherUserLogin" />
+    </form>
+
+    <div class="table-container">
+        <div class="table-wrapper" th:each="elem : ${users}">
+            <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
+                <tr>
+                    <td class="photo-cell">
+                        <img th:src="@{/usericon.png}" alt="usericon" />
+                    </td>
+                </tr>
+                <td class="content-row">
+                    <div class="content-cell"></div>
+                    <div class="content-cell"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}"></b></div>
+                    <div class="content-cell"></div>
+                    <div class="content-cell">Електронна пошта: <span th:text="${elem.email}"></span></div>
+                    <div class="content-cell" th:if="${elem.phoneNumber != null}">Номер телефону: <span th:text="${elem.phoneNumber}"></span></div>
+                    <div class="content-cell" th:if="${elem.country != null}">Країна: <span th:text="${elem.country}"></span></div>
+                    <div class="content-cell" th:if="${elem.region != null}">Регіон: <span th:text="${elem.region}"></span></div>
+                    <div class="content-cell" th:if="${elem.city != null}">Населений пункт: <span th:text="${elem.city}"></span></div>
+                    <div class="content-cell" th:if="${elem.education != null}">Освіта: <span th:text="${elem.education}"></span></div>
+                    <div class="content-cell" th:if="${elem.workplace != null}">Місце роботи: <span th:text="${elem.workplace}"></span></div>
+                    <div class="content-cell" th:if="${login == author.login}">
+                        <form typeof="hidden" method="post" action="/user/acceptToFriendsMyPage">
+                            <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="id" />
+                            <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+                            <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+                            <input class="userButton" type="submit" value="Прийняти запит на дружбу">
+                        </form>
+                    </div>
+                    <div class="content-cell" th:if="${login == author.login}">
+                        <form typeof="hidden" method="post" action="/user/rejectInvitationToFriendsMyPage">
+                            <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="id" />
+                            <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+                            <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+                            <input class="userButton" type="submit" value="Відхилити запит на дружбу">
+                        </form>
+                    </div>
+                    <div class="content-cell"></div>
+                    <div class="content-cell"></div>
+                </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <form typeof="hidden" method="get" action="/user/anotherUserPage">
+        <input class="field" th:value="${author.login}" type="hidden" name="login" />
+        <input class="field" th:value="${author.password}" type="hidden" name="password" />
+        <input class="field" th:value="${login}" type="hidden" name="anotherUserLogin" />
+        <input class="backButton" type="submit" value="Назад">
+    </form>
+</div>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/dropdownUser.js"></script>
+<script src="/script/bigButton.js"></script>
+<script src="/script/search.js"></script>
+<script src="/script/submitInSearchResultPage.js"></script>
+</body>
+</html>

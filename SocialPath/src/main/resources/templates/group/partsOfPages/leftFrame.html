@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <div id="left">
+    <img class=".user-photo" src="/usericon.png" alt="usericon" />
+    <h1 th:text="${group.name}"></h1>
+
+    <form method="get" action="/group/getGroupsMembers">
+      <input class="field" th:value="${group.id}" type="hidden" name="id" />
+      <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+      <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+      <input class="leftFrameButton" type="submit" value="Учасники">
+    </form>
+
+    <form method="get" action="/group/getGroupsAdmins">
+      <input class="field" th:value="${group.id}" type="hidden" name="id" />
+      <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+      <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+      <input class="leftFrameButton" type="submit" value="Адміністратори">
+    </form>
+
+    <div th:if="${not group.members.contains(author.login)}">
+      <form method="post" action="/group/joinGroup">
+        <input class="field" th:value="${group.id}" type="hidden" name="id" />
+        <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+        <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+        <input class="leftFrameButton" type="submit" value="Долучитися до групи">
+      </form>
+    </div>
+
+    <div th:if="${group.members.contains(author.login) && group.owner != author.login}">
+      <form method="post" action="/group/leaveGroup">
+        <input class="field" th:value="${group.id}" type="hidden" name="id" />
+        <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+        <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+        <input class="leftFrameButton" type="submit" value="Покинути групу">
+      </form>
+    </div>
+
+    <div th:if="${not group.members.contains(author.login)}">
+      <form method="get" action="/report/getReportPage">
+        <input class="field" th:value="${group.id}" type="hidden" name="id" />
+        <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+        <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+        <input class="leftFrameButton" type="submit" value="Поскаржитись на групу">
+      </form>
+    </div>
+  </div>
+</html>

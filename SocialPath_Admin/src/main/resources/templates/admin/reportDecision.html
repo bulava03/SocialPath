@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SocialPath</title>
+  <link rel="stylesheet" href="/style/layout.css">
+  <link rel="stylesheet" href="/style/userIconStyle.css">
+  <link rel="stylesheet" href="/style/gradientPage.css">
+  <link rel="stylesheet" href="/style/reportDecisionStyle.css">
+  <link rel="stylesheet" href="/style/commentsStyle.css">
+</head>
+<body>
+<div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
+
+<br><br>
+
+<table>
+  <tr>
+    <td>Дата скарги</td>
+    <td th:text="${report.date}"></td>
+  </tr>
+  <tr>
+    <td>Тип скарги</td>
+    <td th:if="${report.type != 'Group'}">Коментар</td>
+    <td th:unless="${report.type != 'Group'}">Група</td>
+  </tr>
+  <tr>
+    <td>Сутність скарги</td>
+    <td th:text="${report.subject}"></td>
+  </tr>
+</table>
+
+<form id="formBack" action="/admin/authorisation" method="get">
+  <input class="field" id="login" type="hidden" th:value="${admin.login}" name="login" />
+  <input class="field" id="password" type="hidden" th:value="${admin.password}" name="password" />
+</form>
+
+<form id="setReportDecisionResult" action="/admin/setReportResult" method="post">
+  <input class="field" type="hidden" th:value="${admin.login}" name="login" />
+  <input class="field" type="hidden" th:value="${admin.password}" name="password" />
+  <input class="field" type="hidden" th:value="${report.id}" name="id" />
+  <input class="field" id="reportResult" type="hidden" value="" name="result" />
+</form>
+
+<div th:if="${report.type != 'Group'}" class="buttons">
+  <button class="btn" onclick="submitFormSetResult('Ban')">Забанити акаунт</button>
+  <button class="btn" onclick="submitFormSetResult('Nothing')">Виправдати</button>
+  <button class="btn" onclick="submitFormBack()">Назад</button>
+</div>
+<div th:unless="${report.type != 'Group'}" class="buttons">
+  <button class="btn" onclick="submitFormSetResult('Delete')">Видалити групу</button>
+  <button class="btn" onclick="submitFormSetResult('Nothing')">Виправдати</button>
+  <button class="btn" onclick="submitFormBack()">Назад</button>
+</div>
+
+<div th:if="${report.type != 'Group'}">
+  <h2>Текст публікації</h2>
+  <h3 th:text="${publication.text}"></h3>
+</div>
+<div id="publicationsContainer" th:if="${report.type == 'Group'}">
+  <h2>Публікації групи, на яку подано скаргу:</h2>
+  <div id="publications">
+    <div th:if="${publications != null and publications.size() > 0}">
+      <div th:each="i : ${#numbers.sequence(publications.size() - 1, 0, -1)}">
+        <div  th:replace="~{renderComment/renderComment :: renderComment(comment=${publications[i]})}"></div>
+      </div>
+    </div>
+    <p th:unless="${publications != null and publications.size() > 0}">Публікацій ще нема.</p>
+  </div>
+</div>
+
+<footer id="layoutFooter">
+  <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/dropdownAdmin.js"></script>
+<script src="/script/bigButton.js"></script>
+<script src="/script/setReportResult.js"></script>
+</body>
+</html>

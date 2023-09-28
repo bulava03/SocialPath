@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SocialPath</title>
+  <link rel="stylesheet" href="/style/layout.css">
+  <link rel="stylesheet" href="/style/userIconStyle.css">
+  <link rel="stylesheet" href="/style/adminInfoStyle.css">
+  <link rel="stylesheet" href="/style/gradientPage.css">
+</head>
+<body>
+<div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
+
+<div class="container">
+  <div class="authtitle"><h1>Зміна пароля</h1></div>
+  <div class="authform">
+    <form id="regform" method="post" action="/admin/changePassword">
+      <div class="authinput">
+        <input type="hidden" th:value="${admin.login}" name="login" />
+        <input type="hidden" th:value="${admin.password}" name="passwordOld" />
+        <h2 class="name">Новий пароль</h2>
+        <input class="field" id="password" type="text" th:value="${admin.password}" name="password" />
+        <input class="button" type="submit" value="Змінити пароль" />
+      </div>
+    </form>
+    <form id="backform" method="get" action="/admin/getAdminPage">
+      <input type="hidden" th:value="${admin.login}" name="login" />
+      <input type="hidden" th:value="${admin.password}" name="password" />
+      <input class="button" id="buttonback" type="submit" value="Назад" />
+    </form>
+    <p class="errortext" id="errortext"></p>
+    <p class="errortext" th:text="${errorText}"></p>
+  </div>
+</div>
+
+<footer id="layoutFooter">
+  <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/dropdownAdmin.js"></script>
+<script src="/script/bigButton.js"></script>
+</body>
+</html>
