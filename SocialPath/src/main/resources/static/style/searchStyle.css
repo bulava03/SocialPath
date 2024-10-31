@@ -13,7 +13,7 @@
 
 #searchButton {
     padding: 10px 20px;
-    background-color: #4caf50;
+    background-color: #e37f22;
     border: none;
     color: white;
     border-radius: 5px;
@@ -22,5 +22,5 @@
 }
 
 #searchButton:hover {
-    background-color: #45a049;
+    background-color: #fa9434;
 }

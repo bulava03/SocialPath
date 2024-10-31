@@ -20,6 +20,8 @@ public class UserUpdate {
 
     private String passwordOld;
 
+    private String imageId;
+
     @NotBlank(message = "Ім'я обов'язкове.")
     @Pattern(regexp = "^[a-zA-Z]+$", message = "Ім'я може містити тільки літери.")
     @Size(max = 50, message = "Ім'я повинне містити не більше 50 символів.")

@@ -9,7 +9,10 @@
             </form>
         </div>
         <div class="userIcon">
-            <img onclick="dropdownUser()" id="usericon" src="/usericon.png" alt="usericon">
+            <img th:if="${avatar == null}" id="usericon" width="30px" height="30px" alt="usericon"
+                 onclick="dropdownUser()" src="/pictures/photo.png">
+            <img th:unless="${avatar == null}" id="usericon" width="30px" height="30px" alt="usericon"
+                 onclick="dropdownUser()" th:src="'data:image/jpeg;base64,' + ${avatar}">
         </div>
         <form id="formbackPersonnalInfo" method="get" action="/user/getUserInfo">
             <input class="hidden" th:value="${author.login}" id="login" type="text" name="login" />

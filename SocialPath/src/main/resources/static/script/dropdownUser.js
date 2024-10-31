@@ -1,15 +1,20 @@
 function dropdownUser() {
-    document.getElementById('dropdown').classList.toggle('show');
+    var userIcon = document.getElementById('usericon');
+    var dropdown = document.getElementById('dropdown');
+
+    dropdown.classList.toggle('show'); // Додаємо або прибираємо клас show
+    userIcon.style.backgroundColor = dropdown.classList.contains('show') ? '#fa9434' : ''; // Змінюємо фон
 }
 
 window.onclick = function (event) {
+    var userIcon = document.getElementById('usericon');
+    var dropdown = document.getElementById('dropdown');
+
     if (!event.target.matches('#usericon')) {
-        var dropdowns = document.getElementsByClassName('dropdown');
-        for (var i = 0; i < dropdowns.length; i++) {
-            var opendropdown = dropdowns[i];
-            if (opendropdown.classList.contains('show')) {
-                opendropdown.classList.remove('show');
-            }
+        // Закриваємо меню, якщо клікнули поза usericon
+        if (dropdown.classList.contains('show')) {
+            dropdown.classList.remove('show');
+            userIcon.style.backgroundColor = ''; // Прибираємо фон
         }
     }
 }

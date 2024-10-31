@@ -1,0 +1,7 @@
+#left img {
+    width: calc(100% - 40px);
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    margin-left: 20px;
+    margin-right: 20px;
+}

@@ -13,12 +13,14 @@
 <div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
 
 <div class="container">
-  <div class="authtitle"><h1>Особиста інформація</h1></div>
+  <div class="authtitle"><h1>Про мене</h1></div>
   <div class="authform">
-    <form id="regform" method="post" action="/user/changeUserInfo">
+    <form id="regform" method="post" action="/user/changeUserInfo" enctype="multipart/form-data">
       <div class="authinput">
         <input type="hidden" th:value="${user.login}" name="login" />
         <input type="hidden" th:value="${user.password}" name="passwordOld" />
+        <h2 class="name">Фото</h2>
+        <input class="field" id="file" value="" type="file" name="file">
         <h2 class="name">Пароль</h2>
         <input class="field" id="password" type="text" th:value="${user.password}" name="password" />
         <h2 class="name">Ім'я</h2>
@@ -65,7 +67,7 @@
         <input class="field" id="education" th:value="${user.education}" type="text" name="education">
         <h2 class="name">Місце роботи</h2>
         <input class="field" id="workplace" th:value="${user.workplace}" type="text" name="workplace">
-        <input onclick="registerUser()" class="button" type="submit" value="Оновити" />
+        <input onclick="validateAvatarSize()" class="button" type="submit" value="Зберегти" />
       </div>
     </form>
     <form id="backform" method="get" action="/user/authorisation">
@@ -78,6 +80,8 @@
   </div>
 </div>
 
+<h2 id="imageToUploadByDefault" th:text="${avatar}" style="display: none;"></h2>
+
 <footer id="layoutFooter">
   <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
 </footer>
@@ -86,5 +90,7 @@
 <script src="/script/dateValidation.js"></script>
 <script src="/script/dropdownUser.js"></script>
 <script src="/script/bigButton.js"></script>
+<script src="/script/validateAvatarSize.js"></script>
+<script src="/script/imageUpdateDefault.js"></script>
 </body>
 </html>

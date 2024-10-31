@@ -1,3 +1,23 @@
+body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: inherit;
+    filter: brightness(0.7);
+    z-index: -1;
+    pointer-events: none;
+}
+
+body {
+    background-image: url('/pictures/index.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
 .authtitle {
     width: 490px;
     background-color: rgb(0,0,0,0.7);
@@ -47,7 +67,7 @@
 }
 
 button:hover {
-    background-color: #5390f5;
+    background-color: #fa9434;
 }
 
 form {
@@ -64,12 +84,12 @@ p.errortext {
 }
 
 .button {
-    background-color: #3baf9f;
+    background-color: #e37f22;
     display: block;
     margin: -10px 0px 0px 20px;
     text-align: center;
     border-radius: 12px;
-    border: 2px solid #366473;
+    border: 0;
     width: 425px;
     padding: 14px 5px;
     outline: none;
@@ -80,7 +100,7 @@ p.errortext {
 }
 
 .button:hover {
-    background-color: #349e8f;
+    background-color: #fa9434;
 }
 
 form:last-of-type .button:last-of-type {

@@ -58,7 +58,8 @@ public class UserRepositoryImpl implements UserRepository {
                 .set("region", userUpdate.getRegion())
                 .set("city", userUpdate.getCity())
                 .set("education", userUpdate.getEducation())
-                .set("workplace", userUpdate.getWorkplace());
+                .set("workplace", userUpdate.getWorkplace())
+                .set("imageId", userUpdate.getImageId());
         mongoTemplate.updateFirst(query, update, User.class);
     }
 

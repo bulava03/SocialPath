@@ -14,11 +14,9 @@ import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -74,7 +72,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
     public void updateUser(UserUpdate userUpdate) {
         userRepository.updateFieldsByLogin(userUpdate.getLogin(), userUpdate);
     }
@@ -105,6 +102,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<GroupSearchResult> findUsersGroups(String login) {
         List<ObjectId> userGroupsIds = userRepository.findUsersGroups(login);
+
+        if (userGroupsIds == null) {
+            return null;
+        }
 
         List<Group> usersGroupsObj = groupRepository.findAllById(userGroupsIds);
 
@@ -141,26 +142,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
     public void acceptToFriends(String myId, String anotherId) {
         userRepository.addToFriends(myId, anotherId);
         userRepository.addToFriends(anotherId, myId);
     }
 
     @Override
-    @Transactional
     public void inviteUser(String myId, String anotherId) {
         userRepository.inviteUser(myId, anotherId);
     }
 
     @Override
-    @Transactional
     public void removeFromInvitations(String myId, String anotherId) {
         userRepository.removeFromInvitations(myId, anotherId);
     }
 
     @Override
-    @Transactional
     public void removeFromFriends(String myId, String anotherId) {
         userRepository.removeFromFriends(myId, anotherId);
         userRepository.removeFromFriends(anotherId, myId);

@@ -18,6 +18,10 @@ function validateDateOfBirth(day, month, year) {
     return true;
 }
 
+function isValidNumber(value) {
+    return /^\d+$/.test(value);
+}
+
 function registerUser() {
     event.preventDefault();
 
@@ -25,6 +29,10 @@ function registerUser() {
         var day = parseInt(document.getElementById("dob-day").value);
         var month = parseInt(document.getElementById("dob-month").value);
         var year = parseInt(document.getElementById("dob-year").value);
+
+        day = isValidNumber(day) ? parseInt(day) : NaN;
+        month = isValidNumber(month) ? parseInt(month) : NaN;
+        year = isValidNumber(year) ? parseInt(year) : NaN;
 
         if (!validateDateOfBirth(day, month, year) || isNaN(day) || isNaN(month) || isNaN(year)) {
             document.getElementById("errortext").innerHTML = "Введено некоректну дату";

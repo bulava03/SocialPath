@@ -1,8 +1,15 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
     <div id="left">
-        <img src="/usericon.png" alt="usericon">
-        <h1 th:text="${user.FirstName + '   ' + user.LastName}"></h1>
+        <img th:if="${avatar == null} and ${isAuthor}" src="/pictures/photo.png" alt="usericon">
+        <img th:unless="${avatar == null} and !${isAuthor}"
+             th:src="'data:image/jpeg;base64,' + ${avatar}" alt="Image">
+
+        <img th:if="${avatarAnother == null} and !${isAuthor}" src="/pictures/photo.png" alt="usericon">
+        <img th:unless="${avatarAnother == null} and ${isAuthor}"
+             th:src="'data:image/jpeg;base64,' + ${avatarAnother}" alt="Image"><br>
+
+        <h1 style="text-align: center;" th:text="${user.FirstName + '   ' + user.LastName}"></h1>
         <p>Номер телефону: <span th:text="${user.PhoneNumber}"></span></p>
         <p>Email: <span th:text="${user.Email}"></span></p>
         <p>День народження: <span th:text="${user.DateOfBirth}"></span></p>

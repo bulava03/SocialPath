@@ -23,6 +23,8 @@ public class User {
     @Size(min = 8, max = 20, message = "Пароль повинен містити від 8 до 20 символів.")
     private String password;
 
+    private String imageId;
+
     @NotBlank(message = "Ім'я обов'язкове.")
     @Pattern(regexp = "^[a-zA-Z]+$", message = "Ім'я може містити тільки літери.")
     @Size(max = 50, message = "Ім'я повинне містити не більше 50 символів.")

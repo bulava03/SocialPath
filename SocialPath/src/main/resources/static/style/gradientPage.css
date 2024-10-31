@@ -1,3 +1,19 @@
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: inherit;
+    filter: brightness(0.8);
+    z-index: -1;
+    pointer-events: none;
+}
+
 body {
-    background-image: linear-gradient(to right top, #26caff, #95e5f0);
+    background-image: url('/pictures/index.jpg');
+    background-size: cover;
+    background-repeat: repeat-y;
+    background-position: center;
 }

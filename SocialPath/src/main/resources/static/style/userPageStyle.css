@@ -7,30 +7,33 @@
 
 #left {
     grid-column: 1;
-    background-color: #1C4D8C;
+    background-color: #edc7a4;
     padding-left: 20px;
-    padding-top: 50px;
+    padding-top: 40px;
     padding-bottom: 50px;
     padding-right: 20px;
-    color: #E8E8E8;
+    color: #595959;
+    margin-left: 15px;
+    margin-bottom: 20px;
+    border-radius: 10px;
 }
 
 #right {
     grid-column: 2;
     padding-left: 20px;
-    padding-right: 20px;
+    padding-right: 15px;
     padding-top: 50px;
     padding-bottom: 50px;
 }
 
 .leftFrameButton {
-    background-color: #3baf9f;
+    background-color: #e37f22;
     display: block;
     margin: 20px, 20px, 20px, 20px;
     margin-top: 40px;
     text-align: center;
     border-radius: 12px;
-    border: 2px solid #366473;
+    border: 0;
     width: 100%;
     padding: 14px 5px;
     outline: none;
@@ -45,5 +48,5 @@
 }
 
 .leftFrameButton:hover {
-    background-color: #349e8f;
+    background-color: #fa9434;
 }
