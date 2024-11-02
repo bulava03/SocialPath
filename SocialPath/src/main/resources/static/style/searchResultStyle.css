@@ -88,3 +88,7 @@ tr {
 	float: right;
 	width: 50%;
 }
+
+td img {
+    border-radius: 25px;
+}

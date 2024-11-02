@@ -23,7 +23,10 @@
             <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
                 <tr>
                     <td class="photo-cell">
-                        <img th:src="@{/usericon.png}" alt="usericon" />
+                        <img th:if="${elem.file == null}" src="/pictures/photo.png"
+                             style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
+                        <img th:unless="${elem.file == null}" th:src="'data:image/jpeg;base64,' + ${elem.file}"
+                             style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
                     </td>
                 </tr>
                 <tr>
@@ -43,7 +46,7 @@
                                 <input class="field" th:value="${elem.anotherUserLogin}"  type="hidden" name="id" />
                                 <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
                                 <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-                                <input class="backButton" type="submit" value="Видалити з друзів">
+                                <input class="userButton rejectButton" style="width: 200px;" type="submit" value="Видалити з друзів">
                             </form>
                         </div>
                         <div class="content-cell"></div>

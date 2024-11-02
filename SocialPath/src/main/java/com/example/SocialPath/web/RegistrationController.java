@@ -60,8 +60,7 @@ public class RegistrationController {
             user.setDateOfBirth(LocalDateTime.of(user.getDateOfBirth().getYear(), user.getDateOfBirth().getMonthValue(), user.getDateOfBirth().getDayOfMonth(), 0, 0, 0));
             userService.addUser(user);
 
-            model = modelAttributesService.usersAttributes(model, user, true, commentsService.loadComments("User", user.getLogin()));
-            return "user/userPage";
+            return "redirect:/user/authorisation?login=" + user.getLogin() + "&password=" + user.getPassword();
         }
     }
 

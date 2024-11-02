@@ -1,8 +1,18 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
   <div id="left">
-    <img class=".user-photo" src="/pictures/photo.png" height="512px" width="512px" alt="usericon" />
-    <h1 th:text="${group.name}"></h1>
+    <img th:if="${groupAvatar == null}" src="/pictures/photo.png" alt="GroupIcon">
+    <img th:unless="${groupAvatar == null}"
+         th:src="'data:image/jpeg;base64,' + ${groupAvatar}" alt="GroupIcon"><br>
+
+    <h1 style="text-align: center;" th:text="${group.name}"></h1>
+
+    <form th:if="${group.owner == author.login}" method="get" action="/group/getGroupUpdatingForm">
+      <input class="field" th:value="${group.id}" type="hidden" name="id" />
+      <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+      <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+      <input class="leftFrameButton" type="submit" value="Керування групою">
+    </form>
 
     <form method="get" action="/group/getGroupsMembers">
       <input class="field" th:value="${group.id}" type="hidden" name="id" />
@@ -18,31 +28,22 @@
       <input class="leftFrameButton" type="submit" value="Адміністратори">
     </form>
 
-    <div th:if="${not group.members.contains(author.login)}">
-      <form method="post" action="/group/joinGroup">
-        <input class="field" th:value="${group.id}" type="hidden" name="id" />
-        <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-        <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-        <input class="leftFrameButton" type="submit" value="Долучитися до групи">
-      </form>
-    </div>
+    <form>
+      <input id="formGroupId" type="hidden" th:value="${group.id}" />
+      <input id="formAuthorLogin" type="hidden" th:value="${author.login}" />
+      <input id="formAuthorPassword" type="hidden" th:value="${author.password}" />
+    </form>
 
-    <div th:if="${group.members.contains(author.login) && group.owner != author.login}">
-      <form method="post" action="/group/leaveGroup">
-        <input class="field" th:value="${group.id}" type="hidden" name="id" />
-        <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-        <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-        <input class="leftFrameButton" type="submit" value="Покинути групу">
-      </form>
-    </div>
+    <button id="joinButton" class="leftFrameButton"
+            th:if="${not group.members.contains(author.login)}" onclick="joinGroup()">Долучитися до групи</button>
+    <button id="leaveButton" class="leftFrameButton"
+            th:if="${group.members.contains(author.login) && group.owner != author.login}" onclick="leaveGroup()">Покинути групу</button>
 
-    <div th:if="${not group.members.contains(author.login)}">
-      <form method="get" action="/report/getReportPage">
-        <input class="field" th:value="${group.id}" type="hidden" name="id" />
-        <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-        <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-        <input class="leftFrameButton" type="submit" value="Поскаржитись на групу">
-      </form>
-    </div>
+    <form th:if="${not group.members.contains(author.login)}" method="get" action="/report/getReportPage">
+      <input class="field" th:value="${group.id}" type="hidden" name="id" />
+      <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+      <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+      <input class="leftFrameButton" type="submit" value="Поскаржитись на групу">
+    </form>
   </div>
 </html>

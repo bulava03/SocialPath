@@ -23,7 +23,10 @@
             <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
                 <tr>
                     <td class="photo-cell">
-                        <img th:src="@{/usericon.png}" alt="usericon" />
+                        <img th:if="${elem.file == null}" src="/pictures/photo.png"
+                             style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
+                        <img th:unless="${elem.file == null}" th:src="'data:image/jpeg;base64,' + ${elem.file}"
+                             style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
                     </td>
                 </tr>
                 <td class="content-row">
@@ -37,22 +40,30 @@
                     <div class="content-cell" th:if="${elem.city != null}">Населений пункт: <span th:text="${elem.city}"></span></div>
                     <div class="content-cell" th:if="${elem.education != null}">Освіта: <span th:text="${elem.education}"></span></div>
                     <div class="content-cell" th:if="${elem.workplace != null}">Місце роботи: <span th:text="${elem.workplace}"></span></div>
-                    <div class="content-cell" th:if="${login == author.login}">
-                        <form typeof="hidden" method="post" action="/user/acceptToFriendsMyPage">
-                            <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="id" />
-                            <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-                            <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-                            <input class="userButton" type="submit" value="Прийняти запит на дружбу">
-                        </form>
-                    </div>
-                    <div class="content-cell" th:if="${login == author.login}">
-                        <form typeof="hidden" method="post" action="/user/rejectInvitationToFriendsMyPage">
-                            <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="id" />
-                            <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-                            <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-                            <input class="userButton" type="submit" value="Відхилити запит на дружбу">
-                        </form>
-                    </div>
+                    <table id="decisionButtonsTable">
+                        <tr>
+                            <td>
+                                <div class="content-cell" th:if="${login == author.login}">
+                                    <form typeof="hidden" method="post" action="/user/acceptToFriendsMyPage">
+                                        <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="id" />
+                                        <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+                                        <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+                                        <input class="userButton acceptButton" type="submit" value="Прийняти">
+                                    </form>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="content-cell" th:if="${login == author.login}">
+                                    <form typeof="hidden" method="post" action="/user/rejectInvitationToFriendsMyPage">
+                                        <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="id" />
+                                        <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
+                                        <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
+                                        <input class="userButton rejectButton" type="submit" value="Відхилити">
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
                     <div class="content-cell"></div>
                     <div class="content-cell"></div>
                 </td>

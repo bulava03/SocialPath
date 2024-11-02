@@ -6,11 +6,14 @@ import com.example.SocialPath.extraClasses.GroupSearchResult;
 import com.example.SocialPath.extraClasses.UserSearchResult;
 import com.example.SocialPath.repository.GroupRepository;
 import com.example.SocialPath.repository.UserRepository;
+import com.example.SocialPath.service.FileStorageService;
 import com.example.SocialPath.service.SearchService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -23,9 +26,11 @@ public class SearchServiceImpl implements SearchService {
     private GroupRepository groupRepository;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private FileStorageService fileStorageService;
 
     @Override
-    public Object[] SearchUsersAndGroups(String searchValuesString, String thisLogin) {
+    public Object[] searchUsersAndGroups(String searchValuesString, String thisLogin) throws IOException {
         List<String> searchValues = Arrays.asList(searchValuesString.split(" "));
 
         List<User> usersList = searchValues.stream()
@@ -40,13 +45,38 @@ public class SearchServiceImpl implements SearchService {
             if (!element.getLogin().equals(thisLogin)) {
                 UserSearchResult userSearchResult = modelMapper.map(element, UserSearchResult.class);
                 userSearchResult.setAnotherUserLogin(element.getLogin());
+
+                String file;
+                if (element.getImageId() == null || element.getImageId().isEmpty()) {
+                    file = null;
+                } else {
+                    GridFsResource resource = fileStorageService.getFileById(element.getImageId());
+                    file = fileStorageService.convertGridFsFileToBase64(resource);
+                }
+                userSearchResult.setFile(file);
+
                 users.add(userSearchResult);
             }
         }
 
-        List<GroupSearchResult> groups = groupRepository.findByNameIn(searchValues).stream()
-                .map(group -> modelMapper.map(group, GroupSearchResult.class))
-                .collect(Collectors.toList());
+        List<GroupSearchResult> groups = new ArrayList<>();
+
+        List<Group> groupsList = groupRepository.findByNameIn(searchValues);
+        for (Group group: groupsList) {
+            GroupSearchResult groupSearchResult = modelMapper.map(group, GroupSearchResult.class);
+            groupSearchResult.setId(group.getId().toString());
+
+            String file;
+            if (group.getImageId() == null || group.getImageId().isEmpty()) {
+                file = null;
+            } else {
+                GridFsResource resource = fileStorageService.getFileById(group.getImageId());
+                file = fileStorageService.convertGridFsFileToBase64(resource);
+            }
+            groupSearchResult.setFile(file);
+
+            groups.add(groupSearchResult);
+        }
 
         return new Object[]{users, groups};
     }

@@ -7,14 +7,17 @@ import com.example.SocialPath.extraClasses.UserSearchResult;
 import com.example.SocialPath.extraClasses.UserUpdate;
 import com.example.SocialPath.repository.GroupRepository;
 import com.example.SocialPath.repository.UserRepository;
+import com.example.SocialPath.service.FileStorageService;
 import com.example.SocialPath.service.UserService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +32,8 @@ public class UserServiceImpl implements UserService {
     private ModelMapper modelMapper;
     @Autowired
     private Validator validator;
+    @Autowired
+    private FileStorageService fileStorageService;
 
     @Override
     public Object[] validateUser(User user) {
@@ -77,7 +82,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserSearchResult> findUsersFriends(String login) {
+    public List<UserSearchResult> findUsersFriends(String login) throws IOException {
         List<String> usersFriends = userRepository.findUsersFriends(login);
 
         if (usersFriends == null) {
@@ -91,6 +96,16 @@ public class UserServiceImpl implements UserService {
              ) {
             if (!user.getLogin().equals(login)) {
                 UserSearchResult toAdd = modelMapper.map(user, UserSearchResult.class);
+
+                String file;
+                if (user.getImageId() == null || user.getImageId().isEmpty()) {
+                    file = null;
+                } else {
+                    GridFsResource resource = fileStorageService.getFileById(user.getImageId());
+                    file = fileStorageService.convertGridFsFileToBase64(resource);
+                }
+                toAdd.setFile(file);
+
                 toAdd.setAnotherUserLogin(user.getLogin());
                 usersFriendsPresentable.add(toAdd);
             }
@@ -100,7 +115,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<GroupSearchResult> findUsersGroups(String login) {
+    public List<GroupSearchResult> findUsersGroups(String login) throws IOException {
         List<ObjectId> userGroupsIds = userRepository.findUsersGroups(login);
 
         if (userGroupsIds == null) {
@@ -112,14 +127,24 @@ public class UserServiceImpl implements UserService {
         List<GroupSearchResult> usersGroupsPresentable = new ArrayList<>();
         for (Group group : usersGroupsObj
              ) {
-            usersGroupsPresentable.add(modelMapper.map(group, GroupSearchResult.class));
+            GroupSearchResult groupSearchResult = modelMapper.map(group, GroupSearchResult.class);
+            groupSearchResult.setId(group.getId().toString());
+            String file;
+            if (group.getImageId() == null || group.getImageId().isEmpty()) {
+                file = null;
+            } else {
+                GridFsResource resource = fileStorageService.getFileById(group.getImageId());
+                file = fileStorageService.convertGridFsFileToBase64(resource);
+            }
+            groupSearchResult.setFile(file);
+            usersGroupsPresentable.add(groupSearchResult);
         }
 
         return usersGroupsPresentable;
     }
 
     @Override
-    public List<UserSearchResult> findUsersFriendsInvitations(String login) {
+    public List<UserSearchResult> findUsersFriendsInvitations(String login) throws IOException {
         List<String> usersFriends = userRepository.findUsersFriendsInvitations(login);
 
         if (usersFriends == null) {
@@ -133,6 +158,16 @@ public class UserServiceImpl implements UserService {
              ) {
             if (!user.getLogin().equals(login)) {
                 UserSearchResult toAdd = modelMapper.map(user, UserSearchResult.class);
+
+                String file;
+                if (user.getImageId() == null || user.getImageId().isEmpty()) {
+                    file = null;
+                } else {
+                    GridFsResource resource = fileStorageService.getFileById(user.getImageId());
+                    file = fileStorageService.convertGridFsFileToBase64(resource);
+                }
+                toAdd.setFile(file);
+
                 toAdd.setAnotherUserLogin(user.getLogin());
                 usersFriendsPresentable.add(toAdd);
             }
@@ -161,5 +196,15 @@ public class UserServiceImpl implements UserService {
     public void removeFromFriends(String myId, String anotherId) {
         userRepository.removeFromFriends(myId, anotherId);
         userRepository.removeFromFriends(anotherId, myId);
+    }
+
+    @Override
+    public void addGroup(String login, String  groupId) {
+        userRepository.addGroup(login, new ObjectId(groupId));
+    }
+
+    @Override
+    public void removeGroup(String login, String groupId) {
+        userRepository.removeGroup(login, new ObjectId(groupId));
     }
 }

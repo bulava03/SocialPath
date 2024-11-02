@@ -12,6 +12,7 @@ import java.util.List;
 public class Group {
     @Id
     private ObjectId id;
+    private String imageId;
     private String name;
     private String owner;
     private List<String> members;

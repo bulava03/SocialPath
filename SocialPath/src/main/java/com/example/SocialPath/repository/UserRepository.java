@@ -3,6 +3,8 @@ package com.example.SocialPath.repository;
 import com.example.SocialPath.document.User;
 import com.example.SocialPath.extraClasses.UserUpdate;
 import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.mongodb.repository.Update;
 
 import java.util.List;
 
@@ -25,4 +27,6 @@ public interface UserRepository {
     void removeFromFriends(String myId, String friendId);
     void removeFromGroups(String userId, ObjectId groupId);
     List<ObjectId> getPublicationsIdList(String login);
+    void addGroup(String login, ObjectId groupId);
+    void removeGroup(String login, ObjectId groupId);
 }

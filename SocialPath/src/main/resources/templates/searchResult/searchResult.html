@@ -47,7 +47,10 @@
                 <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
                     <tr>
                         <td>
-                            <img src="/usericon.png" alt="usericon">
+                            <img th:if="${elem.file == null}" src="/pictures/photo.png"
+                                 width="50px" height="50px" alt="usericon">
+                            <img th:unless="${elem.file == null}" th:src="'data:image/jpeg;base64,' + ${elem.file}"
+                                 width="50px" height="50px" alt="usericon">
                         </td>
                     </tr>
                     <tr>
@@ -79,7 +82,10 @@
                 <table th:attr="onclick='submitGroup(\'' + ${elem.id} + '\')'">
                     <tr>
                         <td>
-                            <img src="/usericon.png" alt="usericon">
+                            <img th:if="${elem.file == null}" src="/pictures/photo.png"
+                                 width="50px" height="50px" alt="usericon">
+                            <img th:unless="${elem.file == null}" th:src="'data:image/jpeg;base64,' + ${elem.file}"
+                                 width="50px" height="50px" alt="usericon">
                         </td>
                     </tr>
                     <tr>

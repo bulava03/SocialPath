@@ -1,5 +1,7 @@
 package com.example.SocialPath.service;
 
+import java.io.IOException;
+
 public interface SearchService {
-    Object[] SearchUsersAndGroups(String searchValuesString, String thisLogin);
+    Object[] searchUsersAndGroups(String searchValuesString, String thisLogin) throws IOException;
 }

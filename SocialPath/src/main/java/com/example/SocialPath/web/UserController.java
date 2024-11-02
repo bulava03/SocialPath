@@ -3,12 +3,10 @@ package com.example.SocialPath.web;
 import com.example.SocialPath.document.User;
 import com.example.SocialPath.extraClasses.*;
 import com.example.SocialPath.helper.CheckHelper;
-import com.example.SocialPath.helper.ConvertHelper;
 import com.example.SocialPath.service.CommentsService;
 import com.example.SocialPath.service.FileStorageService;
 import com.example.SocialPath.service.ModelAttributesService;
 import com.example.SocialPath.service.UserService;
-import org.apache.tomcat.util.codec.binary.Base64;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.gridfs.GridFsResource;
@@ -75,8 +73,7 @@ public class UserController {
             model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
             return "home/index";
         } else if (userService.findUserById(foundedUser.getAnotherUserLogin()) == null) {
-            model = modelAttributesService.usersAttributes(model, myUser, true, commentsService.loadComments("User", foundedUser.getLogin()));
-            return "user/userPage";
+            return "redirect:/user/authorisation?login=" + foundedUser.getLogin() + "&password=" + foundedUser.getPassword();
         }
 
         User user = userService.findUserById(foundedUser.getAnotherUserLogin());
@@ -240,163 +237,58 @@ public class UserController {
         return "user/usersFriendsInvitations";
     }
 
-    @PostMapping("/inviteToFriends")
-    public String inviteToFriends(@ModelAttribute("request") LeftFrameRequest request, Model model) {
-        User myUser = userService.findUserByLoginAndPassword(request.getAuthorLogin(), request.getAuthorPassword());
-
-        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
-                model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
-                return "home/index";
-        }
-
-        User user = userService.findUserById(request.getId());
-
-        if (user.getFriendInvites() != null) {
-            if (user.getFriendInvites().contains(request.getAuthorLogin()))
-            {
-                userService.acceptToFriends(request.getAuthorLogin(), request.getId());
-                userService.removeFromInvitations(request.getAuthorLogin(), request.getId());
-            } else {
-                userService.inviteUser(request.getAuthorLogin(), request.getId());
-            }
-        } else {
-            userService.inviteUser(request.getAuthorLogin(), request.getId());
-        }
-
-        user = userService.findUserById(request.getId());
-
-        return "redirect:/user/anotherUserPage?login=" + myUser.getLogin() + "&password=" + myUser.getPassword() + "&anotherUserLogin=" + user.getLogin();
-    }
-
-    @PostMapping("/removeInviteToFriends")
-    public String removeInviteToFriends(@ModelAttribute("request") LeftFrameRequest request, Model model) {
-        User myUser = userService.findUserByLoginAndPassword(request.getAuthorLogin(), request.getAuthorPassword());
-
-        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
-                model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
-                return "home/index";
-        }
-
-        userService.removeFromInvitations(request.getId(), request.getAuthorLogin());
-
-        User user = userService.findUserById(request.getId());
-
-        return "redirect:/user/anotherUserPage?login=" + myUser.getLogin() + "&password=" + myUser.getPassword() + "&anotherUserLogin=" + user.getLogin();
-    }
-
-    @PostMapping("/acceptToFriends")
-    public String acceptToFriends(@ModelAttribute("request") LeftFrameRequest request, Model model) {
-        User myUser = userService.findUserByLoginAndPassword(request.getAuthorLogin(), request.getAuthorPassword());
-
-        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
-                model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
-                return "home/index";
-        }
-
-        if (myUser.getFriendInvites().contains(request.getId())) {
-            userService.acceptToFriends(request.getAuthorLogin(), request.getId());
-            //userService.acceptToFriends(request.getId(), request.getAuthorLogin());
-            userService.removeFromInvitations(request.getAuthorLogin(), request.getId());
-        }
-
-        myUser = userService.findUserById(request.getAuthorLogin());
-        User user = userService.findUserById(request.getId());
-
-        return "redirect:/user/anotherUserPage?login=" + myUser.getLogin() + "&password=" + myUser.getPassword() + "&anotherUserLogin=" + user.getLogin();
-    }
-
-    @PostMapping("/rejectInvitationToFriends")
-    public String rejectInvitationToFriends(@ModelAttribute("request") LeftFrameRequest request, Model model) {
-        User myUser = userService.findUserByLoginAndPassword(request.getAuthorLogin(), request.getAuthorPassword());
-
-        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
-                model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
-                return "home/index";
-        }
-
-        userService.removeFromInvitations(request.getAuthorLogin(), request.getId());
-
-        myUser = userService.findUserById(request.getAuthorLogin());
-        User user = userService.findUserById(request.getId());
-
-        return "redirect:/user/anotherUserPage?login=" + myUser.getLogin() + "&password=" + myUser.getPassword() + "&anotherUserLogin=" + user.getLogin();
-    }
-
-    @PostMapping("/removeFromFriends")
-    public String removeFromFriends(@ModelAttribute("request") LeftFrameRequest request, Model model) {
-        User myUser = userService.findUserByLoginAndPassword(request.getAuthorLogin(), request.getAuthorPassword());
-
-        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
-                model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
-                return "home/index";
-        }
-
-        userService.removeFromFriends(request.getAuthorLogin(), request.getId());
-        //userService.removeFromFriends(request.getId(), request.getAuthorLogin());
-
-        myUser = userService.findUserById(request.getAuthorLogin());
-        User user = userService.findUserById(request.getId());
-
-        return "redirect:/user/anotherUserPage?login=" + myUser.getLogin() + "&password=" + myUser.getPassword() + "&anotherUserLogin=" + user.getLogin();
-    }
-
     @PostMapping("/acceptToFriendsMyPage")
-    public String acceptToFriendsMyPage(@ModelAttribute("request") LeftFrameRequest request, Model model) {
+    public String acceptToFriendsMyPage(@ModelAttribute("request") LeftFrameRequest request, Model model) throws IOException {
         User myUser = userService.findUserByLoginAndPassword(request.getAuthorLogin(), request.getAuthorPassword());
 
         if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
-                model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
-                return "home/index";
+            model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
+            return "home/index";
         }
 
         if (myUser.getFriendInvites().contains(request.getId())) {
             userService.acceptToFriends(request.getAuthorLogin(), request.getId());
-            //userService.acceptToFriends(request.getId(), request.getAuthorLogin());
             userService.removeFromInvitations(request.getAuthorLogin(), request.getId());
         }
 
         myUser = userService.findUserById(request.getAuthorLogin());
 
-        List<UserSearchResult> list = userService.findUsersFriendsInvitations(myUser.getLogin());
-
-        return "redirect:/user/getInvitationsToFriends?login=" + myUser.getLogin() + "&password=" + myUser.getPassword();
+        return "redirect:/user/getInvitationsToFriends?id=" + myUser.getLogin() +
+                "&authorLogin=" + myUser.getLogin() + "&authorPassword=" + myUser.getPassword();
     }
 
     @PostMapping("/rejectInvitationToFriendsMyPage")
-    public String rejectInvitationToFriendsMyPage(@ModelAttribute("request") LeftFrameRequest request, Model model) {
+    public String rejectInvitationToFriendsMyPage(@ModelAttribute("request") LeftFrameRequest request, Model model) throws IOException {
         User myUser = userService.findUserByLoginAndPassword(request.getAuthorLogin(), request.getAuthorPassword());
 
         if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
-                model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
-                return "home/index";
+            model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
+            return "home/index";
         }
 
         userService.removeFromInvitations(request.getAuthorLogin(), request.getId());
 
         myUser = userService.findUserById(request.getAuthorLogin());
 
-        List<UserSearchResult> list = userService.findUsersFriendsInvitations(myUser.getLogin());
-
-        return "redirect:/user/getInvitationsToFriends?login=" + myUser.getLogin() + "&password=" + myUser.getPassword();
+        return "redirect:/user/getInvitationsToFriends?id=" + myUser.getLogin() +
+                "&authorLogin=" + myUser.getLogin() + "&authorPassword=" + myUser.getPassword();
     }
 
     @PostMapping("/removeFromFriendsMyPage")
-    public String removeFromFriendsMyPage(@ModelAttribute("request") LeftFrameRequest request, Model model) {
+    public String removeFromFriendsMyPage(@ModelAttribute("request") LeftFrameRequest request, Model model) throws IOException {
         User myUser = userService.findUserByLoginAndPassword(request.getAuthorLogin(), request.getAuthorPassword());
 
         if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
-                model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
-                return "home/index";
+            model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
+            return "home/index";
         }
 
         userService.removeFromFriends(request.getAuthorLogin(), request.getId());
-        //userService.removeFromFriends(request.getId(), request.getAuthorLogin());
 
         myUser = userService.findUserById(request.getAuthorLogin());
 
-        List<UserSearchResult> list = userService.findUsersFriends(myUser.getLogin());
-
-        return "redirect:/user/getUsersFriends?login=" + myUser.getLogin() + "&password=" + myUser.getPassword();
+        return "redirect:/user/getUsersFriends?id=" + myUser.getLogin() +
+                "&authorLogin=" + myUser.getLogin() + "&authorPassword=" + myUser.getPassword();
     }
 
 }

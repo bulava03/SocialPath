@@ -166,4 +166,18 @@ public class UserRepositoryImpl implements UserRepository {
         return user != null ? user.getPublications() : null;
     }
 
+    @Override
+    public void addGroup(String login, ObjectId groupId) {
+        Query query = new Query(Criteria.where("_id").is(login));
+        Update update = new Update().push("groups", groupId);
+        mongoTemplate.updateFirst(query, update, User.class);
+    }
+
+    @Override
+    public void removeGroup(String login, ObjectId groupId) {
+        Query query = new Query(Criteria.where("_id").is(login));
+        Update update = new Update().pull("groups", groupId);
+        mongoTemplate.updateFirst(query, update, User.class);
+    }
+
 }

@@ -50,3 +50,7 @@
 .leftFrameButton:hover {
     background-color: #fa9434;
 }
+
+#divLeftFrameButtons button {
+    margin-top: 20px;
+}

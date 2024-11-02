@@ -5,5 +5,6 @@ import lombok.Data;
 @Data
 public class GroupSearchResult {
     private String id;
+    private String file;
     private String name;
 }

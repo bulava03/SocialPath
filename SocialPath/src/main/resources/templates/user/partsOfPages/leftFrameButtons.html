@@ -23,47 +23,27 @@
         </form>
     </div>
 
-    <div th:if="${user.Login != author.Login}">
+    <div id="divLeftFrameButtons" th:if="${user.Login != author.Login}">
+        <form>
+            <input id="userLogin" th:value="${user.login}" type="hidden" />
+            <input id="authorLogin" th:value="${author.login}" type="hidden" />
+            <input id="authorPassword" th:value="${author.password}" type="hidden" />
+        </form>
         <div th:if="${InRequests == 0}">
-            <form method="post" action="/user/inviteToFriends">
-                <input class="field" th:value="${user.login}" type="hidden" name="id" />
-                <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-                <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-                <input class="leftFrameButton" type="submit" value="Запросити в друзі">
-            </form>
+            <button id="submitInvite" class="leftFrameButton" onclick="inviteToFriends()">Запросити в друзі</button>
         </div>
 
         <div th:if="${InRequests == 1}">
-            <form method="post" action="/user/removeInviteToFriends">
-                <input class="field" th:value="${user.login}" type="hidden" name="id" />
-                <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-                <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-                <input class="leftFrameButton" type="submit" value="Скасувати запит на дружбу">
-            </form>
+            <button id="submitRemoveInvite" class="leftFrameButton" onclick="removeInviteToFriends()">Скасувати запит на дружбу</button>
         </div>
 
         <div th:if="${InRequests == 2}">
-            <form method="post" action="/user/acceptToFriends">
-                <input class="field" th:value="${user.login}" type="hidden" name="id" />
-                <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-                <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-                <input class="leftFrameButton" type="submit" value="Прийняти запит на дружбу">
-            </form>
-            <form method="post" action="/user/rejectInvitationToFriends">
-                <input class="field" th:value="${user.login}" type="hidden" name="id" />
-                <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-                <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-                <input class="leftFrameButton" type="submit" value="Відхилити запит на дружбу">
-            </form>
+            <button id="submitAccept" class="leftFrameButton" onclick="acceptToFriends()">Прийняти запит на дружбу</button>
+            <button id="submitReject" class="leftFrameButton" onclick="rejectInvitationToFriends()">Відхилити запит на дружбу</button>
         </div>
 
         <div th:if="${InRequests == 3}">
-            <form method="post" action="/user/removeFromFriends">
-                <input class="field" th:value="${user.login}" type="hidden" name="id" />
-                <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-                <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-                <input class="leftFrameButton" type="submit" value="Видалити з друзів">
-            </form>
+            <button id="submitRemove" class="leftFrameButton" onclick="removeFromFriends()">Видалити з друзів</button>
         </div>
     </div>
 </html>

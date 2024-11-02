@@ -6,6 +6,7 @@ import com.example.SocialPath.extraClasses.GroupCreationForm;
 import com.example.SocialPath.extraClasses.UserSearchResult;
 import com.example.SocialPath.repository.GroupRepository;
 import com.example.SocialPath.repository.UserRepository;
+import com.example.SocialPath.service.FileStorageService;
 import com.example.SocialPath.service.GroupService;
 import com.example.SocialPath.service.UserService;
 import jakarta.validation.ConstraintViolation;
@@ -13,8 +14,11 @@ import jakarta.validation.Validator;
 import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -29,6 +33,8 @@ public class GroupServiceImpl implements GroupService {
     private ModelMapper modelMapper;
     @Autowired
     private Validator validator;
+    @Autowired
+    private FileStorageService fileStorageService;
 
     @Override
     public Object[] validateGroup(GroupCreationForm group) {
@@ -59,13 +65,23 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public List<UserSearchResult> findGroupsMembers(ObjectId id) {
+    public List<UserSearchResult> findGroupsMembers(ObjectId id) throws IOException {
         List<String> groupsMembers = groupRepository.findMembersById(id);
         List<User> membersObj = userRepository.findByLoginIn(groupsMembers);
         List<UserSearchResult> groupsMembersPresentable = new ArrayList<>();
         for (User user : membersObj
              ) {
             UserSearchResult toAdd = modelMapper.map(user, UserSearchResult.class);
+
+            String file;
+            if (user.getImageId() == null || user.getImageId().isEmpty()) {
+                file = null;
+            } else {
+                GridFsResource resource = fileStorageService.getFileById(user.getImageId());
+                file = fileStorageService.convertGridFsFileToBase64(resource);
+            }
+            toAdd.setFile(file);
+
             toAdd.setAnotherUserLogin(user.getLogin());
             groupsMembersPresentable.add(toAdd);
         }
@@ -79,6 +95,7 @@ public class GroupServiceImpl implements GroupService {
         for (User user : adminsObj
         ) {
             UserSearchResult toAdd = modelMapper.map(user, UserSearchResult.class);
+
             toAdd.setAnotherUserLogin(user.getLogin());
             usersAdminsPresentable.add(toAdd);
         }
@@ -91,13 +108,23 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public List<UserSearchResult> findGroupsAdminsPresentable(ObjectId id) {
+    public List<UserSearchResult> findGroupsAdminsPresentable(ObjectId id) throws IOException {
         List<String> groupsAdmins = groupRepository.findAdminsById(id);
         List<User> adminsObj = userRepository.findByLoginIn(groupsAdmins);
         List<UserSearchResult> groupsAdminsPresentable = new ArrayList<>();
         for (User user : adminsObj
         ) {
             UserSearchResult toAdd = modelMapper.map(user, UserSearchResult.class);
+
+            String file;
+            if (user.getImageId() == null || user.getImageId().isEmpty()) {
+                file = null;
+            } else {
+                GridFsResource resource = fileStorageService.getFileById(user.getImageId());
+                file = fileStorageService.convertGridFsFileToBase64(resource);
+            }
+            toAdd.setFile(file);
+
             toAdd.setAnotherUserLogin(user.getLogin());
             groupsAdminsPresentable.add(toAdd);
         }
@@ -135,5 +162,39 @@ public class GroupServiceImpl implements GroupService {
     public void removeUserFromGroup(ObjectId groupId, String userId) {
         removeFromAdmins(groupId, userId);
         removeFromGroup(groupId, userId);
+    }
+
+    @Override
+    public void updateGroup(Group groupUpdated, MultipartFile file) throws IOException {
+        Group group = findGroupById(groupUpdated.getId());
+        group.setName(groupUpdated.getName());
+
+        if (!file.isEmpty()) {
+            if (!Objects.equals(groupUpdated.getImageId(), "") && (groupUpdated.getImageId() != null)) {
+                fileStorageService.deleteFileById(groupUpdated.getImageId());
+                group.setImageId("");
+            }
+            String fileId = fileStorageService.storeFile(file);
+            group.setImageId(fileId);
+        } else {
+            if (!Objects.equals(group.getImageId(), "") && (group.getImageId() != null)) {
+                fileStorageService.deleteFileById(groupUpdated.getImageId());
+                group.setImageId("");
+            } else {
+                groupUpdated.setImageId("");
+            }
+        }
+
+        groupRepository.updateGroup(group.getId(), group.getName(), group.getImageId());
+    }
+
+    @Override
+    public void addMember(String groupId, String memberId) {
+        groupRepository.addMember(new ObjectId(groupId), memberId);
+    }
+
+    @Override
+    public void removeMember(String groupId, String memberId) {
+        groupRepository.removeMember(new ObjectId(groupId), memberId);
     }
 }

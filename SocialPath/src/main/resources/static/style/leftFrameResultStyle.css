@@ -54,7 +54,7 @@ tr {
 
 .photo-cell {
     width: 200px;
-    height: 100px;
+    height: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -80,14 +80,13 @@ tr {
 }
 
 .userButton {
-    background-color: #3baf9f;
     display: block;
     margin: 20px, 20px, 20px, 20px;
     margin-top: 10px;
     text-align: center;
     border-radius: 12px;
-    border: 2px solid #366473;
-    width: 100%;
+    border: 0;
+    width: 125px;
     padding: 14px 5px;
     outline: none;
     color: white;
@@ -96,6 +95,22 @@ tr {
     font-weight: 500;
 }
 
-.userButton:hover {
-    background-color: #349e8f;
+.rejectButton {
+    background-color: #990000;
+}
+
+.userButton.rejectButton:hover {
+    background-color: #942525;
+}
+
+.acceptButton {
+    background-color: #00b00f;
+}
+
+.userButton.acceptButton:hover {
+    background-color: #34a33e;
+}
+
+#decisionButtonsTable {
+    background: none;
 }

@@ -4,6 +4,7 @@ import com.example.SocialPath.document.Group;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.mongodb.repository.Update;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +39,6 @@ public interface GroupRepository extends MongoRepository<Group, ObjectId> {
         return null;
     }
 
-    @Transactional
     default void addAdmin(ObjectId groupId, String newAdminId) {
         Group group = findById(groupId).orElse(null);
         if (group != null) {
@@ -49,7 +49,6 @@ public interface GroupRepository extends MongoRepository<Group, ObjectId> {
         }
     }
 
-    @Transactional
     default void addUserToGroup(ObjectId groupId, String userId) {
         Group group = findById(groupId).orElse(null);
         if (group != null) {
@@ -60,7 +59,6 @@ public interface GroupRepository extends MongoRepository<Group, ObjectId> {
         }
     }
 
-    @Transactional
     default void removeFromAdmins(ObjectId groupId, String userId) {
         Group group = findById(groupId).orElse(null);
         if (group != null) {
@@ -71,7 +69,6 @@ public interface GroupRepository extends MongoRepository<Group, ObjectId> {
         }
     }
 
-    @Transactional
     default void removeFromGroup(ObjectId groupId, String userId) {
         Group group = findById(groupId).orElse(null);
         if (group != null) {
@@ -82,7 +79,6 @@ public interface GroupRepository extends MongoRepository<Group, ObjectId> {
         }
     }
 
-    @Transactional
     default void addPublicationToGroup(ObjectId publicationId, ObjectId groupId) {
         Group group = findById(groupId).orElse(null);
         if (group != null) {
@@ -93,7 +89,6 @@ public interface GroupRepository extends MongoRepository<Group, ObjectId> {
         }
     }
 
-    @Transactional
     default void removePublicationFromGroup(ObjectId groupId, ObjectId publicationId) {
         Group group = findById(groupId).orElse(null);
         if (group != null) {
@@ -103,4 +98,16 @@ public interface GroupRepository extends MongoRepository<Group, ObjectId> {
             save(group);
         }
     }
+
+    @Query("{ '_id': ?0 }")
+    @Update("{ '$set': { 'name': ?1, 'imageId': ?2 }}")
+    void updateGroup(ObjectId id, String name, String imageId);
+
+    @Query("{ '_id': ?0 }")
+    @Update("{ '$push': { 'members': ?1 }}")
+    void addMember(ObjectId groupId, String memberId);
+
+    @Query("{ '_id': ?0 }")
+    @Update("{ '$pull': { 'members': ?1 }}")
+    void removeMember(ObjectId groupId, String memberId);
 }

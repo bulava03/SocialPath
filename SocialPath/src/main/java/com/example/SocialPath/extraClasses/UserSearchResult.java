@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class UserSearchResult {
     private String anotherUserLogin;
+    private String file;
     private String firstName;
     private String lastName;
     private String email;
