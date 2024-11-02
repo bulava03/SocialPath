@@ -77,8 +77,7 @@ public class GroupController {
         String owner = groupService.findGroupOwner(new ObjectId(request.getId()));
 
         if (groupService.findGroupById(new ObjectId(request.getId())) == null) {
-            model = modelAttributesService.usersAttributes(model, user, true, commentsService.loadComments("User", user.getLogin()));
-            return "user/userPage";
+            return "redirect:/user/authorisation?login=" + request.getAuthorLogin() + "&password=" + request.getAuthorPassword();
         }
 
         model = modelAttributesService.groupsAttributes(model, user, admins, request.getId(), owner);
@@ -99,47 +98,11 @@ public class GroupController {
         String owner = groupService.findGroupOwner(new ObjectId(request.getId()));
 
         if (groupService.findGroupById(new ObjectId(request.getId())) == null) {
-            model = modelAttributesService.usersAttributes(model, user, true, commentsService.loadComments("User", user.getLogin()));
-            return "user/userPage";
+            return "redirect:/user/authorisation?login=" + request.getAuthorLogin() + "&password=" + request.getAuthorPassword();
         }
 
         model = modelAttributesService.groupsAttributesFullList(model, user, list, request.getId(), owner);
         return "group/groupsAdmins";
-    }
-
-    @PostMapping("/joinGroup")
-    public String joinGroup(@ModelAttribute("request") LeftFrameRequest request, Model model) {
-        User user = userService.findUserByLoginAndPassword(request.getAuthorLogin(), request.getAuthorPassword());
-
-        if (!CheckHelper.nullOrBannedCheck(user).isEmpty()) {
-            model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(user));
-            return "home/index";
-        }
-
-        groupService.joinGroup(new ObjectId(request.getId()), request.getAuthorLogin());
-
-        model.addAttribute("group", groupService.findGroupById(new ObjectId(request.getId())));
-        model.addAttribute("author", new UserLogin(request.getAuthorLogin(), request.getAuthorPassword()));
-        model.addAttribute("publications", commentsService.loadComments("Group", request.getId()));
-        return "group/groupPage";
-    }
-
-    @PostMapping("/leaveGroup")
-    public String leaveGroup(@ModelAttribute("request") LeftFrameRequest request, Model model) {
-        User user = userService.findUserByLoginAndPassword(request.getAuthorLogin(), request.getAuthorPassword());
-
-        if (!CheckHelper.nullOrBannedCheck(user).isEmpty()) {
-            model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(user));
-            return "home/index";
-        }
-
-        groupService.removeFromAdmins(new ObjectId(request.getId()), request.getAuthorLogin());
-        groupService.removeFromGroup(new ObjectId(request.getId()), request.getAuthorLogin());
-
-        model.addAttribute("group", groupService.findGroupById(new ObjectId(request.getId())));
-        model.addAttribute("author", new UserLogin(request.getAuthorLogin(), request.getAuthorPassword()));
-        model.addAttribute("publications", commentsService.loadComments("Group", request.getId()));
-        return "group/groupPage";
     }
 
     @PostMapping("/removeUserFromGroup")
@@ -158,13 +121,11 @@ public class GroupController {
         String owner = groupService.findGroupOwner(new ObjectId(request.getGroupId()));
 
         if (groupService.findGroupById(new ObjectId(request.getGroupId())) == null) {
-            model = modelAttributesService.usersAttributes(model, myUser, true, commentsService.loadComments("User", myUser.getLogin()));
-            return "user/userPage";
+            return "redirect:/user/authorisation?login=" + myUser.getLogin() + "&password=" + myUser.getPassword();
         }
 
-        model = modelAttributesService.groupsAttributes(model, myUser, admins, request.getGroupId(), owner);
-        model.addAttribute("users", list);
-        return "group/groupsMembers";
+        return "redirect:/group/getGroupsMembers?authorLogin=" + myUser.getLogin() +
+                "&authorPassword=" + myUser.getPassword() + "&id=" + request.getGroupId();
     }
 
     @PostMapping("/addToAdmins")
@@ -183,13 +144,11 @@ public class GroupController {
         String owner = groupService.findGroupOwner(new ObjectId(request.getGroupId()));
 
         if (groupService.findGroupById(new ObjectId(request.getGroupId())) == null) {
-            model = modelAttributesService.usersAttributes(model, myUser, true, commentsService.loadComments("User", myUser.getLogin()));
-            return "user/userPage";
+            return "redirect:/user/authorisation?login=" + myUser.getLogin() + "&password=" + myUser.getPassword();
         }
 
-        model = modelAttributesService.groupsAttributes(model, myUser, admins, request.getGroupId(), owner);
-        model.addAttribute("users", list);
-        return "group/groupsMembers";
+        return "redirect:/group/getGroupsMembers?authorLogin=" + myUser.getLogin() +
+                "&authorPassword=" + myUser.getPassword() + "&id=" + request.getGroupId();
     }
 
     @PostMapping("/removeFromAdmins")
@@ -208,13 +167,11 @@ public class GroupController {
         String owner = groupService.findGroupOwner(new ObjectId(request.getGroupId()));
 
         if (groupService.findGroupById(new ObjectId(request.getGroupId())) == null) {
-            model = modelAttributesService.usersAttributes(model, myUser, true, commentsService.loadComments("User", myUser.getLogin()));
-            return "user/userPage";
+            return "redirect:/user/authorisation?login=" + myUser.getLogin() + "&password=" + myUser.getPassword();
         }
 
-        model = modelAttributesService.groupsAttributes(model, myUser, admins, request.getGroupId(), owner);
-        model.addAttribute("users", list);
-        return "group/groupsMembers";
+        return "redirect:/group/getGroupsMembers?authorLogin=" + myUser.getLogin() +
+                "&authorPassword=" + myUser.getPassword() + "&id=" + request.getGroupId();
     }
 
     @PostMapping("/removeFromAdminsAdminsList")
@@ -232,12 +189,11 @@ public class GroupController {
         String owner = groupService.findGroupOwner(new ObjectId(request.getGroupId()));
 
         if (groupService.findGroupById(new ObjectId(request.getGroupId())) == null) {
-            model = modelAttributesService.usersAttributes(model, myUser, true, commentsService.loadComments("User", myUser.getLogin()));
-            return "user/userPage";
+            return "redirect:/user/authorisation?login=" + myUser.getLogin() + "&password=" + myUser.getPassword();
         }
 
-        model = modelAttributesService.groupsAttributesFullList(model, myUser, list, request.getGroupId(), owner);
-        return "group/groupsAdmins";
+        return "redirect:/group/getGroupsAdmins?authorLogin=" + myUser.getLogin() +
+                "&authorPassword=" + myUser.getPassword() + "&id=" + request.getGroupId();
     }
 
     @GetMapping("/getGroupUpdatingForm")
