@@ -14,8 +14,6 @@
 <div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
 
 <form id="userToSubmit" th:action="@{/searchResult/getUserPage}" method="get">
-    <input class="field" id="login" th:value="${author.login}" type="hidden" name="login" />
-    <input class="field" id="password" th:value="${author.password}" type="hidden" name="password" />
     <input class="field" id="anotherUserLogin" value="" type="hidden" name="anotherUserLogin" />
 </form>
 
@@ -45,8 +43,6 @@
 
                     <div style="text-align: center;" th:if="${(not admins.contains(elem.anotherUserLogin) and admins.contains(author.login)) or (owner == author.login and elem.anotherUserLogin != owner)}">
                         <form typeof="hidden" method="post" action="/group/removeUserFromGroup">
-                            <input class="field" th:value="${author.login}" type="hidden" name="login" />
-                            <input class="field" th:value="${author.password}" type="hidden" name="password" />
                             <input class="field" th:value="${groupId}" type="hidden" name="groupId" />
                             <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="userId" />
                             <input class="userButton rejectButton" style="width: 250px;" type="submit" value="Видалити з групи">
@@ -56,8 +52,6 @@
                     <th:block th:if="${author.login == owner}">
                         <div style="text-align: center;" th:if="!${admins.contains(elem.AnotherUserLogin)}">
                             <form typeof="hidden" method="post" action="/group/addToAdmins">
-                                <input class="field" th:value="${author.login}" type="hidden" name="login" />
-                                <input class="field" th:value="${author.password}" type="hidden" name="password" />
                                 <input class="field" th:value="${groupId}" type="hidden" name="groupId" />
                                 <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="userId" />
                                 <input class="userButton acceptButton" style="width: 250px;" type="submit" value="Зробити адміністратором">
@@ -67,8 +61,6 @@
 
                     <div style="text-align: center;" th:if="${author.login == owner and elem.anotherUserLogin != owner and admins.contains(elem.anotherUserLogin)}">
                         <form typeof="hidden" method="post" action="/group/removeFromAdmins">
-                            <input class="field" th:value="${author.login}" type="hidden" name="login" />
-                            <input class="field" th:value="${author.password}" type="hidden" name="password" />
                             <input class="field" th:value="${groupId}" type="hidden" name="groupId" />
                             <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="userId" />
                             <input class="userButton rejectButton" style="width: 250px;" type="submit" value="Видалити з адміністраторів">
@@ -86,8 +78,6 @@
 
 <div style="margin-left: 20px; margin-right: 20px;">
     <form th:action="@{/searchResult/getGroupPage}" method="get">
-        <input class="field" th:value="${author.login}" type="hidden" name="login" />
-        <input class="field" th:value="${author.password}" type="hidden" name="password" />
         <input class="field" th:value="${groupId}" type="hidden" name="groupId" />
         <input class="backButton" type="submit" value="Назад">
     </form>

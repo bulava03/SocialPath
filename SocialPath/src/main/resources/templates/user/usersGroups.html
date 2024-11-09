@@ -13,8 +13,6 @@
 
 <div class="container">
     <form id="groupToSubmit" action="/../searchResult/getGroupPage" method="get">
-        <input class="field" id="login" th:value="${author.login}" type="hidden" name="login">
-        <input class="field" id="password" th:value="${author.password}" type="hidden" name="password">
         <input class="field" id="groupId" value="" type="hidden" name="groupId">
     </form>
 
@@ -43,8 +41,6 @@
     </div>
 
     <form method="get" action="anotherUserPage">
-        <input class="field" id="login" th:value="${author.login}" type="hidden" name="login" />
-        <input class="field" id="password" th:value="${author.password}" type="hidden" name="password" />
         <input class="field" id="anotherUserLogin" th:value="${login}" type="hidden" name="anotherUserLogin" />
         <input class="backButton" type="submit" value="Назад">
     </form>

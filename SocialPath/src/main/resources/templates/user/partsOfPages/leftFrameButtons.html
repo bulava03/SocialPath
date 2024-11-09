@@ -2,23 +2,17 @@
 <html xmlns:th="http://www.thymeleaf.org">
     <form typeof="hidden" method="get" action="/user/getUsersGroups">
         <input class="field" th:value="${user.login}" type="hidden" name="id" />
-        <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-        <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
         <input class="leftFrameButton" type="submit" value="Групи">
     </form>
 
     <form typeof="hidden" method="get" action="/user/getUsersFriends">
         <input class="field" th:value="${user.login}" type="hidden" name="id" />
-        <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-        <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
         <input class="leftFrameButton" type="submit" value="Друзі">
     </form>
 
     <div th:if="${user.login == author.login}">
         <form method="get" action="/user/getInvitationsToFriends">
             <input class="field" th:value="${user.login}" type="hidden" name="id" />
-            <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-            <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
             <input class="leftFrameButton" type="submit" value="Запити на дружбу">
         </form>
     </div>
@@ -26,8 +20,6 @@
     <div id="divLeftFrameButtons" th:if="${user.Login != author.Login}">
         <form>
             <input id="userLogin" th:value="${user.login}" type="hidden" />
-            <input id="authorLogin" th:value="${author.login}" type="hidden" />
-            <input id="authorPassword" th:value="${author.password}" type="hidden" />
         </form>
         <div th:if="${InRequests == 0}">
             <button id="submitInvite" class="leftFrameButton" onclick="inviteToFriends()">Запросити в друзі</button>

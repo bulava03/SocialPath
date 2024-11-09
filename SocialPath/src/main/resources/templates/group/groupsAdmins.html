@@ -12,8 +12,6 @@
 <div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
 
 <form id="userToSubmit" th:action="@{/searchResult/getUserPage}" method="get">
-    <input class="field" id="login" th:value="${author.login}" type="hidden" name="login" />
-    <input class="field" id="password" th:value="${author.password}" type="hidden" name="password" />
     <input class="field" id="anotherUserLogin" value="" type="hidden" name="anotherUserLogin" />
 </form>
 
@@ -42,8 +40,6 @@
                     <div class="content-cell" th:if="${elem.workplace != null and elem.workplace != ''}" th:text="'Місце роботи: ' + ${elem.workplace}">Workplace</div>
                     <form th:if="${author.login == owner and elem.anotherUserLogin != owner and admins.contains(elem)}"
                           th:action="@{/group/removeFromAdminsAdminsList}" method="post">
-                        <input class="field" th:value="${author.login}" type="hidden" name="Login" />
-                        <input class="field" th:value="${author.password}" type="hidden" name="Password" />
                         <input class="field" th:value="${groupId}" type="hidden" name="groupId" />
                         <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="userId" />
                         <input class="userButton rejectButton" style="width: 250px;" type="submit" value="Видалити з адміністраторів">
@@ -58,8 +54,6 @@
 
 <div style="margin-left: 20px; margin-right: 20px;">
     <form th:action="@{/searchResult/getGroupPage}" method="get">
-        <input class="field" th:value="${author.login}" type="hidden" name="login" />
-        <input class="field" th:value="${author.password}" type="hidden" name="password" />
         <input class="field" id="groupId"  th:value="${groupId}" type="hidden" name="groupId" />
         <input class="backButton" type="submit" value="Назад">
     </form>

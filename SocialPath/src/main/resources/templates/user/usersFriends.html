@@ -13,8 +13,6 @@
 
 <div class="container">
     <form id="userToSubmit" th:action="@{/searchResult/getUserPage}" method="get">
-        <input class="field" th:value="${author.login}" type="hidden" name="login" />
-        <input class="field" th:value="${author.password}" type="hidden" name="password" />
         <input class="field" id="anotherUserLogin" value="" type="hidden" name="anotherUserLogin" />
     </form>
 
@@ -58,8 +56,6 @@
     </div>
 
     <form typeof="hidden" method="get" action="/user/anotherUserPage">
-        <input class="field" th:value="${author.login}" type="hidden" name="login" />
-        <input class="field" th:value="${author.password}" type="hidden" name="password" />
         <input class="field" th:value="${login}" type="hidden" name="anotherUserLogin" />
         <input class="backButton" type="submit" value="Назад">
     </form>

@@ -146,10 +146,11 @@ public class UserController {
 
             user.setDateOfBirth(LocalDateTime.of(user.getDateOfBirth().getYear(), user.getDateOfBirth().getMonthValue(), user.getDateOfBirth().getDayOfMonth(), 0, 0, 0));
             user = handleAvatarService.updateAvatar(user, myUser, file);
+            user.setLogin(myUser.getLogin());
 
             userService.updateUser(user);
 
-            return "redirect:/user/authorisation?login=" + user.getLogin() + "&password=" + user.getPassword();
+            return "redirect:/user/authorisation";
         }
     }
 

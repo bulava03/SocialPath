@@ -17,8 +17,6 @@
   <div class="authform">
     <form id="regform" method="post" action="/user/changeUserInfo" enctype="multipart/form-data">
       <div class="authinput">
-        <input type="hidden" th:value="${user.login}" name="login" />
-        <input type="hidden" th:value="${user.password}" name="passwordOld" />
         <h2 class="name">Фото</h2>
         <input class="field" id="file" value="" type="file" name="file">
         <h2 class="name">Пароль</h2>
@@ -71,8 +69,6 @@
       </div>
     </form>
     <form id="backform" method="get" action="/user/authorisation">
-      <input type="hidden" th:value="${user.login}" name="login" />
-      <input type="hidden" th:value="${user.password}" name="password" />
       <input class="button" id="buttonback" type="submit" value="На мою сторінку" />
     </form>
     <p class="errortext" id="errortext"></p>

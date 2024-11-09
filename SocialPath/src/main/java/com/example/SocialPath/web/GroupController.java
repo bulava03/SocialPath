@@ -77,8 +77,9 @@ public class GroupController {
             model.addAttribute("errorText", validation[1].toString().replaceAll("Optional\\[|\\]", ""));
             return "group/groupCreationForm";
         }
-        if (userService.findUserByLoginAndPassword(groupCreationForm.getOwner(), groupCreationForm.getOwnerPassword()) != null) {
+        if (myUser != null) {
             Group group = modelMapper.map(groupCreationForm, Group.class);
+            group.setOwner(login);
             group = groupService.addGroup(group);
             return "redirect:/searchResult/getGroupPage?groupId=" + group.getId();
         }

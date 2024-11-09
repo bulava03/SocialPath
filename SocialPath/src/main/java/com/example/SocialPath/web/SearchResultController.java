@@ -55,7 +55,6 @@ public class SearchResultController {
 
         Object[] searchResult = searchService.searchUsersAndGroups(request.getSearchText(), request.getLogin());
 
-        model.addAttribute("author", user);
         model.addAttribute("users", searchResult[0]);
         model.addAttribute("groups", searchResult[1]);
 

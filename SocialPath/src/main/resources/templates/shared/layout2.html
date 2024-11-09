@@ -3,10 +3,7 @@
     <header id="layoutHeader">
         <div class="navbar-header">
             <p id="bigbuttonlink" onclick="submitBugButton()">SocialPath</p>
-            <form id="bigbutton" typeof="hidden" action="/user/authorisation">
-                <input th:value="${author.login}" id="login" type="hidden" name="login" />
-                <input th:value="${author.password}" id="password" type="hidden" name="password" />
-            </form>
+            <form id="bigbutton" typeof="hidden" action="/user/authorisation"></form>
         </div>
         <div class="userIcon">
             <img th:if="${avatar == null}" id="usericon" width="30px" height="30px" alt="usericon"
@@ -14,14 +11,8 @@
             <img th:unless="${avatar == null}" id="usericon" width="30px" height="30px" alt="usericon"
                  onclick="dropdownUser()" th:src="'data:image/jpeg;base64,' + ${avatar}">
         </div>
-        <form id="formbackPersonnalInfo" method="get" action="/user/getUserInfo">
-            <input class="hidden" th:value="${author.login}" id="login" type="text" name="login" />
-            <input class="hidden" th:value="${author.password}" id="password" type="text" name="password" />
-        </form>
-        <form id="formbackGroupCreation" method="get" action="/group/getGroupCreationForm">
-            <input class="hidden" th:value="${author.login}" id="login" type="text" name="login" />
-            <input class="hidden" th:value="${author.password}" id="password" type="text" name="password" />
-        </form>
+        <form id="formbackPersonnalInfo" method="get" action="/user/getUserInfo"></form>
+        <form id="formbackGroupCreation" method="get" action="/group/getGroupCreationForm"></form>
         <div id="dropdown" class="dropdown">
             <a href="#" onclick="personalInformation()">Особиста інформація</a>
             <a href="#" onclick="groupCreation()">Створити групу</a>

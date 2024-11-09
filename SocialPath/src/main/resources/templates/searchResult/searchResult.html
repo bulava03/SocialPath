@@ -17,8 +17,6 @@
     <div class="search-container">
         <form id="searchForm" th:action="@{/searchResult/getSearchResult}" method="get">
             <input id="searchInput" type="hidden" name="searchText">
-            <input class="field" th:value="${author.Login}" type="hidden" name="login" />
-            <input class="field" th:value="${author.Password}" type="hidden" name="password" />
         </form>
 
         <form id="pseudoSearchForm">
@@ -28,14 +26,10 @@
     </div>
 
     <form id="userToSubmit" th:action="@{/searchResult/getUserPage}" method="get">
-        <input class="field" th:value="${author.login}" type="hidden" name="login" />
-        <input class="field" th:value="${author.password}" type="hidden" name="password" />
         <input class="field" id="anotherUserLogin" value="" type="hidden" name="anotherUserLogin" />
     </form>
 
     <form id="groupToSubmit" th:action="@{/searchResult/getGroupPage}" method="get">
-        <input class="field" th:value="${author.login}" type="hidden" name="login" />
-        <input class="field" th:value="${author.password}" type="hidden" name="password" />
         <input class="field" id="groupId" value="" type="hidden" name="groupId" />
     </form>
 

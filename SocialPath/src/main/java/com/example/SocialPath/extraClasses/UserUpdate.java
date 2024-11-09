@@ -10,15 +10,11 @@ import java.util.List;
 
 @Data
 public class UserUpdate {
-    @NotBlank(message = "Логін обов'язковий.")
-    @Size(max = 20, message = "Логін повинен містити не більше 20 символів.")
     private String login;
 
     @NotBlank(message = "Пароль обов'язковий.")
     @Size(min = 8, max = 20, message = "Пароль повинен містити від 8 до 20 символів.")
     private String password;
-
-    private String passwordOld;
 
     private String imageId;
 

@@ -19,16 +19,12 @@
     <div class="authForm">
         <form id="regForm" method="post" action="/group/createGroup">
             <div class="authInput">
-                <input type="hidden" th:value="${group.owner}" name="Owner">
-                <input type="hidden" th:value="${group.ownerPassword}" name="OwnerPassword">
                 <h2 class="name">Назва групи</h2>
                 <input class="field" id="name" type="text" th:value="${group.name}" name="Name" />
                 <input class="button" type="submit" value="Створити">
             </div>
         </form>
         <form id="backForm" method="get" action="/user/authorisation">
-            <input type="hidden" th:value="${author.login}" name="Login">
-            <input type="hidden" th:value="${author.password}" name="Password">
             <input class="button" id="buttonBack" type="submit" value="Назад">
         </form>
         <p class="errorText" th:text="${errorText}" th:if="${errorText}"></p>

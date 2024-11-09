@@ -9,29 +9,21 @@
 
     <form th:if="${group.owner == author.login}" method="get" action="/group/getGroupUpdatingForm">
       <input class="field" th:value="${group.id}" type="hidden" name="id" />
-      <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-      <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
       <input class="leftFrameButton" type="submit" value="Керування групою">
     </form>
 
     <form method="get" action="/group/getGroupsMembers">
       <input class="field" th:value="${group.id}" type="hidden" name="id" />
-      <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-      <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
       <input class="leftFrameButton" type="submit" value="Учасники">
     </form>
 
     <form method="get" action="/group/getGroupsAdmins">
       <input class="field" th:value="${group.id}" type="hidden" name="id" />
-      <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-      <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
       <input class="leftFrameButton" type="submit" value="Адміністратори">
     </form>
 
     <form>
       <input id="formGroupId" type="hidden" th:value="${group.id}" />
-      <input id="formAuthorLogin" type="hidden" th:value="${author.login}" />
-      <input id="formAuthorPassword" type="hidden" th:value="${author.password}" />
     </form>
 
     <button id="joinButton" class="leftFrameButton"
@@ -41,8 +33,6 @@
 
     <form th:if="${not group.members.contains(author.login)}" method="get" action="/report/getReportPage">
       <input class="field" th:value="${group.id}" type="hidden" name="id" />
-      <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-      <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
       <input class="leftFrameButton" type="submit" value="Поскаржитись на групу">
     </form>
   </div>
