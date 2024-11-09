@@ -4,10 +4,12 @@ import com.example.SocialPath.document.Group;
 import com.example.SocialPath.document.User;
 import com.example.SocialPath.extraClasses.*;
 import com.example.SocialPath.helper.CheckHelper;
+import com.example.SocialPath.security.JwtTokenProvider;
+import com.example.SocialPath.service.HandleAvatarService;
 import com.example.SocialPath.service.*;
+import jakarta.servlet.http.HttpServletRequest;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,11 +32,21 @@ public class SearchResultController {
     @Autowired
     private ModelAttributesService modelAttributesService;
     @Autowired
+    private HandleAvatarService handleAvatarService;
+    @Autowired
     private FileStorageService fileStorageService;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/getSearchResult")
-    public String getSearchResult(@ModelAttribute("request") SearchRequest request, Model model) throws IOException {
-        User user = userService.findUserByLoginAndPassword(request.getLogin(), request.getPassword());
+    public String getSearchResult(HttpServletRequest req, SearchRequest request, Model model) throws IOException {
+        String token = userService.resolveToken(req);
+        if (token == null) {
+            return "redirect:/";
+        }
+        String login = jwtTokenProvider.getUsernameFromToken(token);
+
+        User user = userService.findByLogin(login);
 
         if (!CheckHelper.nullOrBannedCheck(user).isEmpty()) {
             model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(user));
@@ -46,19 +58,24 @@ public class SearchResultController {
         model.addAttribute("author", user);
         model.addAttribute("users", searchResult[0]);
         model.addAttribute("groups", searchResult[1]);
+
         return "searchResult/searchResult";
     }
 
     @GetMapping("/getUserPage")
-    public String getUserPage(@ModelAttribute("foundedUser") FoundedUser foundedUser, Model model) {
-        return "redirect:/user/anotherUserPage?login=" + foundedUser.getLogin() +
-                "&password=" + foundedUser.getPassword() +
-                "&anotherUserLogin=" + foundedUser.getAnotherUserLogin();
+    public String getUserPage(FoundedUser foundedUser, Model model) {
+        return "redirect:/user/anotherUserPage?anotherUserLogin=" + foundedUser.getAnotherUserLogin();
     }
 
     @GetMapping("/getGroupPage")
-    public String getGroupPage(@ModelAttribute("foundedGroup") FoundedGroup foundedGroup, Model model) throws IOException {
-        User user = userService.findUserByLoginAndPassword(foundedGroup.getLogin(), foundedGroup.getPassword());
+    public String getGroupPage(HttpServletRequest req, FoundedGroup foundedGroup, Model model) throws IOException {
+        String token = userService.resolveToken(req);
+        if (token == null) {
+            return "redirect:/";
+        }
+        String login = jwtTokenProvider.getUsernameFromToken(token);
+
+        User user = userService.findByLogin(login);
 
         if (!CheckHelper.nullOrBannedCheck(user).isEmpty()) {
             model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(user));
@@ -71,23 +88,12 @@ public class SearchResultController {
         }
 
         Group group = groupService.findGroupById(new ObjectId(foundedGroup.getGroupId()));
+
         model.addAttribute("group", group);
         model.addAttribute("author", new UserLogin(user.getLogin(), user.getPassword()));
         model.addAttribute("publications", commentsService.loadComments("Group", foundedGroup.getGroupId()));
-
-        if (user.getImageId() != null && !user.getImageId().isEmpty()) {
-            GridFsResource file = fileStorageService.getFileById(user.getImageId());
-            model.addAttribute("avatar", fileStorageService.convertGridFsFileToBase64(file));
-        } else {
-            model.addAttribute("avatar", null);
-        }
-
-        if (group.getImageId() != null && !group.getImageId().isEmpty()) {
-            GridFsResource file = fileStorageService.getFileById(group.getImageId());
-            model.addAttribute("groupAvatar", fileStorageService.convertGridFsFileToBase64(file));
-        } else {
-            model.addAttribute("groupAvatar", null);
-        }
+        model = handleAvatarService.handleAvatar(user, model, false);
+        model = handleAvatarService.handleAvatar(group, model);
 
         return "group/groupPage";
     }

@@ -9,6 +9,8 @@ import com.example.SocialPath.repository.GroupRepository;
 import com.example.SocialPath.repository.UserRepository;
 import com.example.SocialPath.service.FileStorageService;
 import com.example.SocialPath.service.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.bson.types.ObjectId;
@@ -59,6 +61,28 @@ public class UserServiceImpl implements UserService {
         } else {
             return new Object[] { true, "" };
         }
+    }
+
+    @Override
+    public String resolveToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        String token = null;
+
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("token")) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        return token;
+    }
+
+    @Override
+    public User findByLogin(String login) {
+        return userRepository.findByLogin(login);
     }
 
     @Override

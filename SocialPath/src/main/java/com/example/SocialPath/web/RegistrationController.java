@@ -44,8 +44,19 @@ public class RegistrationController {
         return "registration/registration";
     }
 
-    @PostMapping()
-    public String registration(@ModelAttribute("user") User user, Model model) {
+    @PostMapping("/registration")
+    public String registration(User user, Model model) {
+        if (userService.findByLogin(user.getLogin()) != null) {
+            UserForm userForm = modelMapper.map(user, UserForm.class);
+            userForm.setDay(user.getDateOfBirth().getDayOfMonth());
+            userForm.setMonth(ConvertHelper.monthToString(user.getDateOfBirth().getMonthValue()));
+            userForm.setYear(user.getDateOfBirth().getYear());
+
+            model.addAttribute("User", userForm);
+            model.addAttribute("errorText", "Цей логін вже зайнято!");
+            return "registration/registration";
+        }
+
         Object[] validation = userService.validateUser(user);
         if (!(boolean) validation[0]) {
             UserForm userForm = modelMapper.map(user, UserForm.class);

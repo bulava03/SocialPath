@@ -18,7 +18,7 @@ public class CheckHelper {
     public static int inRequestsCheck(User user, User myUser, String login, String anotherUserLogin) {
         int inRequests;
 
-        if (user.getFriendInvites() == null || user.getFriendInvites().size() == 0) {
+        if (user.getFriendInvites() == null || user.getFriendInvites().isEmpty()) {
             inRequests = 0;
         } else if (!user.getFriendInvites().contains(login)) {
             inRequests = 0;

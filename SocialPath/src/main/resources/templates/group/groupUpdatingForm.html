@@ -13,31 +13,31 @@
 <div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
 
 <div class="container">
-    <div class="authTitle">
-        <h1>Про групу</h1>
-    </div>
-    <div class="authForm">
-        <form id="regForm" method="post" action="/group/updateGroup" enctype="multipart/form-data">
-            <div class="authInput">
+        <div class="authTitle">
+            <h1>Про групу</h1>
+        </div>
+        <div class="authForm">
+            <form id="regForm" method="post" action="/group/updateGroup" enctype="multipart/form-data">
+                <div class="authInput">
+                    <input type="hidden" th:value="${author.login}" name="login">
+                    <input type="hidden" th:value="${author.password}" name="password">
+                    <input type="hidden" th:value="${group.id}" name="groupId">
+                    <h2 class="name">Фото</h2>
+                    <input class="field" id="file" value="" type="file" name="file">
+                    <h2 class="name">Назва групи</h2>
+                    <input class="field" id="name" type="text" th:value="${group.name}" name="Name" />
+                    <input class="button" type="submit" value="Зберегти">
+                </div>
+            </form>
+            <form id="backForm" method="get" action="/searchResult/getGroupPage">
                 <input type="hidden" th:value="${author.login}" name="login">
                 <input type="hidden" th:value="${author.password}" name="password">
                 <input type="hidden" th:value="${group.id}" name="groupId">
-                <h2 class="name">Фото</h2>
-                <input class="field" id="file" value="" type="file" name="file">
-                <h2 class="name">Назва групи</h2>
-                <input class="field" id="name" type="text" th:value="${group.name}" name="Name" />
-                <input class="button" type="submit" value="Зберегти">
-            </div>
-        </form>
-        <form id="backForm" method="get" action="/searchResult/getGroupPage">
-            <input type="hidden" th:value="${author.login}" name="login">
-            <input type="hidden" th:value="${author.password}" name="password">
-            <input type="hidden" th:value="${group.id}" name="groupId">
-            <input class="button" id="buttonBack" type="submit" value="Назад">
-        </form>
-        <p class="errorText" th:text="${errorText}" th:if="${errorText}"></p>
-        <p id="errorText" class="errorText"></p>
-    </div>
+                <input class="button" id="buttonBack" type="submit" value="Назад">
+            </form>
+            <p class="errorText" th:text="${errorText}" th:if="${errorText}"></p>
+            <p id="errorText" class="errorText"></p>
+        </div>
 </div>
 
 <h2 id="imageToUploadByDefault" th:text="${group.file}" style="display: none;"></h2>
@@ -49,5 +49,6 @@
 <script src="/script/dropdownUser.js"></script>
 <script src="/script/bigButton.js"></script>
 <script src="/script/imageUpdateDefault.js"></script>
+<script src="/script/authorization/logout.js"></script>
 </body>
 </html>

@@ -54,7 +54,7 @@ public class CommentsController {
     public String addGroupPublication(@ModelAttribute("publication") NewPublication publication, Model model) {
         User myUser = userService.findUserByLoginAndPassword(publication.getAuthorId(), publication.getAuthorPassword());
         Group myGroup = groupService.findGroupById(new ObjectId(publication.getLogin()));
-        if (!CheckHelper.nullOrBannedCheck(myUser).equals("")) {
+        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
             model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
             return "home/index";
         } else if (myGroup == null) {
@@ -73,7 +73,7 @@ public class CommentsController {
     public String addCommentUser(@ModelAttribute("newComment") NewComment newComment, Model model) {
         User myUser = userService.findUserByLoginAndPassword(newComment.getAuthorLogin(), newComment.getAuthorPassword());
 
-        if (!CheckHelper.nullOrBannedCheck(myUser).equals("")) {
+        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
             model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
             return "home/index";
         } else if (newComment.getText() != null && !newComment.getText().trim().isEmpty() && commentsService.findById(newComment.getIdPublication()) != null) {
@@ -100,7 +100,7 @@ public class CommentsController {
     public String addCommentGroup(@ModelAttribute("newComment") NewComment newComment, Model model) {
         User myUser = userService.findUserByLoginAndPassword(newComment.getAuthorLogin(), newComment.getAuthorPassword());
         Group myGroup = groupService.findGroupById(new ObjectId(newComment.getLogin()));
-        if (!CheckHelper.nullOrBannedCheck(myUser).equals("")) {
+        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
             model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
             return "home/index";
         } else if (myGroup == null) {
@@ -118,7 +118,7 @@ public class CommentsController {
     @PostMapping("/removeCommentUser")
     public String removeCommentUser(@ModelAttribute("delComment") DelComment delComment, Model model) {
         User myUser = userService.findUserByLoginAndPassword(delComment.getAuthorLogin(), delComment.getAuthorPassword());
-        if (!CheckHelper.nullOrBannedCheck(myUser).equals("")) {
+        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
             model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
             return "home/index";
         } else if (commentsService.findById(delComment.getIdComment()) != null) {
@@ -147,7 +147,7 @@ public class CommentsController {
     public String removeCommentGroup(@ModelAttribute("delComment") DelComment delComment, Model model) {
         User myUser = userService.findUserByLoginAndPassword(delComment.getAuthorLogin(), delComment.getAuthorPassword());
         Group myGroup = groupService.findGroupById(new ObjectId(delComment.getLogin()));
-        if (!CheckHelper.nullOrBannedCheck(myUser).equals("")) {
+        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
             model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
             return "home/index";
         } else if (myGroup == null) {

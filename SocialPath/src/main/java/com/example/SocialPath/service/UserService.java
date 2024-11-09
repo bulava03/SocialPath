@@ -4,6 +4,7 @@ import com.example.SocialPath.document.User;
 import com.example.SocialPath.extraClasses.GroupSearchResult;
 import com.example.SocialPath.extraClasses.UserSearchResult;
 import com.example.SocialPath.extraClasses.UserUpdate;
+import jakarta.servlet.http.HttpServletRequest;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.Update;
@@ -14,6 +15,8 @@ import java.util.List;
 public interface UserService {
     Object[] validateUser(User user);
     Object[] validateUserUpdate(UserUpdate user);
+    String resolveToken(HttpServletRequest request);
+    User findByLogin(String login);
     User findUserByLoginAndPassword(String id, String password);
     void addUser(User user);
     User findUserById(String id);

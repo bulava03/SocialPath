@@ -39,7 +39,7 @@ public class ReportController {
     public String addReport(@ModelAttribute("newReport") NewReport newReport, Model model) {
         User myUser = userService.findUserByLoginAndPassword(newReport.getAuthorLogin(), newReport.getAuthorPassword());
 
-        if (!CheckHelper.nullOrBannedCheck(myUser).equals("")) {
+        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
             model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
             return "home/index";
         }

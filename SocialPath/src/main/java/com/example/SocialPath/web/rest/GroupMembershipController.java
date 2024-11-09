@@ -2,8 +2,10 @@ package com.example.SocialPath.web.rest;
 
 import com.example.SocialPath.document.Group;
 import com.example.SocialPath.document.User;
+import com.example.SocialPath.security.JwtTokenProvider;
 import com.example.SocialPath.service.GroupService;
 import com.example.SocialPath.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,10 +20,18 @@ public class GroupMembershipController {
     private UserService userService;
     @Autowired
     private GroupService groupService;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/joinGroup")
-    public int joinGroup(String groupId, String authorLogin, String authorPassword) {
-        User myUser = userService.findUserByLoginAndPassword(authorLogin, authorPassword);
+    public int joinGroup(HttpServletRequest request, String groupId) {
+        String token = userService.resolveToken(request);
+        if (token == null) {
+            return -1;
+        }
+        String authorLogin = jwtTokenProvider.getUsernameFromToken(token);
+
+        User myUser = userService.findByLogin(authorLogin);
 
         if (myUser == null) {
             return -1;
@@ -49,8 +59,14 @@ public class GroupMembershipController {
     }
 
     @PostMapping("/leaveGroup")
-    public int leaveGroup(String groupId, String authorLogin, String authorPassword) {
-        User myUser = userService.findUserByLoginAndPassword(authorLogin, authorPassword);
+    public int leaveGroup(HttpServletRequest request, String groupId) {
+        String token = userService.resolveToken(request);
+        if (token == null) {
+            return -1;
+        }
+        String authorLogin = jwtTokenProvider.getUsernameFromToken(token);
+
+        User myUser = userService.findByLogin(authorLogin);
 
         if (myUser == null) {
             return -1;

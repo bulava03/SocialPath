@@ -1,7 +1,9 @@
 package com.example.SocialPath.web.rest;
 
 import com.example.SocialPath.document.User;
+import com.example.SocialPath.security.JwtTokenProvider;
 import com.example.SocialPath.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,10 +15,18 @@ public class FriendsController {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/inviteToFriends")
-    public int inviteToFriends(String login, String authorLogin, String authorPassword) {
-        User myUser = userService.findUserByLoginAndPassword(authorLogin, authorPassword);
+    public int inviteToFriends(HttpServletRequest request, String login) {
+        String token = userService.resolveToken(request);
+        if (token == null) {
+            return -1;
+        }
+        String authorLogin = jwtTokenProvider.getUsernameFromToken(token);
+
+        User myUser = userService.findByLogin(authorLogin);
 
         if (myUser == null) {
             return -1;
@@ -39,8 +49,14 @@ public class FriendsController {
     }
 
     @PostMapping("/removeInviteToFriends")
-    public int removeInviteToFriends(String login, String authorLogin, String authorPassword) {
-        User myUser = userService.findUserByLoginAndPassword(authorLogin, authorPassword);
+    public int removeInviteToFriends(HttpServletRequest request, String login) {
+        String token = userService.resolveToken(request);
+        if (token == null) {
+            return -1;
+        }
+        String authorLogin = jwtTokenProvider.getUsernameFromToken(token);
+
+        User myUser = userService.findByLogin(authorLogin);
 
         if (myUser == null) {
             return -1;
@@ -64,8 +80,14 @@ public class FriendsController {
     }
 
     @PostMapping("/rejectInvitationToFriends")
-    public int rejectInvitationToFriends(String login, String authorLogin, String authorPassword) {
-        User myUser = userService.findUserByLoginAndPassword(authorLogin, authorPassword);
+    public int rejectInvitationToFriends(HttpServletRequest request, String login) {
+        String token = userService.resolveToken(request);
+        if (token == null) {
+            return -1;
+        }
+        String authorLogin = jwtTokenProvider.getUsernameFromToken(token);
+
+        User myUser = userService.findByLogin(authorLogin);
 
         if (myUser == null) {
             return -1;
@@ -83,8 +105,14 @@ public class FriendsController {
     }
 
     @PostMapping("/acceptToFriends")
-    public int acceptToFriends(String login, String authorLogin, String authorPassword) {
-        User myUser = userService.findUserByLoginAndPassword(authorLogin, authorPassword);
+    public int acceptToFriends(HttpServletRequest request, String login) {
+        String token = userService.resolveToken(request);
+        if (token == null) {
+            return -1;
+        }
+        String authorLogin = jwtTokenProvider.getUsernameFromToken(token);
+
+        User myUser = userService.findByLogin(authorLogin);
 
         if (myUser == null) {
             return -1;
@@ -108,8 +136,14 @@ public class FriendsController {
     }
 
     @PostMapping("/removeFromFriends")
-    public int removeFromFriends(String login, String authorLogin, String authorPassword) {
-        User myUser = userService.findUserByLoginAndPassword(authorLogin, authorPassword);
+    public int removeFromFriends(HttpServletRequest request, String login) {
+        String token = userService.resolveToken(request);
+        if (token == null) {
+            return -1;
+        }
+        String authorLogin = jwtTokenProvider.getUsernameFromToken(token);
+
+        User myUser = userService.findByLogin(authorLogin);
 
         if (myUser == null) {
             return -1;
