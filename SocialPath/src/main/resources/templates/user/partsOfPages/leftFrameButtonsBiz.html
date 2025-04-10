@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <form typeof="hidden" method="get" action="/user/getSubscribers">
+        <input class="field" th:value="${user.login}" type="hidden" name="pageLogin" />
+        <input class="leftFrameButton" type="submit" value="Підписники">
+    </form>
+
+    <div id="divLeftFrameButtons" th:if="${user.Login != author.Login}">
+        <form>
+            <input id="userLogin" th:value="${user.login}" type="hidden" />
+        </form>
+
+        <div th:if="${!isSubscribed}">
+            <button id="submitSubscribe" class="leftFrameButton" onclick="subscribe()">Слідкувати</button>
+        </div>
+
+        <div th:if="${isSubscribed}">
+            <button id="submitUnsubscribe" class="leftFrameButton" onclick="unsubscribe()">Відписатися</button>
+        </div>
+    </div>
+</html>

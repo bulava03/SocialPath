@@ -15,26 +15,27 @@
     <link rel="stylesheet" href="/style/commentAddStyle.css">
 </head>
 <body>
-<div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
+    <div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
 
-<div id="page">
-    <div th:replace="~{/group/partsOfPages/leftFrame}"></div>
-    <div th:replace="~{/group/partsOfPages/rightFrame}"></div>
-</div>
+    <div id="page">
+        <div th:replace="~{/group/partsOfPages/leftFrame}"></div>
+        <div th:replace="~{/group/partsOfPages/rightFrame}"></div>
+    </div>
 
-<footer id="layoutFooter">
-    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
-</footer>
+    <footer id="layoutFooter">
+        <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+    </footer>
 
-<script src="/script/addComment.js"></script>
-<script src="/script/getAddingCommentForm.js"></script>
-<script src="/script/removeComment.js"></script>
-<script src="/script/search.js"></script>
-<script src="/script/reportComment.js"></script>
-<script src="/script/getReportingCommentForm.js"></script>
-<script src="/script/dropdownUser.js"></script>
-<script src="/script/bigButton.js"></script>
-<script src="/script/groupMembership.js"></script>
-<script src="/script/authorization/logout.js"></script>
+    <script src="/script/addComment.js"></script>
+    <script src="/script/getAddingCommentForm.js"></script>
+    <script src="/script/removeComment.js"></script>
+    <script src="/script/search.js"></script>
+    <script src="/script/reportComment.js"></script>
+    <script src="/script/getReportingCommentForm.js"></script>
+    <script src="/script/dropdownUser.js"></script>
+    <script src="/script/bigButton.js"></script>
+    <script src="/script/groupMembership.js"></script>
+    <script src="/script/authorization/logout.js"></script>
+    <script src="/script/comments/groupComments.js"></script>
 </body>
 </html>

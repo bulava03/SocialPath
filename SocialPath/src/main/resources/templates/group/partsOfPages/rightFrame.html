@@ -14,51 +14,26 @@
 
     <div th:if="${group.members.contains(author.login)}">
       <br><br>
-
       <div id="new-comment">
-        <form id="new-comment-form" method="post" action="/comments/addGroupPublication">
-          <input class="field" th:value="${group.id}" type="hidden" name="login" />
-          <input class="field" value="" type="hidden" name="password" />
-          <input class="field" th:value="${author.login}" type="hidden" name="authorId" />
-          <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-          <input class="field" value="Group" type="hidden" name="type" />
-          <input class="field" th:value="${group.id}" type="hidden" name="idInType" />
-          <input class="field" value="" type="hidden" name="createdAt" />
+        <form id="new-comment-form">
           <div class="form-group">
             <textarea id="comment-content" name="text" placeholder="Введіть текст публікації..."></textarea>
           </div>
-          <button type="submit" class="submit-btn">Опублікувати</button>
+          <button class="submit-btn" type="button" th:attr="onclick='submitPublication(\'' + ${group.id} + '\')'">Опублікувати</button>
         </form>
       </div>
     </div>
 
     <br><br>
 
-    <div id="publications">
-      <div th:if="${publications != null and publications.size() > 0}">
-        <div th:each="i : ${#numbers.sequence(publications.size() - 1, 0, -1)}">
+    <div id="publications" th:fragment="publications">
+      <th:block th:if="${publications != null and publications.size() > 0}">
+        <th:block th:each="i : ${#numbers.sequence(publications.size() - 1, 0, -1)}">
           <div  th:replace="~{renderComment/renderCommentGroup :: renderComment(comment=${publications[i]})}"></div>
-        </div>
-      </div>
+        </th:block>
+      </th:block>
       <p th:unless="${publications != null and publications.size() > 0}">Публікацій ще нема.</p>
     </div>
-
-    <form id="commentSender" method="post" action="/comments/addCommentGroup">
-      <input class="field" id="loginComment" th:value="${group.id}" type="hidden" name="login" />
-      <input class="field" id="authorLoginComment" th:value="${author.login}" type="hidden" name="authorLogin" />
-      <input class="field" id="authorPasswordComment" th:value="${author.password}" type="hidden" name="authorPassword" />
-      <input class="field" id="commentText" value="" type="hidden" name="text" />
-      <input class="field" id="idPublication" value="" type="hidden" name="idPublication" />
-      <input class="field" id="createdAtComment" value="" type="hidden" name="createdAt" />
-    </form>
-
-    <form id="commentRemover" method="post" action="/comments/removeCommentGroup">
-      <input class="field" th:value="${group.id}" type="hidden" name="Login" />
-      <input class="field" th:value="${author.login}" type="hidden" name="AuthorLogin" />
-      <input class="field" th:value="${author.password}" type="hidden" name="AuthorPassword" />
-      <input class="field" id="idPublicationRemove" value="" type="hidden" name="IdPublication" />
-      <input class="field" id="idCommentRemove" value="" type="hidden" name="IdComment" />
-    </form>
 
     <form id="commentReporter" method="post" action="/report/addReport">
       <input class="field" th:value="${group.id}" type="hidden" name="idPage" />

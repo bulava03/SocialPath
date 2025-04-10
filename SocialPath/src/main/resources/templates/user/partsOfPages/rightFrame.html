@@ -3,8 +3,6 @@
     <div id="right">
         <form id="searchForm" typeof="hidden" method="get" action="/searchResult/getSearchResult">
             <input id="searchInput" type="hidden" name="SearchText">
-            <input class="field" id="login" th:value="${author.login}" type="hidden" name="login" />
-            <input class="field" id="password" th:value="${author.password}" type="hidden" name="password" />
         </form>
 
         <form id="pseudoSearchForm">
@@ -15,48 +13,25 @@
         <div th:if="${isAuthor}">
             <br><br>
             <div id="new-comment">
-                <form id="new-comment-form" method="post" action="/comments/addUserPublication">
-                    <input class="field" th:value="${user.login}" type="hidden" name="login" />
-                    <input class="field" th:value="${author.password}" type="hidden" name="password" />
-                    <input class="field" id="authorLogin" th:value="${author.login}" type="hidden" name="authorId" />
-                    <input class="field" id="authorPassword" th:value="${author.password}" type="hidden" name="authorPassword" />
-                    <input class="field" id="type" value="User" type="hidden" name="type" />
-                    <input class="field" id="idInType" th:value="${user.login}" type="hidden" name="idInType" />
+                <form id="new-comment-form">
                     <div class="form-group">
                         <textarea id="comment-content" name="text" placeholder="Введіть текст публікації..."></textarea>
                     </div>
-                    <button type="submit" class="submit-btn">Опублікувати</button>
+                    <button class="submit-btn" type="button" th:attr="onclick='submitPublication(\'' + ${user.login} + '\')'">Опублікувати</button>
                 </form>
             </div>
         </div>
 
         <br><br>
 
-        <div id="publications">
-            <div th:if="${publications != null and publications.size() > 0}">
-                <div th:each="i : ${#numbers.sequence(publications.size() - 1, 0, -1)}">
+        <div id="publications" th:fragment="publications">
+            <th:block th:if="${publications != null and publications.size() > 0}">
+                <th:block th:each="i : ${#numbers.sequence(publications.size() - 1, 0, -1)}">
                     <div  th:replace="~{renderComment/renderCommentUser :: renderComment(comment=${publications[i]})}"></div>
-                </div>
-            </div>
+                </th:block>
+            </th:block>
             <p th:unless="${publications != null and publications.size() > 0}">Публікацій ще нема.</p>
         </div>
-
-        <form id="commentSender" method="post" action="/comments/addCommentUser">
-            <input class="field" id="loginComment" th:value="${user.login}" type="hidden" name="login" />
-            <input class="field" id="authorLoginComment" th:value="${author.login}" type="hidden" name="authorLogin" />
-            <input class="field" id="authorPasswordComment" th:value="${author.password}" type="hidden" name="authorPassword" />
-            <input class="field" id="commentText" value="" type="hidden" name="text" />
-            <input class="field" id="idPublication" value="" type="hidden" name="idPublication" />
-            <input class="field" id="createdAtComment" value="" type="hidden" name="createdAt" />
-        </form>
-
-        <form id="commentRemover" method="post" action="/comments/removeCommentUser">
-            <input class="field" th:value="${user.login}" type="hidden" name="login" />
-            <input class="field" th:value="${author.login}" type="hidden" name="authorLogin" />
-            <input class="field" th:value="${author.password}" type="hidden" name="authorPassword" />
-            <input class="field" id="idPublicationRemove" value="" type="hidden" name="idPublication" />
-            <input class="field" id="idCommentRemove" value="" type="hidden" name="idComment" />
-        </form>
 
         <form id="commentReporter" method="post" action="/report/addReport">
             <input class="field" th:value="${user.login}" type="hidden" name="idPage" />

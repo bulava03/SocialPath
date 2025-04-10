@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialPath</title>
+    <link rel="stylesheet" th:href="@{/style/layout.css}">
+    <link rel="stylesheet" th:href="@{/style/regFormStyle.css}">
+    <link rel="stylesheet" th:href="@{/style/gradientPage.css}">
+</head>
+<body>
+<div th:insert="~{/shared/layout3 :: #layoutHeader}"></div>
+
+<div class="container">
+    <div class="regtitle">
+        <h1>Реєстрація</h1>
+    </div>
+    <div class="regform">
+        <form id="regform" method="post" action="/registration-biz/registration-biz">
+            <div class="reginput">
+                <h2 class="name">Логін</h2>
+                <input class="field" id="login" th:value="${biz.login}" type="text" name="login">
+                <h2 class="name">Пароль</h2>
+                <input class="field" id="password" th:value="${biz.password}" type="text" name="password">
+                <h2 class="name">Назва</h2>
+                <input class="field" id="name" th:value="${biz.name}" type="text" name="name">
+                <h2 class="name">Гасло</h2>
+                <input class="field" id="surname" th:value="${biz.slogan}" type="text" name="slogan">
+                <h2 class="name">Номер телефону</h2>
+                <input class="field" id="phone" th:value="${biz.phoneNumber}" type="text" name="phoneNumber">
+                <h2 class="name">Електронна пошта</h2>
+                <input class="field" id="email" th:value="${biz.email}" type="text" name="email">
+                <input class="button" type="submit" value="Зареєструватися">
+                <p class="errortext" id="errortext"></p>
+                <p class="errortext" th:text="${errorText}"></p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+</body>
+</html>

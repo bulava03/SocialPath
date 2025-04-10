@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Data
 public class NewPublication {
     private String login;
+    private String groupId;
     private String password;
     private String authorId;
     private String authorPassword;

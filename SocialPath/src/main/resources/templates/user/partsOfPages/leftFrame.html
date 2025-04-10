@@ -9,16 +9,44 @@
         <img th:if="${avatarAnother != null} and !${isAuthor}"
              th:src="'data:image/jpeg;base64,' + ${avatarAnother}" alt="Image"><br>
 
-        <h1 style="text-align: center;" th:text="${user.FirstName + '   ' + user.LastName}"></h1>
-        <p>Номер телефону: <span th:text="${user.PhoneNumber}"></span></p>
-        <p>Email: <span th:text="${user.Email}"></span></p>
-        <p>День народження: <span th:text="${user.DateOfBirth}"></span></p>
-        <p th:if="${user.Country != null and user.Country != ''}">Країна: <span th:text="${user.Country}"></span></p>
-        <p th:if="${user.Region != null and user.Region != ''}">Регіон: <span th:text="${user.Region}"></span></p>
-        <p th:if="${user.City != null and user.City != ''}">Місто: <span th:text="${user.City}"></span></p>
-        <p th:if="${user.Education != null and user.Education != ''}">Освіта: <span th:text="${user.Education}"></span></p>
-        <p th:if="${user.Workplace != null and user.Workplace != ''}">Місце роботи: <span th:text="${user.Workplace}"></span></p>
+        <th:block th:if="${user.type == 0}">
+            <h1 style="text-align: center;" th:text="${user.FirstName + '   ' + user.LastName}"></h1>
+            <p>Телефон: <span th:text="${user.PhoneNumber}"></span></p>
+            <p>Email: <span th:text="${user.Email}"></span></p>
+            <p>День народження: <span th:text="${user.DateOfBirth}"></span></p>
+            <p th:if="${user.Country != null and user.Country != ''}">Країна: <span th:text="${user.Country}"></span></p>
+            <p th:if="${user.Region != null and user.Region != ''}">Регіон: <span th:text="${user.Region}"></span></p>
+            <p th:if="${user.City != null and user.City != ''}">Місто: <span th:text="${user.City}"></span></p>
+            <p th:if="${user.Education != null and user.Education != ''}">Освіта: <span th:text="${user.Education}"></span></p>
+            <p th:if="${user.Workplace != null and user.Workplace != ''}">Місце роботи: <span th:text="${user.Workplace}"></span></p>
+        </th:block>
 
-        <div th:insert="~{/user/partsOfPages/leftFrameButtons}"></div>
+        <th:block th:if="${user.type == 1}">
+            <h1 style="text-align: center;" th:text="${user.name}"></h1>
+            <h2 style="text-align: center;" th:text="${user.slogan}"></h2>
+            <p>Email: <span th:text="${user.email}"></span></p>
+            <p>Телефон: <span th:text="${user.phoneNumber}"></span></p>
+
+            <div class="location-display" th:if="${user.latitude != null && user.longitude != null && user.concreteAddress != 'Дистанційно'}">
+                <!--<div class="location-address">
+                    <span class="location-icon">📍</span>
+                    <p class="location-text" th:text="${@locationFormatService.formatAddress(user.concreteAddress)}"></p>
+                </div>-->
+                <div id="displayMap"
+                     th:data-lat="${user.latitude}"
+                     th:data-lng="${user.longitude}"
+                     th:data-address="${user.concreteAddress}"></div>
+            </div>
+
+            <div class="location-display remote" th:if="${user.concreteAddress == 'Дистанційно'}">
+                <div class="location-address">
+                    <span class="location-icon">🌐</span>
+                    <p class="location-text">Дистанційно</p>
+                </div>
+            </div>
+        </th:block>
+
+        <div th:if="${user.type == 0}" th:insert="~{/user/partsOfPages/leftFrameButtons}"></div>
+        <div th:if="${user.type == 1}" th:insert="~{/user/partsOfPages/leftFrameButtonsBiz}"></div>
     </div>
 </html>

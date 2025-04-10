@@ -32,6 +32,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/",
+                                "/index-biz",
+                                "/registration-biz",
+                                "/registration-biz/registration-biz",
                                 "/auth/login",
                                 "/registration",
                                 "/registration/registration",

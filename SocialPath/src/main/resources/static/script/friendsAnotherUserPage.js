@@ -1,8 +1,6 @@
 function getFormData() {
     return {
-        login: document.getElementById("userLogin").value,
-        authorLogin: document.getElementById("authorLogin").value,
-        authorPassword: document.getElementById("authorPassword").value
+        login: document.getElementById("userLogin").value
     };
 }
 
@@ -80,8 +78,6 @@ function handleRemoveResponse(responseCode) {
 function sendPostRequest(url, data, handleResponseFunction) {
     const formData = new FormData();
     formData.append("login", data.login);
-    formData.append("authorLogin", data.authorLogin);
-    formData.append("authorPassword", data.authorPassword);
 
     fetch(url, {
         method: "POST",

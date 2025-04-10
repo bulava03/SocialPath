@@ -1,8 +1,10 @@
 package com.example.SocialPath.web.rest;
 
+import com.example.SocialPath.document.Biz;
 import com.example.SocialPath.document.User;
 import com.example.SocialPath.extraClasses.UserLogin;
 import com.example.SocialPath.security.JwtTokenProvider;
+import com.example.SocialPath.service.BizService;
 import com.example.SocialPath.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,11 +20,13 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private UserService userService;
+    private BizService bizService;
     private JwtTokenProvider jwtTokenProvider;
 
-    public AuthController(AuthenticationManager authenticationManager, UserService userService, JwtTokenProvider jwtTokenProvider) {
+    public AuthController(AuthenticationManager authenticationManager, UserService userService, BizService bizService, JwtTokenProvider jwtTokenProvider) {
         this.authenticationManager = authenticationManager;
         this.userService = userService;
+        this.bizService = bizService;
         this.jwtTokenProvider = jwtTokenProvider;
     }
 

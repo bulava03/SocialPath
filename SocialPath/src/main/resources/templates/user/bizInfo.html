@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SocialPath</title>
+  <link rel="stylesheet" href="/style/layout.css">
+  <link rel="stylesheet" href="/style/userIconStyle.css">
+  <link rel="stylesheet" href="/style/bizInfoStyle.css">
+  <link rel="stylesheet" href="/style/gradientPage.css">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.css" />
+  <link rel="stylesheet" href="/style/mapStyle.css">
+</head>
+<body>
+<div th:insert="~{/shared/layout4 :: #layoutHeader}"></div>
+
+<div class="container">
+  <div class="authtitle"><h1>Про цей бізнес</h1></div>
+  <div id="changingHaightForm" class="authform" th:class="${onlyOnline ? 'authform withoutMapForm' : 'authform'}">
+    <form id="regform" method="post" action="/user/changeBizInfo" enctype="multipart/form-data">
+      <div class="authinput">
+        <h2 class="name">Фото</h2>
+        <input class="field" id="file" value="" type="file" name="file">
+        <h2 class="name">Пароль</h2>
+        <input class="field" id="password" type="text" th:value="${user.password}" name="password" />
+        <h2 class="name">Ім'я</h2>
+        <input class="field" id="name" th:value="${user.name}" type="text" name="name">
+        <h2 class="name">Прізвище</h2>
+        <input class="field" id="surname" th:value="${user.slogan}" type="text" name="slogan">
+        <h2 class="name">Номер телефону</h2>
+        <input class="field" id="phone" th:value="${user.phoneNumber}" type="text" name="phoneNumber">
+        <h2 class="name">Електронна пошта</h2>
+        <input class="field" id="email" th:value="${user.email}" type="text" name="email">
+
+        <div class="map-section">
+          <input type="hidden" id="address" th:value="${concreteAddress}" name="concreteAddress">
+          <input type="hidden" id="latitude" th:value="${latitude}" name="latitude">
+          <input type="hidden" id="longitude" th:value="${longitude}" name="longitude">
+
+          <div class="map-container" id="mapContainer">
+            <h2 id="map-name" class="name" th:class="${onlyOnline ? 'name hidden' : 'name'}">Місцезнаходження на карті</h2>
+
+            <div class="remote-checkbox">
+              <input type="checkbox" id="remoteWork" name="onlyOnline" th:value="${onlyOnline}" th:checked="${onlyOnline}">
+              <label for="remoteWork">Тільки дистанційно</label>
+            </div>
+
+            <div id="search-container" th:class="${onlyOnline ? 'hidden' : ''}">
+              <div class="search-row">
+                <input type="text" id="search-input" placeholder="Введіть адресу для пошуку">
+                <button type="button" id="search-button">Пошук</button>
+              </div>
+            </div>
+
+            <div id="map" th:class="${onlyOnline ? 'hidden' : ''}"></div>
+          </div>
+        </div>
+
+        <input onclick="validateAvatarSize()" class="button" type="submit" value="Зберегти" />
+      </div>
+    </form>
+    <form id="backform" method="get" action="/user/authorisation">
+      <input class="button" id="buttonback" type="submit" value="На сторінку бізнесу" />
+    </form>
+    <p class="errortext" id="errortext"></p>
+    <p class="errortext" th:text="${errorText}"></p>
+  </div>
+</div>
+
+<h2 id="imageToUploadByDefault" th:text="${avatar}" style="display: none;"></h2>
+
+<footer id="layoutFooter">
+  <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/dropdownUser.js"></script>
+<script src="/script/bigButton.js"></script>
+<script src="/script/validateBizAvatarSize.js"></script>
+<script src="/script/imageUpdateDefault.js"></script>
+<script src="/script/authorization/logout.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
+<script src="/script/locationMapBiz.js"></script>
+</body>
+</html>

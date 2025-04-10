@@ -18,7 +18,7 @@ body {
 }
 
 .table-wrapper {
-	width: 45%;
+	width: 95%;
 	margin: 15px;
 }
 
@@ -79,15 +79,17 @@ tr {
 	color: white;
 }
 
-#table-left {
-	float: left;
-	width: 50%;
+.container-search {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 20px;
 }
 
-#table-right {
-	float: right;
-	width: 50%;
+#table-left, #table-centre, #table-right {
+    width: 32%;
 }
+
 
 td img {
     border-radius: 25px;

@@ -12,7 +12,7 @@
 .authform {
     background-color: rgb(0,0,0,0.6);
     width: 800px;
-    height: 1360px;
+    height: 1870px;
     margin: auto;
     border-radius: 0px 0px 15px 15px;
 }
@@ -49,7 +49,7 @@
 .button {
     background-color: #e37f22;
     position: relative;
-    right: 465px;
+    right: -15px;
     top: 30px;
     margin: -10px 0px 0px 20px;
     text-align: center;
@@ -89,7 +89,7 @@ p.errortext {
     font-size: 14px;
     font-weight: bold;
     margin-left: 275px;
-    margin-top: -170px;
+    margin-top: -115px;
 }
 
 h1 {

@@ -34,18 +34,18 @@ public class FriendsController {
 
         User anotherUser = userService.findUserById(login);
 
-         if (anotherUser == null) {
-             return -1;
-         }
+        if (anotherUser == null) {
+            return -1;
+        }
 
-         if (anotherUser.getFriends() != null && anotherUser.getFriends().contains(authorLogin)) {
-             return 0;
-         } else if (anotherUser.getFriendInvites() != null && anotherUser.getFriendInvites().contains(authorLogin)) {
-             return 1;
-         } else {
-             userService.inviteUser(authorLogin, login);
-             return 2;
-         }
+        if (anotherUser.getFriends() != null && anotherUser.getFriends().contains(authorLogin)) {
+            return 0;
+        } else if (anotherUser.getFriendInvites() != null && anotherUser.getFriendInvites().contains(authorLogin)) {
+            return 1;
+        } else {
+            userService.inviteUser(authorLogin, login);
+            return 2;
+        }
     }
 
     @PostMapping("/removeInviteToFriends")

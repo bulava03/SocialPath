@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public class NewComment {
     private  ObjectId id;
     private String login;
+    private String groupId;
     private String authorLogin;
     private String authorPassword;
     private String text;

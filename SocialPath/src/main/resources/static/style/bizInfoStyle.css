@@ -1,0 +1,125 @@
+.authtitle {
+    width: 800px;
+    background-color: rgb(0,0,0,0.7);
+    margin: auto;
+    margin-top: 50px;
+    color: #ffffff;
+    padding: 10px 0px 10px 0px;
+    text-align: center;
+    border-radius: 15px 15px 0px 0px;
+}
+
+.authform {
+    background-color: rgb(0,0,0,0.6);
+    width: 800px;
+    height: 1190px;
+    margin: auto;
+    border-radius: 0px 0px 15px 15px;
+}
+
+.withoutMapForm {
+    height: 720px;
+}
+
+.name {
+    margin-left: 25px;
+    margin-top: 10px;
+    width: 250px;
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    text-align: left;
+}
+
+.name:first-of-type {
+    margin-top: 30px;
+}
+
+.authinput {
+    width: 100%;
+}
+
+.field {
+    position: relative;
+    left: 280px;
+    top: -45px;
+    width: 419px;
+    line-height: 40px;
+    border-radius: 10px;
+    padding: 0 22px;
+    font-size: 16px;
+}
+
+.button {
+    background-color: #e37f22;
+    position: relative;
+    right: -15px;
+    top: 30px;
+    margin: -10px 0px 0px 20px;
+    text-align: center;
+    border-radius: 12px;
+    border: 0;
+    width: 240px;
+    padding: 14px 5px;
+    outline: none;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.button:hover {
+    background-color: #fa9434;
+}
+
+#buttonback {
+    margin-left: 520px;
+    top: -16px;
+    left: -5px;
+}
+
+#backform {
+    padding-bottom: 10px;
+    width: 240px;
+    height: 50px;
+}
+
+#regform {
+    padding: 10px;
+}
+
+p.errortext {
+    color: #de0000;
+    font-size: 14px;
+    font-weight: bold;
+    margin-left: 275px;
+    margin-top: -115px;
+}
+
+h1 {
+    font-size: 36px;
+    font-weight: 500;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+select {
+    position: relative;
+    left: 280px;
+    top: -45px;
+    width: 467px;
+    line-height: 40px;
+    border-radius: 10px;
+    padding: 0 22px;
+    font-size: 16px;
+    height: 44px;
+}
+
+.container {
+    margin-top: 50px;
+    margin-bottom: 50px;
+}
+
+#file {
+    padding-left: 0;
+}

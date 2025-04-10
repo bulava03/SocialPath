@@ -8,6 +8,8 @@ public class UserSearchResult {
     private String file;
     private String firstName;
     private String lastName;
+    private String name;
+    private String slogan;
     private String email;
     private String phoneNumber;
     private String country;
@@ -15,4 +17,8 @@ public class UserSearchResult {
     private String city;
     private String education;
     private String workplace;
+    private String concreteAddress;
+    private double latitude;
+    private double longitude;
+    private boolean onlyOnline;
 }

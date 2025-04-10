@@ -69,9 +69,10 @@ public class RegistrationController {
             return "registration/registration";
         } else {
             user.setDateOfBirth(LocalDateTime.of(user.getDateOfBirth().getYear(), user.getDateOfBirth().getMonthValue(), user.getDateOfBirth().getDayOfMonth(), 0, 0, 0));
+            user.setType(0);
             userService.addUser(user);
 
-            return "redirect:/user/authorisation?login=" + user.getLogin() + "&password=" + user.getPassword();
+            return "redirect:/";
         }
     }
 

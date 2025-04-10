@@ -15,6 +15,9 @@ public interface CommentsService {
     void addNewGroupPublication(NewPublication newPublication);
 
     List<PublicationPresentable> loadComments(String type, String idInType);
+    List<PublicationPresentable> loadComments(List<ObjectId> commentIds);
+    List<ObjectId> getCommentsIdsUser(String login);
+    List<ObjectId> getCommentsIdsGroup(ObjectId groupId);
 
     Publication findById(ObjectId id);
 

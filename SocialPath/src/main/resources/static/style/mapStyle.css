@@ -1,0 +1,76 @@
+#map {
+    height: 400px;
+    width: 100%;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.map-section {
+    margin-top: -50px;
+    margin-left: 30px;
+    margin-right: 30px;
+}
+
+.hidden {
+    display: none;
+}
+
+.map-container {
+    margin-top: 15px;
+    transition: all 0.3s ease;
+}
+
+.remote-checkbox {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.remote-checkbox input {
+    margin-right: 10px;
+}
+
+#search-container {
+    margin-bottom: 15px;
+}
+
+#search-button {
+    padding: 8px 15px;
+    background-color: #4285f4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+#search-button:hover {
+    background-color: #357ae8;
+}
+
+.search-row {
+    display: flex;
+    align-items: center;
+}
+
+#search-input {
+    flex-grow: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#map-name {
+    margin-left: 0;
+}
+
+#search-button {
+    background-color: #e37f22;
+}
+
+#search-button:hover {
+    background-color: #fa9434;
+}

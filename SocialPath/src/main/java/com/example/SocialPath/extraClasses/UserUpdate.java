@@ -26,6 +26,13 @@ public class UserUpdate {
     @Size(max = 50, message = "Прізвище повинне містити не більше 50 символів.")
     private String lastName;
 
+    @NotEmpty(message = "Назва групи не може бути порожньою")
+    @Size(max = 50, message = "Довжина назви групи повинна бути не більше 50 символів")
+    private String name;
+
+    @Size(max = 50, message = "Довжина гасла повинна бути не більше 50 символів")
+    private String slogan;
+
     @NotBlank(message = "Електронна пошта обов'язкова.")
     @Email(message = "Некоректна адреса електронної пошти.")
     @Size(max = 100, message = "Адреса електронної пошти повинна містити не більше 100 символів.")
@@ -49,4 +56,9 @@ public class UserUpdate {
     private List<String> friends;
     private List<String> friendInvites;
     private List<ObjectId> publications;
+
+    private String concreteAddress;
+    private double latitude;
+    private double longitude;
+    private boolean onlyOnline;
 }

@@ -58,4 +58,16 @@ public class User {
     private List<String> friends;
     private List<String> friendInvites;
     private List<ObjectId> publications;
+    private List<String> subscribers;
+    private List<String> subscriptions;
+
+    private String concreteAddress;
+    private double latitude;
+    private double longitude;
+    private boolean onlyOnline;
+
+    private String name;
+    private String slogan;
+
+    private int type;
 }

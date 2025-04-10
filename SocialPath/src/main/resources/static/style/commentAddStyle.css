@@ -22,7 +22,7 @@
 }
 
 .publish-btn {
-    background-color: #4caf50;
+    background-color: #e37f22;
     color: white;
     padding: 10px 20px;
     text-align: center;
@@ -36,5 +36,5 @@
 }
 
 .publish-btn:hover {
-    background-color: #45a049;
+    background-color: #fa9434;
 }

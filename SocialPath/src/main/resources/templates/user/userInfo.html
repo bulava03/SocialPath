@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="/style/userIconStyle.css">
   <link rel="stylesheet" href="/style/personalInfoStyle.css">
   <link rel="stylesheet" href="/style/gradientPage.css">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.css" />
+  <link rel="stylesheet" href="/style/mapStyle.css">
 </head>
 <body>
 <div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
@@ -65,6 +68,26 @@
         <input class="field" id="education" th:value="${user.education}" type="text" name="education">
         <h2 class="name">Місце роботи</h2>
         <input class="field" id="workplace" th:value="${user.workplace}" type="text" name="workplace">
+
+        <div class="map-section">
+          <input type="hidden" id="address" th:value="${concreteAddress}" name="concreteAddress">
+          <input type="hidden" id="latitude" th:value="${latitude}" name="latitude">
+          <input type="hidden" id="longitude" th:value="${longitude}" name="longitude">
+
+          <div class="map-container" id="mapContainer">
+            <h2 id="map-name" class="name">Місцезнаходження на карті</h2>
+
+            <div id="search-container">
+              <div class="search-row">
+                <input type="text" id="search-input" placeholder="Введіть адресу для пошуку">
+                <button type="button" id="search-button">Пошук</button>
+              </div>
+            </div>
+
+            <div id="map"></div>
+          </div>
+        </div>
+
         <input onclick="validateAvatarSize()" class="button" type="submit" value="Зберегти" />
       </div>
     </form>
@@ -89,5 +112,8 @@
 <script src="/script/validateAvatarSize.js"></script>
 <script src="/script/imageUpdateDefault.js"></script>
 <script src="/script/authorization/logout.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
+<script src="/script/locationMapUser.js"></script>
 </body>
 </html>

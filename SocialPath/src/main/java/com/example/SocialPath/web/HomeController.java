@@ -15,4 +15,10 @@ public class HomeController {
         return "home/index";
     }
 
+    @GetMapping("/index-biz")
+    public String indexBiz(Model model) {
+        model.addAttribute("errorText", "");
+        return "home/indexBiz";
+    }
+
 }

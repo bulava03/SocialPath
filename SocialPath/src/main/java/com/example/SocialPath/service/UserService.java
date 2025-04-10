@@ -21,6 +21,7 @@ public interface UserService {
     void addUser(User user);
     User findUserById(String id);
     void updateUser(UserUpdate userUpdate);
+    void updateBiz(UserUpdate userUpdate);
     List<UserSearchResult> findUsersFriends(String login) throws IOException;
     List<GroupSearchResult> findUsersGroups(String login) throws IOException;
     List<UserSearchResult> findUsersFriendsInvitations(String login) throws IOException;
@@ -30,4 +31,6 @@ public interface UserService {
     void removeFromFriends(String myId, String anotherId);
     void addGroup(String login, String  groupId);
     void removeGroup(String login, String groupId);
+    void subscribe(String userId, String bizId);
+    void unsubscribe(String userId, String bizId);
 }

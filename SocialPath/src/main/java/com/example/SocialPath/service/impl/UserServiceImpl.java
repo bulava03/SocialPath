@@ -26,6 +26,7 @@ import java.util.Set;
 
 @Service
 public class UserServiceImpl implements UserService {
+
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -104,6 +105,12 @@ public class UserServiceImpl implements UserService {
     public void updateUser(UserUpdate userUpdate) {
         userRepository.updateFieldsByLogin(userUpdate.getLogin(), userUpdate);
     }
+
+    @Override
+    public void updateBiz(UserUpdate userUpdate) {
+        userRepository.updateBizFieldsByLogin(userUpdate.getLogin(), userUpdate);
+    }
+
 
     @Override
     public List<UserSearchResult> findUsersFriends(String login) throws IOException {
@@ -231,4 +238,17 @@ public class UserServiceImpl implements UserService {
     public void removeGroup(String login, String groupId) {
         userRepository.removeGroup(login, new ObjectId(groupId));
     }
+
+    @Override
+    public void subscribe(String userId, String bizId) {
+        userRepository.addSubscribe(userId, bizId);
+        userRepository.addSubscriber(bizId, userId);
+    }
+
+    @Override
+    public void unsubscribe(String userId, String bizId) {
+        userRepository.removeSubscribe(userId, bizId);
+        userRepository.removeSubscriber(bizId, userId);
+    }
+
 }

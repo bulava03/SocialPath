@@ -59,7 +59,28 @@ public class UserRepositoryImpl implements UserRepository {
                 .set("city", userUpdate.getCity())
                 .set("education", userUpdate.getEducation())
                 .set("workplace", userUpdate.getWorkplace())
-                .set("imageId", userUpdate.getImageId());
+                .set("imageId", userUpdate.getImageId())
+                .set("concreteAddress", userUpdate.getConcreteAddress())
+                .set("longitude", userUpdate.getLongitude())
+                .set("latitude", userUpdate.getLatitude())
+                .set("onlyOnline", userUpdate.isOnlyOnline());
+        mongoTemplate.updateFirst(query, update, User.class);
+    }
+
+    @Override
+    public void updateBizFieldsByLogin(String login, UserUpdate userUpdate) {
+        Query query = new Query(Criteria.where("_id").is(login));
+        Update update = new Update()
+                .set("password", userUpdate.getPassword())
+                .set("name", userUpdate.getName())
+                .set("slogan", userUpdate.getSlogan())
+                .set("email", userUpdate.getEmail())
+                .set("phoneNumber", userUpdate.getPhoneNumber())
+                .set("imageId", userUpdate.getImageId())
+                .set("concreteAddress", userUpdate.getConcreteAddress())
+                .set("longitude", userUpdate.getLongitude())
+                .set("latitude", userUpdate.getLatitude())
+                .set("onlyOnline", userUpdate.isOnlyOnline());
         mongoTemplate.updateFirst(query, update, User.class);
     }
 
@@ -82,6 +103,8 @@ public class UserRepositoryImpl implements UserRepository {
         Query query = new Query(new Criteria().orOperator(
                 Criteria.where("firstName").regex(searchValue, "i"),
                 Criteria.where("lastName").regex(searchValue, "i"),
+                Criteria.where("name").regex(searchValue, "i"),
+                Criteria.where("slogan").regex(searchValue, "i"),
                 Criteria.where("email").regex(searchValue, "i"),
                 Criteria.where("phoneNumber").regex(searchValue, "i"),
                 Criteria.where("country").regex(searchValue, "i"),
@@ -177,6 +200,34 @@ public class UserRepositoryImpl implements UserRepository {
     public void removeGroup(String login, ObjectId groupId) {
         Query query = new Query(Criteria.where("_id").is(login));
         Update update = new Update().pull("groups", groupId);
+        mongoTemplate.updateFirst(query, update, User.class);
+    }
+
+    @Override
+    public void addSubscribe(String myId, String bizId) {
+        Query query = new Query(Criteria.where("_id").is(myId));
+        Update update = new Update().push("subscriptions", bizId);
+        mongoTemplate.updateFirst(query, update, User.class);
+    }
+
+    @Override
+    public void removeSubscribe(String myId, String bizId) {
+        Query query = new Query(Criteria.where("_id").is(myId));
+        Update update = new Update().pull("subscriptions", bizId);
+        mongoTemplate.updateFirst(query, update, User.class);
+    }
+
+    @Override
+    public void addSubscriber(String bizId, String userId) {
+        Query query = new Query(Criteria.where("_id").is(bizId));
+        Update update = new Update().push("subscribers", userId);
+        mongoTemplate.updateFirst(query, update, User.class);
+    }
+
+    @Override
+    public void removeSubscriber(String bizId, String userId) {
+        Query query = new Query(Criteria.where("_id").is(bizId));
+        Update update = new Update().pull("subscribers", userId);
         mongoTemplate.updateFirst(query, update, User.class);
     }
 

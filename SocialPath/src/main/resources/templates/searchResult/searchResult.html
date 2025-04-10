@@ -11,7 +11,8 @@
     <title>SocialPath</title>
 </head>
 <body>
-<div th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
+<div th:if="${user.type == 0}" th:insert="~{/shared/layout2 :: #layoutHeader}"></div>
+<div th:if="${user.type == 1}" th:insert="~{/shared/layout4 :: #layoutHeader}"></div>
 
 <div class="container">
     <div class="search-container">
@@ -33,65 +34,100 @@
         <input class="field" id="groupId" value="" type="hidden" name="groupId" />
     </form>
 
-    <div id="table-left">
-        <h3 class="table-title">Люди</h3>
+    <div class="container-search">
+        <div id="table-left">
+            <h3 class="table-title">Люди</h3>
 
-        <div class="table-container">
-            <div th:each="elem : ${users}" class="table-wrapper">
-                <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
-                    <tr>
-                        <td>
-                            <img th:if="${elem.file == null}" src="/pictures/photo.png"
-                                 width="50px" height="50px" alt="usericon">
-                            <img th:unless="${elem.file == null}" th:src="'data:image/jpeg;base64,' + ${elem.file}"
-                                 width="50px" height="50px" alt="usericon">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="content-row">
-                            <div class="content-cell"></div>
-                            <div class="content-cell"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}"></b></div>
-                            <div class="content-cell"></div>
-                            <div class="content-cell">Електронна пошта: <span th:text="${elem.email}"></span></div>
-                            <div th:if="${elem.PhoneNumber != null}" class="content-cell">Номер телефону: <span th:text="${elem.phoneNumber}"></span></div>
-                            <div th:if="${elem.Country != null}" class="content-cell">Країна: <span th:text="${elem.country}"></span></div>
-                            <div th:if="${elem.Region != null}" class="content-cell">Регіон: <span th:text="${elem.region}"></span></div>
-                            <div th:if="${elem.City != null}" class="content-cell">Населений пункт: <span th:text="${elem.city}"></span></div>
-                            <div th:if="${elem.Education != null}" class="content-cell">Освіта: <span th:text="${elem.education}"></span></div>
-                            <div th:if="${elem.Workplace != null}" class="content-cell">Місце роботи: <span th:text="${elem.workplace}"></span></div>
-                            <div class="content-cell"></div>
-                            <div class="content-cell"></div>
-                        </td>
-                    </tr>
-                </table>
+            <div class="table-container">
+                <div th:each="elem : ${users}" class="table-wrapper">
+                    <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
+                        <tr>
+                            <td>
+                                <img th:if="${elem.file == null}" src="/pictures/photo.png"
+                                     width="50px" height="50px" alt="usericon">
+                                <img th:unless="${elem.file == null}" th:src="'data:image/jpeg;base64,' + ${elem.file}"
+                                     width="50px" height="50px" alt="usericon">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="content-row">
+                                <div class="content-cell"></div>
+                                <div class="content-cell"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}"></b></div>
+                                <div class="content-cell"></div>
+                                <div class="content-cell">Електронна пошта: <span th:text="${elem.email}"></span></div>
+                                <div th:if="${elem.PhoneNumber != null}" class="content-cell">Номер телефону: <span th:text="${elem.phoneNumber}"></span></div>
+                                <div th:if="${elem.Country != null}" class="content-cell">Країна: <span th:text="${elem.country}"></span></div>
+                                <div th:if="${elem.Region != null}" class="content-cell">Регіон: <span th:text="${elem.region}"></span></div>
+                                <div th:if="${elem.City != null}" class="content-cell">Населений пункт: <span th:text="${elem.city}"></span></div>
+                                <div th:if="${elem.Education != null}" class="content-cell">Освіта: <span th:text="${elem.education}"></span></div>
+                                <div th:if="${elem.Workplace != null}" class="content-cell">Місце роботи: <span th:text="${elem.workplace}"></span></div>
+                                <div class="content-cell"></div>
+                                <div class="content-cell"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div id="table-right">
-        <h3 class="table-title">Групи</h3>
+        <div id="table-centre">
+            <h3 class="table-title">Групи</h3>
 
-        <div class="table-container">
-            <div th:each="elem : ${groups}" class="table-wrapper">
-                <table th:attr="onclick='submitGroup(\'' + ${elem.id} + '\')'">
-                    <tr>
-                        <td>
-                            <img th:if="${elem.file == null}" src="/pictures/photo.png"
-                                 width="50px" height="50px" alt="usericon">
-                            <img th:unless="${elem.file == null}" th:src="'data:image/jpeg;base64,' + ${elem.file}"
-                                 width="50px" height="50px" alt="usericon">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="content-row">
-                            <div class="content-cell"></div>
-                            <div class="content-cell"><b th:text="${elem.name}"></b></div>
-                            <div class="content-cell"></div>
-                            <div class="content-cell"></div>
-                            <div class="content-cell"></div>
-                        </td>
-                    </tr>
-                </table>
+            <div class="table-container">
+                <div th:each="elem : ${groups}" class="table-wrapper">
+                    <table th:attr="onclick='submitGroup(\'' + ${elem.id} + '\')'">
+                        <tr>
+                            <td>
+                                <img th:if="${elem.file == null}" src="/pictures/photo.png"
+                                     width="50px" height="50px" alt="usericon">
+                                <img th:unless="${elem.file == null}" th:src="'data:image/jpeg;base64,' + ${elem.file}"
+                                     width="50px" height="50px" alt="usericon">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="content-row">
+                                <div class="content-cell"></div>
+                                <div class="content-cell"><b th:text="${elem.name}"></b></div>
+                                <div class="content-cell"></div>
+                                <div class="content-cell"></div>
+                                <div class="content-cell"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="table-right">
+            <h3 class="table-title">Бізнес</h3>
+
+            <div class="table-container">
+                <div th:each="elem : ${bizes}" class="table-wrapper">
+                    <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
+                        <tr>
+                            <td>
+                                <img th:if="${elem.file == null}" src="/pictures/photo.png"
+                                     width="50px" height="50px" alt="usericon">
+                                <img th:unless="${elem.file == null}" th:src="'data:image/jpeg;base64,' + ${elem.file}"
+                                     width="50px" height="50px" alt="usericon">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="content-row">
+                                <div class="content-cell"></div>
+                                <div class="content-cell"><b th:text="${elem.name}"></b></div>
+                                <div class="content-cell"></div>
+                                <div class="content-cell"><b> <i th:text="${elem.slogan}"></i></b></div>
+                                <div class="content-cell"></div>
+                                <div class="content-cell">Електронна пошта: <span th:text="${elem.email}"></span></div>
+                                <div th:if="${elem.PhoneNumber != null}" class="content-cell">Номер телефону: <span th:text="${elem.phoneNumber}"></span></div>
+                                <div class="content-cell"></div>
+                                <div class="content-cell"></div>
+                                <div class="content-cell"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

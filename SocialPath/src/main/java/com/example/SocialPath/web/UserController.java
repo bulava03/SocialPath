@@ -4,11 +4,7 @@ import com.example.SocialPath.document.User;
 import com.example.SocialPath.extraClasses.*;
 import com.example.SocialPath.helper.CheckHelper;
 import com.example.SocialPath.security.JwtTokenProvider;
-import com.example.SocialPath.service.HandleAvatarService;
-import com.example.SocialPath.service.CommentsService;
-import com.example.SocialPath.service.FileStorageService;
-import com.example.SocialPath.service.ModelAttributesService;
-import com.example.SocialPath.service.UserService;
+import com.example.SocialPath.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +25,8 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private BizService bizService;
     @Autowired
     private CommentsService commentsService;
     @Autowired
@@ -61,6 +59,7 @@ public class UserController {
 
         model = modelAttributesService.usersAttributes(model, user, true, commentsService.loadComments("User", user.getLogin()));
         model = handleAvatarService.handleAvatar(user, model, false);
+        model.addAttribute("myUser", user);
 
         return "user/userPage";
     }
@@ -91,7 +90,16 @@ public class UserController {
         User user = userService.findUserById(foundedUser.getAnotherUserLogin());
         user.setPassword("");
 
+        boolean isSubscribed;
+        if (myUser.getSubscriptions() == null) {
+            isSubscribed = false;
+        } else {
+            isSubscribed = myUser.getSubscriptions().contains(myUser.getLogin());
+        }
+
         model.addAttribute("user", user);
+        model.addAttribute("myUser", myUser);
+        model.addAttribute("isSubscribed", isSubscribed);
         model.addAttribute("author", new UserLogin(foundedUser.getLogin(), foundedUser.getPassword()));
         model.addAttribute("isAuthor", user.getLogin().equals(foundedUser.getLogin()));
         model.addAttribute("InRequests", CheckHelper.inRequestsCheck(user, myUser, foundedUser.getLogin(), foundedUser.getAnotherUserLogin()));
@@ -117,10 +125,26 @@ public class UserController {
             return "home/index";
         }
 
-        model = modelAttributesService.userInfoModel(model, user, new UserLogin(user.getLogin(), user.getPassword()));
-        model = handleAvatarService.handleAvatar(user, model, false);
+        if (user.getType() == 0) {
+            model = modelAttributesService.userInfoModel(model, user, new UserLogin(user.getLogin(), user.getPassword()));
+            model.addAttribute("concreteAddress", user.getConcreteAddress());
+            model.addAttribute("longitude", user.getLongitude());
+            model.addAttribute("latitude", user.getLatitude());
+            model.addAttribute("onlyOnline", user.isOnlyOnline());
+            model = handleAvatarService.handleAvatar(user, model, false);
 
-        return "user/userInfo";
+            return "user/userInfo";
+        } else {
+            model.addAttribute("user", user);
+            model.addAttribute("author", new UserLogin(user.getLogin(), user.getPassword()));
+            model.addAttribute("concreteAddress", user.getConcreteAddress());
+            model.addAttribute("longitude", user.getLongitude());
+            model.addAttribute("latitude", user.getLatitude());
+            model.addAttribute("onlyOnline", user.isOnlyOnline());
+            model = handleAvatarService.handleAvatar(user, model, false);
+
+            return "user/bizInfo";
+        }
     }
 
     @PostMapping("/changeUserInfo")
@@ -130,6 +154,9 @@ public class UserController {
             return "redirect:/";
         }
         String login = jwtTokenProvider.getUsernameFromToken(token);
+
+        user.setName("111");
+        user.setSlogan("111");
 
         Object[] validation = userService.validateUserUpdate(user);
         if (!(boolean) validation[0]) {
@@ -147,8 +174,46 @@ public class UserController {
             user.setDateOfBirth(LocalDateTime.of(user.getDateOfBirth().getYear(), user.getDateOfBirth().getMonthValue(), user.getDateOfBirth().getDayOfMonth(), 0, 0, 0));
             user = handleAvatarService.updateAvatar(user, myUser, file);
             user.setLogin(myUser.getLogin());
+            user.setName("");
+            user.setSlogan("");
 
             userService.updateUser(user);
+
+            return "redirect:/user/authorisation";
+        }
+    }
+
+    @PostMapping("/changeBizInfo")
+    public String changeBizInfo(HttpServletRequest request, BizUpdate biz, MultipartFile file, Model model) throws IOException {
+        String token = userService.resolveToken(request);
+        if (token == null) {
+            return "redirect:/";
+        }
+        String login = jwtTokenProvider.getUsernameFromToken(token);
+
+        BizCreationForm bizCreationForm = modelMapper.map(biz, BizCreationForm.class);
+        bizCreationForm.setLogin(login);
+
+        Object[] validation = bizService.validateBiz(bizCreationForm);
+        if (!(boolean) validation[0]) {
+            model.addAttribute("user", modelMapper.map(biz, UserFormUpdate.class));
+            model.addAttribute("author", new UserLogin(login, ""));
+            model.addAttribute("errorText", validation[1].toString().replaceAll("Optional\\[|\\]", ""));
+            return "user/bizInfo";
+        } else {
+            UserUpdate user = modelMapper.map(biz, UserUpdate.class);
+
+            User myUser = userService.findByLogin(login);
+
+            if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
+                model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
+                return "home/index";
+            }
+
+            user = handleAvatarService.updateAvatar(user, myUser, file);
+            user.setLogin(myUser.getLogin());
+
+            userService.updateBiz(user);
 
             return "redirect:/user/authorisation";
         }

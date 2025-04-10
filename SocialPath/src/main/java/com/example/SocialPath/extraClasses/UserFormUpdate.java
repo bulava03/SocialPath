@@ -12,6 +12,8 @@ public class UserFormUpdate {
     private String passwordOld;
     private String firstName;
     private String lastName;
+    private String name;
+    private String slogan;
     private String email;
     private String phoneNumber;
     private int day;

@@ -1,0 +1,41 @@
+.location-display {
+  margin: 15px 0;
+  border-radius: 10px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.location-display.remote {
+  padding: 15px;
+  background-color: #e8f4fd;
+}
+
+.location-address {
+  display: flex;
+  align-items: flex-start;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.location-icon {
+  font-size: 20px;
+  margin-right: 10px;
+  margin-top: 2px;
+}
+
+.location-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #333;
+}
+
+#displayMap {
+  height: 300px;
+  width: 100%;
+}
+
+#displayMap {
+  height: 200px;
+}

@@ -53,10 +53,13 @@ public class SearchResultController {
             return "home/index";
         }
 
-        Object[] searchResult = searchService.searchUsersAndGroups(request.getSearchText(), request.getLogin());
+        Object[] searchResult = searchService.searchUsersAndGroupsAndBizes(request.getSearchText(), login);
 
+        model.addAttribute("user", user);
+        model = handleAvatarService.handleAvatar(user, model, false);
         model.addAttribute("users", searchResult[0]);
         model.addAttribute("groups", searchResult[1]);
+        model.addAttribute("bizes", searchResult[2]);
 
         return "searchResult/searchResult";
     }

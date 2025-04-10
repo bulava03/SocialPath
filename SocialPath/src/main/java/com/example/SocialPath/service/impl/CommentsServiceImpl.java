@@ -47,7 +47,7 @@ public class CommentsServiceImpl implements CommentsService {
         publication.setCreatedAt(LocalDateTime.now());
         Publication savedPublication = commentsRepository.save(publication);
         ObjectId publicationId = savedPublication.getId();
-        groupRepository.addPublicationToGroup(publicationId, new ObjectId(newPublication.getLogin()));
+        groupRepository.addPublicationToGroup(publicationId, new ObjectId(newPublication.getGroupId()));
     }
 
     @Override
@@ -63,7 +63,65 @@ public class CommentsServiceImpl implements CommentsService {
                 return null;
             }
         }
-        return getPublications(ids);
+        return getPublications(ids); // !!! Не забути видалити !!!
+    }
+
+    @Override
+    public List<ObjectId> getCommentsIdsUser(String login) {
+        User user = userRepository.findByLogin(login);
+        if (user != null) {
+            if (user.getPublications() != null) {
+                return user.getPublications();
+            } else {
+                return new ArrayList<>();
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<ObjectId> getCommentsIdsGroup(ObjectId groupId) {
+        Group group = groupRepository.findById(groupId).orElse(null);
+        if (group != null) {
+            if (group.getPublications() != null) {
+                return group.getPublications();
+            } else {
+                return new ArrayList<>();
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<PublicationPresentable> loadComments(List<ObjectId> commentIds) {
+        if (commentIds == null) {
+            return null;
+        }
+
+        List<PublicationPresentable> publications = new ArrayList<PublicationPresentable>();
+        for (ObjectId element : commentIds
+        ) {
+            Publication publication = commentsRepository.findById(element).orElse(null);
+            User author = userRepository.findByLogin(publication.getAuthorId());
+
+            List<PublicationPresentable> publicationComments;
+            if (publication.getComments() != null) {
+                publicationComments = getPublications(publication.getComments());
+            } else {
+                publicationComments = null;
+            }
+
+            PublicationPresentable toAdd = new PublicationPresentable(
+                    publication.getId(),
+                    author.getLogin(),
+                    author.getFirstName() + " " + author.getLastName(),
+                    publication.getText(),
+                    publication.getCreatedAt(),
+                    publicationComments
+            );
+            publications.add(toAdd);
+        }
+        return publications;
     }
 
     @Override
@@ -79,7 +137,7 @@ public class CommentsServiceImpl implements CommentsService {
 
         List<PublicationPresentable> publications = new ArrayList<PublicationPresentable>();
         for (ObjectId element : ids
-            ) {
+        ) {
             Publication publication = commentsRepository.findById(element).orElse(null);
             User author = userRepository.findByLogin(publication.getAuthorId());
 
@@ -121,7 +179,7 @@ public class CommentsServiceImpl implements CommentsService {
 
     @Override
     public void removePublicationGroup(DelComment delComment) {
-        groupRepository.removePublicationFromGroup(new ObjectId(delComment.getLogin()), delComment.getIdComment());
+        groupRepository.removePublicationFromGroup(new ObjectId(delComment.getGroupId()), delComment.getIdComment());
         commentsRepository.removePublication(delComment.getIdComment());
     }
 
