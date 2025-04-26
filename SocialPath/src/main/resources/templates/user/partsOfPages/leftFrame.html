@@ -13,7 +13,7 @@
             <h1 style="text-align: center;" th:text="${user.FirstName + '   ' + user.LastName}"></h1>
             <p>Телефон: <span th:text="${user.PhoneNumber}"></span></p>
             <p>Email: <span th:text="${user.Email}"></span></p>
-            <p>День народження: <span th:text="${user.DateOfBirth}"></span></p>
+            <p>День народження: <span th:text="${#temporals.format(user.DateOfBirth, 'dd.MM.yyyy')}"></span></p>
             <p th:if="${user.Country != null and user.Country != ''}">Країна: <span th:text="${user.Country}"></span></p>
             <p th:if="${user.Region != null and user.Region != ''}">Регіон: <span th:text="${user.Region}"></span></p>
             <p th:if="${user.City != null and user.City != ''}">Місто: <span th:text="${user.City}"></span></p>

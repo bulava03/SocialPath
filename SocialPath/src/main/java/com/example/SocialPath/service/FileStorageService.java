@@ -8,6 +8,7 @@ import java.io.IOException;
 public interface FileStorageService {
     String storeFile(MultipartFile file) throws IOException;
     GridFsResource getFileById(String fileId);
+    boolean isVideo(String fileId);
     void deleteFileById(String fileId);
     String convertGridFsFileToBase64(GridFsResource gridFsFile) throws IOException;
 }

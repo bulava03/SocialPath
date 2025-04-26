@@ -15,6 +15,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 
 @RestController
@@ -33,7 +34,7 @@ public class CommentsController {
     private JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/addUserPublication")
-    public int addUserPublication(HttpServletRequest request, NewPublication publication) {
+    public int addUserPublication(HttpServletRequest request, NewPublication publication) throws IOException {
         String token = userService.resolveToken(request);
         if (token == null) {
             return -1;
@@ -49,7 +50,8 @@ public class CommentsController {
             return -1;
         }
 
-        if (publication.getText() != null && !publication.getText().trim().isEmpty()) {
+        if ((publication.getText() != null && !publication.getText().trim().isEmpty())
+                || (publication.getMedia() != null && (long) publication.getMedia().size() >= 1)) {
             publication.setAuthorId(myUser.getLogin());
             commentsService.addNewUserPublication(publication);
             return 0;
@@ -59,7 +61,7 @@ public class CommentsController {
     }
 
     @PostMapping("/addCommentUser")
-    public int addCommentUser(HttpServletRequest request, NewComment newComment) {
+    public int addCommentUser(HttpServletRequest request, NewComment newComment) throws IOException {
         String token = userService.resolveToken(request);
         if (token == null) {
             return -1;
@@ -75,7 +77,9 @@ public class CommentsController {
             return -1;
         }
 
-        if (newComment.getText() != null && !newComment.getText().trim().isEmpty() && commentsService.findById(newComment.getIdPublication()) != null) {
+        if (commentsService.findById(newComment.getIdPublication()) != null &&
+                ((newComment.getText() != null && !newComment.getText().trim().isEmpty()) ||
+                        (newComment.getMedia() != null && (long) newComment.getMedia().size() >= 1))) {
             newComment.setAuthorLogin(myUser.getLogin());
             commentsService.addNewComment(newComment);
             return 0;
@@ -116,7 +120,7 @@ public class CommentsController {
     }
 
     @PostMapping("/addGroupPublication")
-    public int addGroupPublication(HttpServletRequest request, NewPublication publication) {
+    public int addGroupPublication(HttpServletRequest request, NewPublication publication) throws IOException {
         String token = userService.resolveToken(request);
         if (token == null) {
             return -1;
@@ -137,7 +141,8 @@ public class CommentsController {
             return -1;
         }
 
-        if (publication.getText() != null && !publication.getText().trim().isEmpty()) {
+        if ((publication.getText() != null && !publication.getText().trim().isEmpty())
+                || (publication.getMedia() != null && (long) publication.getMedia().size() >= 1)) {
             publication.setAuthorId(myUser.getLogin());
             commentsService.addNewGroupPublication(publication);
             return 0;
@@ -147,7 +152,7 @@ public class CommentsController {
     }
 
     @PostMapping("/addCommentGroup")
-    public int addCommentGroup(HttpServletRequest request, NewComment newComment) {
+    public int addCommentGroup(HttpServletRequest request, NewComment newComment) throws IOException {
         String token = userService.resolveToken(request);
         if (token == null) {
             return -1;
@@ -168,7 +173,9 @@ public class CommentsController {
             return -1;
         }
 
-        if (newComment.getText() != null && !newComment.getText().trim().isEmpty() && commentsService.findById(newComment.getIdPublication()) != null) {
+        if (commentsService.findById(newComment.getIdPublication()) != null &&
+                ((newComment.getText() != null && !newComment.getText().trim().isEmpty()) ||
+                        (newComment.getMedia() != null && (long) newComment.getMedia().size() >= 1))) {
             newComment.setAuthorLogin(myUser.getLogin());
             commentsService.addNewComment(newComment);
             return 0;

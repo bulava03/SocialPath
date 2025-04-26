@@ -26,7 +26,7 @@ function validateAvatarSize() {
             return;
         }
 
-        var dateOfBirth = new Date(year, month - 1, day);
+        var dateOfBirth = new Date(Date.UTC(year, month - 1, day));
         var dateOfBirthInput = document.getElementById("dateOfBirth");
         dateOfBirthInput.value = dateOfBirth.toISOString();
         document.forms["regform"].submit();

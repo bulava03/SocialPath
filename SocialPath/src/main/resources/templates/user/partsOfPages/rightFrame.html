@@ -12,12 +12,17 @@
 
         <div th:if="${isAuthor}">
             <br><br>
-            <div id="new-comment">
-                <form id="new-comment-form">
-                    <div class="form-group">
-                        <textarea id="comment-content" name="text" placeholder="Введіть текст публікації..."></textarea>
+            <div id="new-publication">
+                <form id="new-publication-form" enctype="multipart/form-data">
+                    <textarea id="publication-text" name="text" placeholder="Введіть текст публікації..."></textarea>
+
+                    <div id="publication-media-preview" class="media-preview"></div>
+                    <input type="file" id="publication-media" name="media" accept="image/*,video/mp4" multiple style="display: none;">
+
+                    <div class="publication-actions">
+                        <button type="button" id="publication-add-media-btn" class="publication-add-media-btn">Додати медіа</button>
+                        <button class="submit-btn" type="button" th:attr="onclick='submitPublication(\'' + ${user.login} + '\')'">Опублікувати</button>
                     </div>
-                    <button class="submit-btn" type="button" th:attr="onclick='submitPublication(\'' + ${user.login} + '\')'">Опублікувати</button>
                 </form>
             </div>
         </div>
@@ -27,7 +32,7 @@
         <div id="publications" th:fragment="publications">
             <th:block th:if="${publications != null and publications.size() > 0}">
                 <th:block th:each="i : ${#numbers.sequence(publications.size() - 1, 0, -1)}">
-                    <div  th:replace="~{renderComment/renderCommentUser :: renderComment(comment=${publications[i]})}"></div>
+                    <div th:replace="~{renderComment/renderCommentUser :: renderComment(comment=${publications[i]})}"></div>
                 </th:block>
             </th:block>
             <p th:unless="${publications != null and publications.size() > 0}">Публікацій ще нема.</p>

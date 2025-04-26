@@ -38,3 +38,51 @@
 .submit-btn:hover {
     background-color: #fa9434;
 }
+
+#publication-text {
+    width: calc(100% - 4px);
+    height: 100px;
+}
+
+#new-publication {
+    text-align: right;
+}
+
+.media-preview {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.preview-image, .preview-video {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #f0f0f0;
+}
+
+.publication-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.publication-add-media-btn {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+}
+
+.publication-add-media-btn:hover {
+    background-color: #3a98fc;
+}

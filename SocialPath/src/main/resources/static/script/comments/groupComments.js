@@ -19,13 +19,53 @@ function loadComments(groupId) {
 }
 
 function submitPublication(groupId) {
-    const textArea = document.getElementById("comment-content");
+    const textArea = document.getElementById('publication-text-' + groupId);
+    const text = textArea.value;
+    const mediaInput = document.getElementById('publication-media-' + groupId);
+    const files = mediaInput.files;
+
+    if (!text && files.length === 0) {
+        alert('Напишіть щось або прикріпіть медіа!');
+        return;
+    }
+
+    // Перевірка медіа
+    if (files.length > 0) {
+        if (files.length > 5) {
+            alert('Максимум 5 фото або 1 відео.');
+            return;
+        }
+
+        let hasVideo = false;
+        for (let file of files) {
+            if (file.type.startsWith('video/')) {
+                hasVideo = true;
+                if (files.length > 1) {
+                    alert('Ви можете прикріпити тільки одне відео без фото.');
+                    return;
+                }
+                if (file.size > 50 * 1024 * 1024) { // 50 MB
+                    alert('Відео не повинно перевищувати 50 МБ.');
+                    return;
+                }
+            } else if (file.type.startsWith('image/')) {
+                if (file.size > 10 * 1024 * 1024) { // 10 MB
+                    alert('Фото не повинно перевищувати 10 МБ.');
+                    return;
+                }
+            } else {
+                alert('Дозволено тільки фото та mp4-відео.');
+                return;
+            }
+        }
+    }
 
     const formData = new FormData();
-    formData.append("text", textArea.value);
+    formData.append("text", text);
     formData.append("groupId", groupId);
-
-    textArea.value = '';
+    for (let file of files) {
+        formData.append('media', file);
+    }
 
     fetch("/comments/addGroupPublication", {
         method: "POST",
@@ -45,12 +85,55 @@ function submitPublication(groupId) {
 }
 
 function submitComment(parentId, groupId) {
-    const textArea = document.getElementsByClassName('reply-field ' + parentId)[0];
+    const textArea = document.getElementById('publication-text-' + parentId);
+    const text = textArea.value;
+    const mediaInput = document.getElementById('publication-media-' + parentId);
+    const files = mediaInput.files;
+
+    if (!text && files.length === 0) {
+        alert('Напишіть щось або прикріпіть медіа!');
+        return;
+    }
+
+    // Перевірка медіа
+    if (files.length > 0) {
+        if (files.length > 5) {
+            alert('Максимум 5 фото або 1 відео.');
+            return;
+        }
+
+        let hasVideo = false;
+        for (let file of files) {
+            if (file.type.startsWith('video/')) {
+                hasVideo = true;
+                if (files.length > 1) {
+                    alert('Ви можете прикріпити тільки одне відео без фото.');
+                    return;
+                }
+                if (file.size > 50 * 1024 * 1024) { // 50 MB
+                    alert('Відео не повинно перевищувати 50 МБ.');
+                    return;
+                }
+            } else if (file.type.startsWith('image/')) {
+                if (file.size > 10 * 1024 * 1024) { // 10 MB
+                    alert('Фото не повинно перевищувати 10 МБ.');
+                    return;
+                }
+            } else {
+                alert('Дозволено тільки фото та mp4-відео.');
+                return;
+            }
+        }
+    }
 
     const formData = new FormData();
     formData.append("idPublication", parentId);
     formData.append("groupId", groupId);
-    formData.append("text", textArea.value);
+    formData.append("text", text);
+    for (let file of files) {
+            formData.append('media', file);
+        }
+
 
     fetch("/comments/addCommentGroup", {
         method: "POST",

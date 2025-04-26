@@ -11,11 +11,15 @@ import com.example.SocialPath.repository.CommentsRepository;
 import com.example.SocialPath.repository.GroupRepository;
 import com.example.SocialPath.repository.UserRepository;
 import com.example.SocialPath.service.CommentsService;
+import com.example.SocialPath.service.FileStorageService;
 import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +35,19 @@ public class CommentsServiceImpl implements CommentsService {
     private CommentsRepository commentsRepository;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private FileStorageService fileStorageService;
 
     @Override
-    public void addNewUserPublication(NewPublication newPublication) {
+    public void addNewUserPublication(NewPublication newPublication) throws IOException {
         Publication publication = modelMapper.map(newPublication, Publication.class);
+
+        List<String> mediaIds = new ArrayList<>();
+        for (MultipartFile file : newPublication.getMedia()) {
+            mediaIds.add(fileStorageService.storeFile(file));
+        }
+        publication.setMedia(mediaIds);
+
         publication.setCreatedAt(LocalDateTime.now());
         Publication savedPublication = commentsRepository.save(publication);
         ObjectId publicationId = savedPublication.getId();
@@ -42,8 +55,15 @@ public class CommentsServiceImpl implements CommentsService {
     }
 
     @Override
-    public void addNewGroupPublication(NewPublication newPublication) {
+    public void addNewGroupPublication(NewPublication newPublication) throws IOException {
         Publication publication = modelMapper.map(newPublication, Publication.class);
+
+        List<String> mediaIds = new ArrayList<>();
+        for (MultipartFile file : newPublication.getMedia()) {
+            mediaIds.add(fileStorageService.storeFile(file));
+        }
+        publication.setMedia(mediaIds);
+
         publication.setCreatedAt(LocalDateTime.now());
         Publication savedPublication = commentsRepository.save(publication);
         ObjectId publicationId = savedPublication.getId();
@@ -51,7 +71,7 @@ public class CommentsServiceImpl implements CommentsService {
     }
 
     @Override
-    public List<PublicationPresentable> loadComments(String type, String idInType) {
+    public List<PublicationPresentable> loadComments(String type, String idInType) throws IOException {
         List<ObjectId> ids;
         if (type.equals("User")) {
             ids = userRepository.getPublicationsIdList(idInType);
@@ -63,7 +83,7 @@ public class CommentsServiceImpl implements CommentsService {
                 return null;
             }
         }
-        return getPublications(ids); // !!! Не забути видалити !!!
+        return getPublications(ids);
     }
 
     @Override
@@ -93,7 +113,7 @@ public class CommentsServiceImpl implements CommentsService {
     }
 
     @Override
-    public List<PublicationPresentable> loadComments(List<ObjectId> commentIds) {
+    public List<PublicationPresentable> loadComments(List<ObjectId> commentIds) throws IOException {
         if (commentIds == null) {
             return null;
         }
@@ -111,12 +131,34 @@ public class CommentsServiceImpl implements CommentsService {
                 publicationComments = null;
             }
 
+            String authorAvatar;
+            try {
+                GridFsResource file = fileStorageService.getFileById(author.getImageId());
+                authorAvatar = fileStorageService.convertGridFsFileToBase64(file);
+            } catch (Exception ex) {
+                authorAvatar = null;
+            }
+
+            boolean isVideo = false;
+
+            List<String> media = new ArrayList<>();
+            if (publication.getMedia() != null) {
+                for (String elem : publication.getMedia()) {
+                    GridFsResource resource = fileStorageService.getFileById(elem);
+                    isVideo = fileStorageService.isVideo(elem);
+                    media.add(fileStorageService.convertGridFsFileToBase64(resource));
+                }
+            }
+
             PublicationPresentable toAdd = new PublicationPresentable(
                     publication.getId(),
                     author.getLogin(),
                     author.getFirstName() + " " + author.getLastName(),
+                    authorAvatar,
                     publication.getText(),
                     publication.getCreatedAt(),
+                    media,
+                    isVideo,
                     publicationComments
             );
             publications.add(toAdd);
@@ -130,7 +172,7 @@ public class CommentsServiceImpl implements CommentsService {
     }
 
     @Override
-    public List<PublicationPresentable> getPublications(List<ObjectId> ids) {
+    public List<PublicationPresentable> getPublications(List<ObjectId> ids) throws IOException {
         if (ids == null) {
             return null;
         }
@@ -148,12 +190,34 @@ public class CommentsServiceImpl implements CommentsService {
                 publicationComments = null;
             }
 
+            String authorAvatar;
+            try {
+                GridFsResource file = fileStorageService.getFileById(author.getImageId());
+                authorAvatar = fileStorageService.convertGridFsFileToBase64(file);
+            } catch (Exception ex) {
+                authorAvatar = null;
+            }
+
+            boolean isVideo = false;
+
+            List<String> media = new ArrayList<>();
+            if (publication.getMedia() != null) {
+                for (String elem : publication.getMedia()) {
+                    GridFsResource resource = fileStorageService.getFileById(elem);
+                    isVideo = fileStorageService.isVideo(elem);
+                    media.add(fileStorageService.convertGridFsFileToBase64(resource));
+                }
+            }
+
             PublicationPresentable toAdd = new PublicationPresentable(
                     publication.getId(),
                     author.getLogin(),
                     author.getFirstName() + " " + author.getLastName(),
+                    authorAvatar,
                     publication.getText(),
                     publication.getCreatedAt(),
+                    media,
+                    isVideo,
                     publicationComments
             );
             publications.add(toAdd);
@@ -162,8 +226,15 @@ public class CommentsServiceImpl implements CommentsService {
     }
 
     @Override
-    public void addNewComment(NewComment newComment) {
+    public void addNewComment(NewComment newComment) throws IOException {
         Publication comment = modelMapper.map(newComment, Publication.class);
+
+        List<String> mediaIds = new ArrayList<>();
+        for (MultipartFile file : newComment.getMedia()) {
+            mediaIds.add(fileStorageService.storeFile(file));
+        }
+        comment.setMedia(mediaIds);
+
         comment.setCreatedAt(LocalDateTime.now());
         comment.setAuthorId(newComment.getAuthorLogin());
         Publication savedComment = commentsRepository.save(comment);
@@ -173,18 +244,48 @@ public class CommentsServiceImpl implements CommentsService {
 
     @Override
     public void removePublicationUser(DelComment delComment) {
+        Publication publication = commentsRepository.findById(delComment.getIdComment()).orElse(null);
+        if (publication != null) {
+            List<String> files = publication.getMedia();
+            if (files != null) {
+                for (String file : files) {
+                    fileStorageService.deleteFileById(file);
+                }
+            }
+        }
+
         userRepository.removePublicationFromUser(delComment.getLogin(), delComment.getIdComment());
         commentsRepository.removePublication(delComment.getIdComment());
     }
 
     @Override
     public void removePublicationGroup(DelComment delComment) {
+        Publication publication = commentsRepository.findById(delComment.getIdComment()).orElse(null);
+        if (publication != null) {
+            List<String> files = publication.getMedia();
+            if (files != null) {
+                for (String file : files) {
+                    fileStorageService.deleteFileById(file);
+                }
+            }
+        }
+
         groupRepository.removePublicationFromGroup(new ObjectId(delComment.getGroupId()), delComment.getIdComment());
         commentsRepository.removePublication(delComment.getIdComment());
     }
 
     @Override
     public void removeComment(DelComment delComment) {
+        Publication publication = commentsRepository.findById(delComment.getIdComment()).orElse(null);
+        if (publication != null) {
+            List<String> files = publication.getMedia();
+            if (files != null) {
+                for (String file : files) {
+                    fileStorageService.deleteFileById(file);
+                }
+            }
+        }
+
         commentsRepository.removeCommentFromPublication(new ObjectId(delComment.getIdPublication()), delComment.getIdComment());
         commentsRepository.removePublication(delComment.getIdComment());
     }

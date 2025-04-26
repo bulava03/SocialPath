@@ -42,6 +42,9 @@
     <script th:if="${user.Login != author.Login and user.type == 1}" src="/script/subscriptions.js"></script>
     <script src="/script/authorization/logout.js"></script>
     <script src="/script/comments/userComments.js"></script>
+    <script src="/script/comments/redirectFromNickname.js"></script>
+
+    <script src="/script/comments/publicationMedia.js"></script>
 
     <script th:if="${user.type == 1}" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
     <script th:if="${user.type == 1}" src="/script/displayMap.js"></script>

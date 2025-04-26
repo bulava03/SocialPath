@@ -7,23 +7,24 @@ import com.example.SocialPath.extraClasses.NewPublication;
 import com.example.SocialPath.extraClasses.PublicationPresentable;
 import org.bson.types.ObjectId;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface CommentsService {
-    void addNewUserPublication(NewPublication newPublication);
+    void addNewUserPublication(NewPublication newPublication) throws IOException;
 
-    void addNewGroupPublication(NewPublication newPublication);
+    void addNewGroupPublication(NewPublication newPublication) throws IOException;
 
-    List<PublicationPresentable> loadComments(String type, String idInType);
-    List<PublicationPresentable> loadComments(List<ObjectId> commentIds);
+    List<PublicationPresentable> loadComments(String type, String idInType) throws IOException;
+    List<PublicationPresentable> loadComments(List<ObjectId> commentIds) throws IOException;
     List<ObjectId> getCommentsIdsUser(String login);
     List<ObjectId> getCommentsIdsGroup(ObjectId groupId);
 
     Publication findById(ObjectId id);
 
-    List<PublicationPresentable> getPublications(List<ObjectId> ids);
+    List<PublicationPresentable> getPublications(List<ObjectId> ids) throws IOException;
 
-    void addNewComment(NewComment newComment);
+    void addNewComment(NewComment newComment) throws IOException;
 
     void removePublicationUser(DelComment delComment);
 

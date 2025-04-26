@@ -21,10 +21,16 @@ document.addEventListener('click', function (event) {
     var replySections = document.getElementsByClassName('reply-section');
     for (var i = 0; i < replySections.length; i++) {
         var replyField = replySections[i].getElementsByClassName('reply-field')[0];
+        var mediaField = replySections[i].getElementsByClassName('media-field')[0];
+        var mediaPreview = replySections[i].getElementsByClassName('media-preview')[0];
         if (
             (event.target === replySections[i] || !replySections[i].contains(event.target)) &&
             replyField.value === ''
         ) {
+            mediaField.value = null;
+            while (mediaPreview.firstChild) {
+                mediaPreview.removeChild(mediaPreview.firstChild);
+            }
             replySections[i].style.display = 'none';
         }
     }

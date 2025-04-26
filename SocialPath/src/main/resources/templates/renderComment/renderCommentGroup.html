@@ -2,19 +2,48 @@
 
 <th:block th:fragment="renderComment(comment)">
   <div class="comment" th:id="${comment.id}">
-    <img src="/usericon.png" alt="usericon" />
-    <a class="username" href="#" th:text="${comment.authorName}"></a>
+    <img class="commentImage" th:if="${comment.authorAvatar == null}" src="/usericon.png" alt="usericon"
+         th:attr="data-login=${comment.authorLogin}"
+         onclick="sendAnotherUserForm(this)">
+    <img class="commentImage" th:unless="${comment.authorAvatar == null}" th:src="'data:image/jpeg;base64,' + ${comment.authorAvatar}" alt="usericon"
+         width="30px" height="30px"
+         th:attr="data-login=${comment.authorLogin}"
+         onclick="sendAnotherUserForm(this)">
+    <a class="username" href="#"
+       th:text="${comment.authorName}"
+       th:attr="data-login=${comment.authorLogin}"
+       onclick="sendAnotherUserForm(this)"></a>
     <div class="commentText" th:text="${comment.text}"></div>
+    <div class="commentMedia">
+      <div th:if="${comment.media != null and !comment.media.isEmpty()}">
+        <div th:if="${comment.media.size() == 1 and comment.isVideo}">
+          <video controls th:src="'data:video/mp4;base64,' + ${comment.media[0]}"></video>
+        </div>
+
+        <div th:if="${comment.media.size() > 0 and !comment.isVideo}">
+          <div th:each="img : ${comment.media}">
+            <img th:src="'data:image/jpeg;base64,' + ${img}" alt="image">
+          </div>
+        </div>
+      </div>
+    </div>
 
     <button class="reply-btn" th:if="${group.members.contains(author.login)}" th:attr="onclick='makeVisible(\'' + ${comment.id} + '\')'">Reply</button>
-    <button class="delete-btn" th:if="${comment.authorLogin == author.login || author.login == user.login}" th:attr="onclick='submitRemoveComment(\'' + ${comment.id} + '\',\'' + ${group.id} + '\')'">Delete</button>
+    <button class="delete-btn" th:if="${comment.authorLogin == author.login || group.admins.contains(author.login)}" th:attr="onclick='submitRemoveComment(\'' + ${comment.id} + '\',\'' + ${group.id} + '\')'">Delete</button>
     <button class="report-btn-t1" th:if="${comment.authorLogin != author.login && (comment.authorLogin == author.login || (group.admins.contains(author.login) && group.owner != comment.authorLogin))}" th:attr="onclick='makeVisibleReport(\'' + ${comment.id} + '\')'">Report</button>
     <button class="report-btn-t2" th:if="${comment.authorLogin != author.login && group.members.contains(author.login)}" th:attr="onclick='makeVisibleReport(\'' + ${comment.id} + '\')'">Report</button>
     <button class="report-btn-t3" th:if="${comment.authorLogin != author.login && !group.members.contains(author.login)}" th:attr="onclick='makeVisibleReport(\'' + ${comment.id} + '\')'">Report</button>
 
     <div class="reply-section" th:classappend="${comment.id}" style="display: none;">
-      <textarea type="text" class="reply-field" th:classappend="${comment.id}" placeholder="Введіть тут Ваш коментар..."></textarea>
-      <button class="publish-btn" th:attr="onclick='submitComment(\'' + ${comment.id} + '\',\'' + ${group.id} + '\')'">Опублікувати</button>
+      <textarea type="text" th:id="'publication-text-' + ${comment.id}" class="reply-field" th:classappend="${comment.id}" placeholder="Введіть тут Ваш коментар..."></textarea>
+
+      <div th:id="'publication-media-preview-' + ${comment.id}" class="media-preview" th:classappend="${comment.id}"></div>
+      <input type="file" th:id="'publication-media-' + ${comment.id}" class="media-field" name="media" accept="image/*,video/mp4" multiple style="display: none;">
+
+      <div class="publication-actions">
+        <button type="button" th:id="'publication-add-media-btn-' + ${comment.id}" class="publication-add-media-btn">Додати медіа</button>
+        <button class="publish-btn" th:attr="onclick='submitComment(\'' + ${comment.id} + '\',\'' + ${group.id} + '\')'">Опублікувати</button>
+      </div>
     </div>
 
     <div class="report-section" th:classappend="${comment.id}" style="display: none;">
@@ -24,7 +53,8 @@
 
     <th:block th:if="${comment.publications != null and comment.publications.size() > 0}">
       <th:block th:each="i : ${#numbers.sequence(comment.publications.size() - 1, 0, -1)}">
-        <div  th:replace="~{renderComment/renderCommentGroup :: renderComment(comment=${comment.publications[i]})}"></div>
+        <div th:class="'comment-divider' + (${i == comment.publications.size() - 1} ? ' first' : '')"></div>
+        <div th:replace="~{renderComment/renderCommentGroup :: renderComment(comment=${comment.publications[i]})}"></div>
       </th:block>
     </th:block>
   </div>

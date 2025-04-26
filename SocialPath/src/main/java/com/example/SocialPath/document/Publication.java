@@ -22,4 +22,5 @@ public class Publication {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime createdAt;
     private List<ObjectId> comments;
+    private List<String> media;
 }

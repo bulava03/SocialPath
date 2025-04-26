@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.io.IOException;
+
 @Controller
 @RequestMapping("/report")
 public class ReportController {
@@ -36,7 +38,7 @@ public class ReportController {
     private ModelAttributesService modelAttributesService;
 
     @PostMapping("/addReport")
-    public String addReport(@ModelAttribute("newReport") NewReport newReport, Model model) {
+    public String addReport(@ModelAttribute("newReport") NewReport newReport, Model model) throws IOException {
         User myUser = userService.findUserByLoginAndPassword(newReport.getAuthorLogin(), newReport.getAuthorPassword());
 
         if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {

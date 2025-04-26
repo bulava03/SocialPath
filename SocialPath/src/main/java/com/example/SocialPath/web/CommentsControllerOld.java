@@ -1,9 +1,7 @@
 package com.example.SocialPath.web;
 
-import com.example.SocialPath.document.Group;
 import com.example.SocialPath.document.User;
 import com.example.SocialPath.extraClasses.*;
-import com.example.SocialPath.helper.CheckHelper;
 import com.example.SocialPath.security.JwtTokenProvider;
 import com.example.SocialPath.service.CommentsService;
 import com.example.SocialPath.service.GroupService;
@@ -15,11 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.time.LocalDateTime;
+import java.io.IOException;
 import java.util.List;
 
 @Controller
@@ -37,7 +33,7 @@ public class CommentsControllerOld {
     private JwtTokenProvider jwtTokenProvider;
 
     @GetMapping("/loadCommentsUser")
-    public String loadCommentsUser(HttpServletRequest request, String login, Model model) {
+    public String loadCommentsUser(HttpServletRequest request, String login, Model model) throws IOException {
         String token = userService.resolveToken(request);
         if (token == null) {
             return "";
@@ -59,7 +55,7 @@ public class CommentsControllerOld {
     }
 
     @GetMapping("/loadCommentsGroup")
-    public String loadCommentsGroup(HttpServletRequest request, String groupId, Model model) {
+    public String loadCommentsGroup(HttpServletRequest request, String groupId, Model model) throws IOException {
         String token = userService.resolveToken(request);
         if (token == null) {
             return "";

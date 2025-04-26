@@ -35,6 +35,13 @@ public class FileStorageServiceImpl implements FileStorageService {
         return gridFsOperations.getResource(gridFsFile);
     }
 
+    public boolean isVideo(String fileId) {
+        GridFSFile gridFsFile = gridFsTemplate.findOne(new org.springframework.data.mongodb.core.query.Query().addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("_id").is(fileId)));
+        assert gridFsFile != null;
+        String filename = gridFsFile.getFilename();
+        return filename.toLowerCase().endsWith(".mp4");
+    }
+
     public void deleteFileById(String fileId) {
         ObjectId objectId = new ObjectId(fileId);
         gridFsTemplate.delete(new Query(Criteria.where("_id").is(objectId)));

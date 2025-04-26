@@ -15,7 +15,10 @@ public class PublicationPresentable {
     private ObjectId id;
     private String authorLogin;
     private String authorName;
+    private String authorAvatar;
     private String text;
     private LocalDateTime createdAt;
+    private List<String> media;
+    private boolean isVideo;
     private List<PublicationPresentable> publications;
 }
