@@ -125,3 +125,11 @@
     width: 100%;
     margin-top: 20px;
 }
+
+.mediaTable {
+    width: 100%;
+}
+
+.mediaTable img {
+    object-fit: contain;
+}

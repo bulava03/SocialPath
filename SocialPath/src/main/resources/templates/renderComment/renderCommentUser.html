@@ -20,8 +20,88 @@
           </div>
 
           <div th:if="${comment.media.size() > 0 and !comment.isVideo}">
-            <div th:each="img : ${comment.media}">
-              <img th:src="'data:image/jpeg;base64,' + ${img}" alt="image">
+            <div th:if="${comment.media.size() == 1}">
+              <div class="media-preview">
+                <img th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="width: 100%; max-height: 300px; object-fit: cover;">
+              </div>
+            </div>
+
+            <div th:if="${comment.media.size() == 2}">
+              <table class="mediaTable">
+                <tr>
+                  <td>
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="width: 100%; max-height: 300px;">
+                  </td>
+                  <td>
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[1]}" alt="image" style="width: 100%; max-height: 300px;">
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <div th:if="${comment.media.size() == 3}">
+              <table class="mediaTable">
+                <tr>
+                  <td colspan="2">
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="width: 100%; max-height: 300px;">
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[1]}" alt="image" style="width: 100%; max-height: 150px;">
+                  </td>
+                  <td>
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[2]}" alt="image" style="width: 100%; max-height: 150px;">
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <div th:if="${comment.media.size() == 4}">
+              <table class="mediaTable">
+                <tr>
+                  <td>
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="width: 100%; max-height: 200px;">
+                  </td>
+                  <td>
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[1]}" alt="image" style="width: 100%; max-height: 200px;">
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[2]}" alt="image" style="width: 100%; max-height: 200px;">
+                  </td>
+                  <td>
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[3]}" alt="image" style="width: 100%; max-height: 200px;">
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <div th:if="${comment.media.size() == 5}">
+              <table class="mediaTable">
+                <tr>
+                  <td colspan="2">
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="width: 100%; max-height: 300px;">
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[1]}" alt="image" style="width: 100%; max-height: 150px;">
+                  </td>
+                  <td>
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[2]}" alt="image" style="width: 100%; max-height: 150px;">
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[3]}" alt="image" style="width: 100%; max-height: 150px;">
+                  </td>
+                  <td>
+                    <img th:src="'data:image/jpeg;base64,' + ${comment.media[4]}" alt="image" style="width: 100%; max-height: 150px;">
+                  </td>
+                </tr>
+              </table>
             </div>
           </div>
         </div>
