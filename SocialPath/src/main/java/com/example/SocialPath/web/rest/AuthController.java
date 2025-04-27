@@ -1,9 +1,9 @@
 package com.example.SocialPath.web.rest;
 
-import com.example.SocialPath.document.Biz;
 import com.example.SocialPath.document.User;
 import com.example.SocialPath.extraClasses.UserLogin;
 import com.example.SocialPath.security.JwtTokenProvider;
+import com.example.SocialPath.security.PasswordHasher;
 import com.example.SocialPath.service.BizService;
 import com.example.SocialPath.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,9 +38,12 @@ public class AuthController {
 
         try {
             User user = userService.findByLogin(login);
-            if (!user.getPassword().equals(password)) {
+            if (!PasswordHasher.checkPassword(password, user.getPassword())) {
                 throw (new Exception("Unknown user"));
             }
+            /*if (!user.getPassword().equals(password)) {
+                throw (new Exception("Unknown user"));
+            }*/
             return jwtTokenProvider.createToken(user.getLogin(), user.getPassword());
         } catch (Exception ex) {
             return "fail";

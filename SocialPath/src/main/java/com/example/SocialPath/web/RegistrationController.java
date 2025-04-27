@@ -1,7 +1,6 @@
 package com.example.SocialPath.web;
 
 import com.example.SocialPath.document.User;
-import com.example.SocialPath.extraClasses.UserLogin;
 import com.example.SocialPath.helper.ConvertHelper;
 import com.example.SocialPath.service.CommentsService;
 import com.example.SocialPath.service.ModelAttributesService;
@@ -13,13 +12,10 @@ import com.example.SocialPath.service.RegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/registration")

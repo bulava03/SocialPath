@@ -3,8 +3,6 @@ package com.example.SocialPath.helper;
 import com.example.SocialPath.document.Report;
 import com.example.SocialPath.extraClasses.NewReport;
 
-import java.time.LocalDateTime;
-
 public class ReportHelper {
 
     public static Report ConvertNewReportToReport(NewReport newReport)

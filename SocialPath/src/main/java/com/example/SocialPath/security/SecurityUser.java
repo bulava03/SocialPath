@@ -61,7 +61,6 @@ public class SecurityUser implements UserDetails {
 
     public static UserDetails fromUser(User user) {
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
-
         return new org.springframework.security.core.userdetails.User(user.getLogin(), user.getPassword(), authorities);
     }
 }

@@ -2,6 +2,7 @@ package com.example.SocialPath.service.impl;
 
 import com.example.SocialPath.document.User;
 import com.example.SocialPath.repository.UserRepository;
+import com.example.SocialPath.security.PasswordHasher;
 import com.example.SocialPath.service.RegistrationService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -31,9 +32,5 @@ public class RegistrationServiceImpl implements RegistrationService {
         } else {
             return new Object[] { true, "" };
         }
-    }
-    @Override
-    public void addUser(User user) {
-        userRepository.save(user);
     }
 }

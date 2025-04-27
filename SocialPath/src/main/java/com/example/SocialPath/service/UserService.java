@@ -5,9 +5,6 @@ import com.example.SocialPath.extraClasses.GroupSearchResult;
 import com.example.SocialPath.extraClasses.UserSearchResult;
 import com.example.SocialPath.extraClasses.UserUpdate;
 import jakarta.servlet.http.HttpServletRequest;
-import org.bson.types.ObjectId;
-import org.springframework.data.mongodb.repository.Query;
-import org.springframework.data.mongodb.repository.Update;
 
 import java.io.IOException;
 import java.util.List;

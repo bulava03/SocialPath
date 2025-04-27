@@ -7,6 +7,7 @@ import com.example.SocialPath.extraClasses.UserSearchResult;
 import com.example.SocialPath.extraClasses.UserUpdate;
 import com.example.SocialPath.repository.GroupRepository;
 import com.example.SocialPath.repository.UserRepository;
+import com.example.SocialPath.security.PasswordHasher;
 import com.example.SocialPath.service.FileStorageService;
 import com.example.SocialPath.service.UserService;
 import jakarta.servlet.http.Cookie;
@@ -98,6 +99,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void addUser(User user) {
+        user.setPassword(PasswordHasher.hashPassword(user.getPassword()));
         userRepository.save(user);
     }
 

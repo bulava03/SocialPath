@@ -5,7 +5,6 @@ import com.example.SocialPath.extraClasses.PublicationPresentable;
 import com.example.SocialPath.extraClasses.UserLogin;
 import com.example.SocialPath.extraClasses.UserSearchResult;
 import com.example.SocialPath.extraClasses.UserUpdate;
-import org.bson.types.ObjectId;
 import org.springframework.ui.Model;
 
 import java.util.List;

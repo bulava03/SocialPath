@@ -3,8 +3,6 @@ package com.example.SocialPath.web;
 import com.example.SocialPath.document.Biz;
 import com.example.SocialPath.document.User;
 import com.example.SocialPath.extraClasses.BizCreationForm;
-import com.example.SocialPath.extraClasses.UserForm;
-import com.example.SocialPath.helper.ConvertHelper;
 import com.example.SocialPath.service.*;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
