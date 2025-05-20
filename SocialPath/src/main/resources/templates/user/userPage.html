@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/style/commentsStyle.css">
     <link rel="stylesheet" href="/style/newCommentStyle.css">
     <link rel="stylesheet" href="/style/commentAddStyle.css">
+    <link rel="stylesheet" href="/style/grades.css">
 
     <link th:if="${user.type == 1}" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.css" />
     <link th:if="${user.type == 1}" rel="stylesheet" href="/style/displayMapStyle.css">
@@ -24,6 +25,44 @@
     <div id="page">
         <div th:replace="~{/user/partsOfPages/leftFrame}"></div>
         <div th:replace="~{/user/partsOfPages/rightFrame}"></div>
+
+        <!-- Затемнення -->
+        <div th:if="${user.type == 1}" id="overlay"></div>
+
+        <!-- Форма (в DOM, але прихована) -->
+        <div th:if="${user.type == 1}" id="ratingFormContainer">
+            <form id="ratingForm" method="post" action="/grades/addGrade" onsubmit="return validateRating()">
+                <input type="hidden" name="bizLogin" id="providerId" value="" />
+                <input type="hidden" name="rating" id="ratingInput" value="" />
+                <div class="stars" id="stars">
+                    <span class="star" data-value="1">&#9733;</span>
+                    <span class="star" data-value="2">&#9733;</span>
+                    <span class="star" data-value="3">&#9733;</span>
+                    <span class="star" data-value="4">&#9733;</span>
+                    <span class="star" data-value="5">&#9733;</span>
+                </div>
+                <textarea name="comment" placeholder="Додайте коментар (необов'язково)"></textarea>
+                <button type="submit">Надіслати</button>
+            </form>
+        </div>
+
+        <div th:if="${user.type == 1}" id="review-container" style="display:none;" class="review-modal">
+            <div class="review-header">
+                <h3>Відгуки</h3>
+                <span class="review-close" onclick="closeReviews()">×</span>
+            </div>
+            <div class="review-body">
+                <th:block th:if="${#lists.isEmpty(reviews)}">
+                    <p class="review-empty">Наразі відгуків немає</p>
+                </th:block>
+                <th:block th:each="review : ${reviews}">
+                    <div class="review-comment">
+                        <p th:text="${review}"></p>
+                        <hr class="review-divider" />
+                    </div>
+                </th:block>
+            </div>
+        </div>
     </div>
 
     <footer id="layoutFooter">
@@ -48,5 +87,7 @@
 
     <script th:if="${user.type == 1}" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
     <script th:if="${user.type == 1}" src="/script/displayMap.js"></script>
+
+    <script th:if="${user.type == 1}" src="/script/grades.js"></script>
 </body>
 </html>

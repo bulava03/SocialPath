@@ -30,6 +30,8 @@ public class UserController {
     @Autowired
     private CommentsService commentsService;
     @Autowired
+    private GradeService gradeService;
+    @Autowired
     private ModelMapper modelMapper;
     @Autowired
     private ModelAttributesService modelAttributesService;
@@ -106,6 +108,12 @@ public class UserController {
         model.addAttribute("publications", commentsService.loadComments("User", foundedUser.getAnotherUserLogin()));
         model = handleAvatarService.handleAvatar(myUser, model, false);
         model = handleAvatarService.handleAvatar(user, model, true);
+
+        if (user.getType() == 1) {
+            model.addAttribute("averageGrade", gradeService.getAverageGrade(user.getLogin()));
+            model.addAttribute("userGrade", gradeService.getAverageGrade(user.getLogin()));
+            model.addAttribute("reviews", gradeService.getReviewsByBizLogin(user.getLogin()));
+        }
 
         return "user/userPage";
     }

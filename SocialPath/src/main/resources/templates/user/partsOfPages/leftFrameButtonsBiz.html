@@ -18,4 +18,38 @@
             <button id="submitUnsubscribe" class="leftFrameButton" onclick="unsubscribe()">Відписатися</button>
         </div>
     </div>
+
+    <br><br><br>
+
+    <div id="gradesPart">
+        <div class="rating-block">
+            <th:block th:if="${averageGrade != 0}">
+                <label>
+                    Середня оцінка: <span th:text="${#numbers.formatDecimal(averageGrade, 1, 1)}"></span>
+                </label>
+            </th:block>
+            <th:block th:unless="${averageGrade != 0}">
+                <p>Оцінок поки що немає</p>
+            </th:block>
+        </div>
+
+        <th:block th:if="${userGrade != 0 and user.login != author.login}">
+            <div class="rating-block">
+                <label>
+                    Ваша оцінка: <span th:text="${#numbers.formatDecimal(userGrade, 1, 1)}"></span>
+                </label>
+            </div>
+        </th:block>
+
+        <button th:if="${user.login != author.login}" class="leftFrameButton" th:attr="onclick='openRatingForm(' + '\'' + ${user.login} + '\'' + ')'">Оцінити</button>
+
+        <th:block th:if="${userGrade != 0 and user.login != author.login}">
+            <form action="/grades/deleteGrade" method="post">
+                <input type="hidden" th:value="${user.login}" name="bizLogin">
+                <button class="leftFrameButton" type="submit">Видалити оцінку</button>
+            </form>
+        </th:block>
+
+        <button class="leftFrameButton" onclick="openReviews()">Переглянути відгуки</button>
+    </div>
 </html>

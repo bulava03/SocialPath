@@ -23,7 +23,7 @@
         <div th:if="${comment.media.size() > 0 and !comment.isVideo}">
           <div th:if="${comment.media.size() == 1}">
             <div class="media-preview">
-              <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="width: 100%; max-height: 300px; object-fit: cover;">
+              <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="max-height: 300px; object-fit: contain;">
             </div>
           </div>
 
@@ -31,10 +31,10 @@
             <table class="mediaTable">
               <tr>
                 <td>
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="width: 100%; max-height: 300px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="max-height: 300px; object-fit: contain;">
                 </td>
                 <td>
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[1]}" alt="image" style="width: 100%; max-height: 300px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[1]}" alt="image" style="max-height: 300px; object-fit: contain;">
                 </td>
               </tr>
             </table>
@@ -44,15 +44,15 @@
             <table class="mediaTable">
               <tr>
                 <td colspan="2">
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="width: 100%; max-height: 300px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="max-height: 300px; object-fit: contain;">
                 </td>
               </tr>
               <tr>
                 <td>
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[1]}" alt="image" style="width: 100%; max-height: 150px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[1]}" alt="image" style="max-height: 150px; object-fit: contain;">
                 </td>
                 <td>
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[2]}" alt="image" style="width: 100%; max-height: 150px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[2]}" alt="image" style="max-height: 150px; object-fit: contain;">
                 </td>
               </tr>
             </table>
@@ -62,18 +62,18 @@
             <table class="mediaTable">
               <tr>
                 <td>
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="width: 100%; max-height: 200px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="max-height: 200px; object-fit: contain;">
                 </td>
                 <td>
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[1]}" alt="image" style="width: 100%; max-height: 200px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[1]}" alt="image" style="max-height: 200px; object-fit: contain;">
                 </td>
               </tr>
               <tr>
                 <td>
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[2]}" alt="image" style="width: 100%; max-height: 200px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[2]}" alt="image" style="max-height: 200px; object-fit: contain;">
                 </td>
                 <td>
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[3]}" alt="image" style="width: 100%; max-height: 200px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[3]}" alt="image" style="max-height: 200px; object-fit: contain;">
                 </td>
               </tr>
             </table>
@@ -83,23 +83,23 @@
             <table class="mediaTable">
               <tr>
                 <td colspan="2">
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="width: 100%; max-height: 300px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[0]}" alt="image" style="max-height: 300px; object-fit: contain;">
                 </td>
               </tr>
               <tr>
                 <td>
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[1]}" alt="image" style="width: 100%; max-height: 150px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[1]}" alt="image" style="max-height: 150px; object-fit: contain;">
                 </td>
                 <td>
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[2]}" alt="image" style="width: 100%; max-height: 150px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[2]}" alt="image" style="max-height: 150px; object-fit: contain;">
                 </td>
               </tr>
               <tr>
                 <td>
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[3]}" alt="image" style="width: 100%; max-height: 150px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[3]}" alt="image" style="max-height: 150px; object-fit: contain;">
                 </td>
                 <td>
-                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[4]}" alt="image" style="width: 100%; max-height: 150px;">
+                  <img loading="lazy" th:src="'data:image/jpeg;base64,' + ${comment.media[4]}" alt="image" style="max-height: 150px; object-fit: contain;">
                 </td>
               </tr>
             </table>
