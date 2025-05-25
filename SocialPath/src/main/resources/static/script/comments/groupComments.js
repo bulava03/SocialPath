@@ -19,9 +19,9 @@ function loadComments(groupId) {
 }
 
 function submitPublication(groupId) {
-    const textArea = document.getElementById('publication-text-' + groupId);
+    const textArea = document.getElementById('publication-text');
     const text = textArea.value;
-    const mediaInput = document.getElementById('publication-media-' + groupId);
+    const mediaInput = document.getElementById('publication-media');
     const files = mediaInput.files;
 
     if (!text && files.length === 0) {
@@ -66,6 +66,8 @@ function submitPublication(groupId) {
     for (let file of files) {
         formData.append('media', file);
     }
+
+    textArea.value = '';
 
     fetch("/comments/addGroupPublication", {
         method: "POST",

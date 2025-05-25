@@ -42,6 +42,10 @@ public class CommentsServiceImpl implements CommentsService {
     public void addNewUserPublication(NewPublication newPublication) throws IOException {
         Publication publication = modelMapper.map(newPublication, Publication.class);
 
+        if (newPublication.getMedia() == null) {
+            newPublication.setMedia(new ArrayList<>());
+        }
+
         List<String> mediaIds = new ArrayList<>();
         for (MultipartFile file : newPublication.getMedia()) {
             mediaIds.add(fileStorageService.storeFile(file));
@@ -57,6 +61,10 @@ public class CommentsServiceImpl implements CommentsService {
     @Override
     public void addNewGroupPublication(NewPublication newPublication) throws IOException {
         Publication publication = modelMapper.map(newPublication, Publication.class);
+
+        if (newPublication.getMedia() == null) {
+            newPublication.setMedia(new ArrayList<>());
+        }
 
         List<String> mediaIds = new ArrayList<>();
         for (MultipartFile file : newPublication.getMedia()) {
@@ -228,6 +236,10 @@ public class CommentsServiceImpl implements CommentsService {
     @Override
     public void addNewComment(NewComment newComment) throws IOException {
         Publication comment = modelMapper.map(newComment, Publication.class);
+
+        if (newComment.getMedia() == null) {
+            newComment.setMedia(new ArrayList<>());
+        }
 
         List<String> mediaIds = new ArrayList<>();
         for (MultipartFile file : newComment.getMedia()) {

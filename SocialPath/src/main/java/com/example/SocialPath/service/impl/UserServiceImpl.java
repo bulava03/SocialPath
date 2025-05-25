@@ -105,6 +105,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateUser(UserUpdate userUpdate) {
+        userUpdate.setPassword(PasswordHasher.hashPassword(userUpdate.getPassword()));
         userRepository.updateFieldsByLogin(userUpdate.getLogin(), userUpdate);
     }
 
