@@ -31,6 +31,7 @@ public class RegistrationBizController {
     public String getRegistrationPage(Model model) {
         BizCreationForm biz = new BizCreationForm();
         model.addAttribute("biz", biz);
+        model.addAttribute("onlyOnline", false);
         return "registration/registration-biz";
     }
 
@@ -40,6 +41,7 @@ public class RegistrationBizController {
 
         if (userService.findByLogin(biz.getLogin()) != null) {
             model.addAttribute("biz", bizCreationForm);
+            model.addAttribute("onlyOnline", biz.isOnlyOnline());
             model.addAttribute("errorText", "Цей логін вже зайнято!");
             return "registration/registration-biz";
         }
@@ -47,6 +49,7 @@ public class RegistrationBizController {
         Object[] validation = bizService.validateBiz(bizCreationForm);
         if (!(boolean) validation[0]) {
             model.addAttribute("biz", bizCreationForm);
+            model.addAttribute("onlyOnline", biz.isOnlyOnline());
             model.addAttribute("errorText", validation[1].toString().replaceAll("Optional\\[|\\]", ""));
             return "registration/registration-biz";
         } else {

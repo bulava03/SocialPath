@@ -1,4 +1,4 @@
-.authtitle {
+.regtitle {
     width: 800px;
     background-color: rgb(0,0,0,0.7);
     margin: auto;
@@ -9,10 +9,10 @@
     border-radius: 15px 15px 0px 0px;
 }
 
-.authform {
+.regform {
     background-color: rgb(0,0,0,0.6);
     width: 800px;
-    height: 1095px;
+    height: 1175px;
     margin: auto;
     border-radius: 0px 0px 15px 15px;
 }
@@ -33,9 +33,9 @@
 
 .name:first-of-type {
     margin-top: 30px;
-}
+ }
 
-.authinput {
+.reginput {
     width: 100%;
 }
 
@@ -52,10 +52,8 @@
 
 .button {
     background-color: #e37f22;
-    position: relative;
-    right: -15px;
-    top: 30px;
-    margin: -10px 0px 0px 20px;
+    display: block;
+    margin: 30px 0px 0px 280px;
     text-align: center;
     border-radius: 12px;
     border: 0;
@@ -72,28 +70,15 @@
     background-color: #fa9434;
 }
 
-#buttonback {
-    margin-left: 520px;
-    top: -16px;
-    left: -5px;
-}
-
-#backform {
-    padding-bottom: 10px;
-    width: 240px;
-    height: 50px;
-}
-
-#regform {
+form {
     padding: 10px;
 }
 
 p.errortext {
-    color: #de0000;
+    color: red;
     font-size: 14px;
-    font-weight: bold;
-    margin-left: 275px;
-    margin-top: -115px;
+    font-weight: 100;
+    margin-left: 25px;
 }
 
 h1 {
@@ -118,8 +103,4 @@ select {
 .container {
     margin-top: 50px;
     margin-bottom: 50px;
-}
-
-#file {
-    padding-left: 0;
 }

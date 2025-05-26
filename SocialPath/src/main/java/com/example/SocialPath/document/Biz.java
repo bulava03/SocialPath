@@ -15,4 +15,9 @@ public class Biz {
     private String slogan;
     private String email;
     private String phoneNumber;
+
+    private String concreteAddress;
+    private double latitude;
+    private double longitude;
+    private boolean onlyOnline;
 }

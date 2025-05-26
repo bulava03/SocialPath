@@ -15,6 +15,7 @@ public interface UserRepository {
     User findByLoginAndPassword(String login, String password);
     void addPublicationToUser(ObjectId publicationId, String userId);
     void updateFieldsByLogin(String login, UserUpdate userUpdate);
+    void updatePasswordByLogin(String login, UserUpdate userUpdate);
     void updateBizFieldsByLogin(String login, UserUpdate userUpdate);
     void addGroupToUser(ObjectId groupId, String login);
     void removePublicationFromUser(String login, ObjectId id);

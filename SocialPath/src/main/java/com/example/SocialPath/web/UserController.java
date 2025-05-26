@@ -4,6 +4,7 @@ import com.example.SocialPath.document.User;
 import com.example.SocialPath.extraClasses.*;
 import com.example.SocialPath.helper.CheckHelper;
 import com.example.SocialPath.security.JwtTokenProvider;
+import com.example.SocialPath.security.PasswordHasher;
 import com.example.SocialPath.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.modelmapper.ModelMapper;
@@ -165,6 +166,7 @@ public class UserController {
 
         user.setName("111");
         user.setSlogan("111");
+        user.setPassword("11111111");
 
         Object[] validation = userService.validateUserUpdate(user);
         if (!(boolean) validation[0]) {
@@ -201,6 +203,7 @@ public class UserController {
 
         BizCreationForm bizCreationForm = modelMapper.map(biz, BizCreationForm.class);
         bizCreationForm.setLogin(login);
+        bizCreationForm.setPassword("11111111");
 
         Object[] validation = bizService.validateBiz(bizCreationForm);
         if (!(boolean) validation[0]) {
@@ -372,6 +375,56 @@ public class UserController {
 
         return "redirect:/user/getUsersFriends?id=" + myUser.getLogin() +
                 "&authorLogin=" + myUser.getLogin() + "&authorPassword=" + myUser.getPassword();
+    }
+
+    @GetMapping("/getChangePasswordForm")
+    public String getChangePasswordForm(HttpServletRequest req, Model model) throws IOException {
+        String token = userService.resolveToken(req);
+        if (token == null) {
+            return "redirect:/";
+        }
+        String login = jwtTokenProvider.getUsernameFromToken(token);
+
+        User myUser = userService.findByLogin(login);
+
+        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
+            model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
+            return "home/index";
+        }
+
+        model = handleAvatarService.handleAvatar(myUser, model, false);
+        model.addAttribute("errorText", "");
+
+        return "user/changePasswordForm";
+    }
+
+    @PostMapping("/changePassword")
+    public String changePassword(HttpServletRequest req, ChangePasswordForm form, Model model) throws IOException {
+        String token = userService.resolveToken(req);
+        if (token == null) {
+            return "redirect:/";
+        }
+        String login = jwtTokenProvider.getUsernameFromToken(token);
+
+        User myUser = userService.findByLogin(login);
+
+        if (!CheckHelper.nullOrBannedCheck(myUser).isEmpty()) {
+            model.addAttribute("errorText", CheckHelper.nullOrBannedCheck(myUser));
+            return "home/index";
+        }
+
+        if (!PasswordHasher.checkPassword(form.getOldPassword(), myUser.getPassword())) {
+            model = handleAvatarService.handleAvatar(myUser, model, false);
+            model.addAttribute("errorText", "Старий пароль введено неправильно!");
+            return "user/changePasswordForm";
+        }
+
+        UserUpdate userUpdate = modelMapper.map(myUser, UserUpdate.class);
+        userUpdate.setPassword(form.getPassword());
+
+        userService.updatePassword(userUpdate);
+
+        return "redirect:/user/authorisation";
     }
 
 }

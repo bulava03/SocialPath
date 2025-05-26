@@ -12,8 +12,10 @@
              onclick="dropdownUser()" th:src="'data:image/jpeg;base64,' + ${avatar}">
     </div>
     <form id="formbackPersonnalInfo" method="get" action="/user/getUserInfo"></form>
+    <form id="formbackChangePassword" method="get" action="/user/getChangePasswordForm"></form>
     <div id="dropdown" class="dropdown">
         <a href="#" onclick="personalInformation()">Про цей бізнес</a>
+        <a href="#" onclick="personalInformation()">Змінити пароль</a>
         <a href="#" onclick="logout()">Вийти</a>
     </div>
 </header>

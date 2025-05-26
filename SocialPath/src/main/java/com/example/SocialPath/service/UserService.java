@@ -18,6 +18,7 @@ public interface UserService {
     void addUser(User user);
     User findUserById(String id);
     void updateUser(UserUpdate userUpdate);
+    void updatePassword(UserUpdate userUpdate);
     void updateBiz(UserUpdate userUpdate);
     List<UserSearchResult> findUsersFriends(String login) throws IOException;
     List<GroupSearchResult> findUsersGroups(String login) throws IOException;

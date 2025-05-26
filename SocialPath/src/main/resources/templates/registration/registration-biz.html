@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SocialPath</title>
     <link rel="stylesheet" th:href="@{/style/layout.css}">
-    <link rel="stylesheet" th:href="@{/style/regFormStyle.css}">
+    <link rel="stylesheet" th:href="@{/style/regBizFormStyle.css}">
     <link rel="stylesheet" th:href="@{/style/gradientPage.css}">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.css" />
+    <link rel="stylesheet" href="/style/mapStyle.css">
 </head>
 <body>
 <div th:insert="~{/shared/layout3 :: #layoutHeader}"></div>
@@ -15,7 +18,7 @@
     <div class="regtitle">
         <h1>Реєстрація</h1>
     </div>
-    <div class="regform">
+    <div id="changingHaightForm" class="regform">
         <form id="regform" method="post" action="/registration-biz/registration-biz">
             <div class="reginput">
                 <h2 class="name">Логін</h2>
@@ -30,6 +33,31 @@
                 <input class="field" id="phone" th:value="${biz.phoneNumber}" type="text" name="phoneNumber">
                 <h2 class="name">Електронна пошта</h2>
                 <input class="field" id="email" th:value="${biz.email}" type="text" name="email">
+
+                <div class="map-section">
+                    <input type="hidden" id="address" th:value="${concreteAddress}" name="concreteAddress">
+                    <input type="hidden" id="latitude" th:value="${latitude}" name="latitude">
+                    <input type="hidden" id="longitude" th:value="${longitude}" name="longitude">
+
+                    <div class="map-container" id="mapContainer">
+                        <h2 id="map-name" class="name" th:class="${onlyOnline ? 'name hidden' : 'name'}">Місцезнаходження на карті</h2>
+
+                        <div class="remote-checkbox">
+                            <input type="checkbox" id="remoteWork" name="onlyOnline" th:value="${onlyOnline}" th:checked="${onlyOnline}">
+                            <label for="remoteWork">Тільки дистанційно</label>
+                        </div>
+
+                        <div id="search-container" th:class="${onlyOnline ? 'hidden' : ''}">
+                            <div class="search-row">
+                                <input type="text" id="search-input" placeholder="Введіть адресу для пошуку">
+                                <button type="button" id="search-button">Пошук</button>
+                            </div>
+                        </div>
+
+                        <div id="map" th:class="${onlyOnline ? 'hidden' : ''}"></div>
+                    </div>
+                </div>
+
                 <input class="button" type="submit" value="Зареєструватися">
                 <p class="errortext" id="errortext"></p>
                 <p class="errortext" th:text="${errorText}"></p>
@@ -41,5 +69,9 @@
 <footer id="layoutFooter">
     <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
 </footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
+<script src="/script/locationMapBiz.js"></script>
+
 </body>
 </html>

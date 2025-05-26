@@ -26,3 +26,7 @@ function personalInformation() {
 function groupCreation() {
     document.getElementById('formbackGroupCreation').submit();
 }
+
+function changePasswordPage() {
+    document.getElementById('formbackChangePassword').submit();
+}

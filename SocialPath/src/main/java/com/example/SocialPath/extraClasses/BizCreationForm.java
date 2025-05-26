@@ -32,4 +32,9 @@ public class BizCreationForm {
     @Pattern(regexp = "^[\\d\\s()+-]+$", message = "Номер телефону може містити лише цифри, пробіли та символи '+', '-', '(', ')'.")
     @Size(max = 20, message = "Номер телефону повинен містити не більше 20 символів.")
     private String phoneNumber;
+
+    private String concreteAddress;
+    private double latitude;
+    private double longitude;
+    private boolean onlyOnline;
 }

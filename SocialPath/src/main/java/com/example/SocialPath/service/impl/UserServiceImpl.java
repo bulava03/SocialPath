@@ -110,10 +110,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void updatePassword(UserUpdate userUpdate) {
+        userUpdate.setPassword(PasswordHasher.hashPassword(userUpdate.getPassword()));
+        userRepository.updatePasswordByLogin(userUpdate.getLogin(), userUpdate);
+    }
+
+    @Override
     public void updateBiz(UserUpdate userUpdate) {
         userRepository.updateBizFieldsByLogin(userUpdate.getLogin(), userUpdate);
     }
-
 
     @Override
     public List<UserSearchResult> findUsersFriends(String login) throws IOException {

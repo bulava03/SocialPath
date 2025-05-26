@@ -48,7 +48,6 @@ public class UserRepositoryImpl implements UserRepository {
     public void updateFieldsByLogin(String login, UserUpdate userUpdate) {
         Query query = new Query(Criteria.where("_id").is(login));
         Update update = new Update()
-                .set("password", userUpdate.getPassword())
                 .set("firstName", userUpdate.getFirstName())
                 .set("lastName", userUpdate.getLastName())
                 .set("email", userUpdate.getEmail())
@@ -68,10 +67,17 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public void updatePasswordByLogin(String login, UserUpdate userUpdate) {
+        Query query = new Query(Criteria.where("_id").is(login));
+        Update update = new Update()
+                .set("password", userUpdate.getPassword());
+        mongoTemplate.updateFirst(query, update, User.class);
+    }
+
+    @Override
     public void updateBizFieldsByLogin(String login, UserUpdate userUpdate) {
         Query query = new Query(Criteria.where("_id").is(login));
         Update update = new Update()
-                .set("password", userUpdate.getPassword())
                 .set("name", userUpdate.getName())
                 .set("slogan", userUpdate.getSlogan())
                 .set("email", userUpdate.getEmail())
