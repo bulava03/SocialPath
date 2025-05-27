@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class UserSearchResult {
+    private String login;
     private String anotherUserLogin;
     private String file;
     private String firstName;
@@ -21,4 +22,5 @@ public class UserSearchResult {
     private double latitude;
     private double longitude;
     private boolean onlyOnline;
+    private double score;
 }

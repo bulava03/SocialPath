@@ -102,7 +102,7 @@ public class SearchServiceImpl implements SearchService {
 
         User myUser = userRepository.findByLogin(thisLogin);
 
-        bizes = geoSearchService.findNearest(myUser.getLatitude(), myUser.getLongitude(), bizes, (int) Math.max((long) users.size(), groups.size()));
+        bizes = geoSearchService.findNearest(myUser.getLatitude(), myUser.getLongitude(), bizes);
 
         return new Object[]{users, groups, bizes};
     }

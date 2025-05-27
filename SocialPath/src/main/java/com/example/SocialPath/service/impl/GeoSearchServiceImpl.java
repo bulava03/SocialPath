@@ -2,12 +2,18 @@ package com.example.SocialPath.service.impl;
 
 import com.example.SocialPath.extraClasses.UserSearchResult;
 import com.example.SocialPath.service.GeoSearchService;
+import com.example.SocialPath.service.GradeService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class GeoSearchServiceImpl implements GeoSearchService {
+    @Autowired
+    private GradeService gradeService;
+
     private static final double EARTH_RADIUS = 6371.0; // Радіус Землі в км
 
     private static double haversine(double lat1, double lon1, double lat2, double lon2) {
@@ -39,35 +45,71 @@ public class GeoSearchServiceImpl implements GeoSearchService {
         return result;
     }
 
+    private List<UserSearchResult> interleaveProportionally(List<UserSearchResult> offline, List<UserSearchResult> online) {
+        List<UserSearchResult> result = new ArrayList<>();
+        int oSize = offline.size();
+        int lSize = online.size();
+
+        if (oSize == 0) return online;
+        if (lSize == 0) return offline;
+
+        double ratio = (double) oSize / lSize;
+        int i = 0, j = 0;
+        double counter = 0;
+
+        while (i < oSize || j < lSize) {
+            if ((j >= lSize) || (i < oSize && counter < ratio)) {
+                result.add(offline.get(i++));
+                counter += 1;
+            } else {
+                result.add(online.get(j++));
+                counter -= ratio;
+            }
+        }
+
+        return result;
+    }
 
     @Override
-    public List<UserSearchResult> findNearest(double userLat, double userLon, List<UserSearchResult> locations, int limit) {
-        if (limit < 6) {
-            limit = 6;
-        }
+    public List<UserSearchResult> findNearest(double userLat, double userLon, List<UserSearchResult> locations) {
+        double alpha = 0.4;
+        double beta = 0.6;
+        double gamma = 1.0;
 
-        List<UserSearchResult> remoteServices = locations.stream()
-                .filter(UserSearchResult::isOnlyOnline)
-                .limit(limit / 2)
-                .toList();
-
-        int remainingLimit = limit - remoteServices.size();
-
-        List<UserSearchResult> localServices = locations.stream()
+        // Визначаємо max відстань для нормалізації
+        double maxDistance = locations.stream()
                 .filter(loc -> !loc.isOnlyOnline())
-                .sorted(Comparator.comparingDouble(loc ->
-                        haversine(userLat, userLon, loc.getLatitude(), loc.getLongitude())))
-                .limit(remainingLimit)
-                .toList();
+                .mapToDouble(loc -> haversine(userLat, userLon, loc.getLatitude(), loc.getLongitude()))
+                .max()
+                .orElse(1.0); // захист від ділення на 0
 
-        if (localServices.size() < remainingLimit) {
-            remainingLimit = limit / 2 + (remainingLimit - localServices.size());
-            remoteServices = locations.stream()
-                    .filter(UserSearchResult::isOnlyOnline)
-                    .limit(remainingLimit)
-                    .toList();
+        // Обчислення Sᵢ
+        for (UserSearchResult loc : locations) {
+            double r = gradeService.getAverageGrade(loc.getLogin()); // 1–5 або 0 якщо не задано
+            double R = (r > 0) ? (r - 1.0) / 4.0 : 0.5;
+
+            if (loc.isOnlyOnline()) {
+                loc.setScore(gamma * R);
+            } else {
+                double d = haversine(userLat, userLon, loc.getLatitude(), loc.getLongitude());
+                double D = 1.0 - d / maxDistance;
+                loc.setScore(alpha * D + beta * R);
+            }
         }
 
-        return mergeAlternating(remoteServices, localServices);
+        // Поділ на онлайн / офлайн
+        List<UserSearchResult> online = locations.stream()
+                .filter(UserSearchResult::isOnlyOnline)
+                .sorted(Comparator.comparingDouble(UserSearchResult::getScore).reversed())
+                .collect(Collectors.toList());
+
+        List<UserSearchResult> offline = locations.stream()
+                .filter(loc -> !loc.isOnlyOnline())
+                .sorted(Comparator.comparingDouble(UserSearchResult::getScore).reversed())
+                .collect(Collectors.toList());
+
+        // Пропорційне чергування
+        return interleaveProportionally(offline, online);
     }
+
 }
