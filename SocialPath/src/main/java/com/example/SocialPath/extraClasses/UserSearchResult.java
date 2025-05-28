@@ -23,4 +23,5 @@ public class UserSearchResult {
     private double longitude;
     private boolean onlyOnline;
     private double score;
+    private int matches;
 }

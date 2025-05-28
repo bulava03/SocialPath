@@ -31,6 +31,22 @@
         <h2 class="name">Електронна пошта</h2>
         <input class="field" id="email" th:value="${user.email}" type="text" name="email">
 
+        <div class="jobs-section" style="padding-bottom: 70px;">
+          <h2 class="name" style="margin-top: 0;">Сфери діяльності</h2>
+
+          <th:block th:if="${user.jobs != null}">
+            <input th:if="${#lists.size(user.jobs) == 0}" class="field jobs-field" name="jobs" type="text" />
+          </th:block>
+
+          <input th:if="${user.jobs == null}" class="field jobs-field" name="jobs" type="text" />
+
+          <th:block th:each="job, iterStat : ${user.jobs}">
+            <input class="field jobs-field" th:value="${job}" name="jobs" type="text" />
+          </th:block>
+
+          <button type="button" class="button add-job-button">Додати сферу діяльності</button>
+        </div>
+
         <div class="map-section">
           <input type="hidden" id="address" th:value="${concreteAddress}" name="concreteAddress">
           <input type="hidden" id="latitude" th:value="${latitude}" name="latitude">
@@ -77,6 +93,8 @@
 <script src="/script/validateBizAvatarSize.js"></script>
 <script src="/script/imageUpdateDefault.js"></script>
 <script src="/script/authorization/logout.js"></script>
+
+<script src="/script/jobsSection.js"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
 <script src="/script/locationMapBiz.js"></script>

@@ -105,7 +105,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Якщо обрано "Дистанційно"
             mapElem1.classList.add('hidden');
             mapElem2.classList.add('hidden');
-            document.getElementById('changingHaightForm').classList.add('withoutMapForm');
             // Скидання координат
             document.getElementById('latitude').value = 0;
             document.getElementById('longitude').value = 0;
@@ -116,7 +115,6 @@ document.addEventListener('DOMContentLoaded', function() {
             mapElem1.classList.remove('hidden');
             mapElem2.classList.remove('hidden');
             document.getElementById('remoteWork').value = false;
-            document.getElementById('changingHaightForm').classList.remove('withoutMapForm');
             // Повернення карти у нормальний стан
             setTimeout(() => {
                 map.invalidateSize();

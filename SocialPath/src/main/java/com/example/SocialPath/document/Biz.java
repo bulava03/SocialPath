@@ -4,6 +4,8 @@ import lombok.Data;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 
+import java.util.List;
+
 @Data
 public class Biz {
     @Id
@@ -20,4 +22,6 @@ public class Biz {
     private double latitude;
     private double longitude;
     private boolean onlyOnline;
+
+    private List<String> jobs;
 }

@@ -15,6 +15,7 @@ public interface UserService {
     String resolveToken(HttpServletRequest request);
     User findByLogin(String login);
     User findUserByLoginAndPassword(String id, String password);
+    List<User> findAll();
     void addUser(User user);
     User findUserById(String id);
     void updateUser(UserUpdate userUpdate);

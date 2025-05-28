@@ -70,4 +70,6 @@ public class User {
     private String slogan;
 
     private int type;
+
+    private List<String> jobs;
 }

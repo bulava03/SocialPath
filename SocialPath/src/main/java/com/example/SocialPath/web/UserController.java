@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -212,6 +213,16 @@ public class UserController {
             model.addAttribute("errorText", validation[1].toString().replaceAll("Optional\\[|\\]", ""));
             return "user/bizInfo";
         } else {
+            List<String> jobsUpdated = new ArrayList<>();
+
+            for (String str : biz.getJobs()) {
+                if (!str.isEmpty()) {
+                    jobsUpdated.add(str);
+                }
+            }
+
+            biz.setJobs(jobsUpdated);
+
             UserUpdate user = modelMapper.map(biz, UserUpdate.class);
 
             User myUser = userService.findByLogin(login);

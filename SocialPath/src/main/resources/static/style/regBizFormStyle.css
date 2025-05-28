@@ -12,13 +12,9 @@
 .regform {
     background-color: rgb(0,0,0,0.6);
     width: 800px;
-    height: 1175px;
     margin: auto;
+    padding-bottom: 30px;
     border-radius: 0px 0px 15px 15px;
-}
-
-.withoutMapForm {
-    height: 720px;
 }
 
 .name {

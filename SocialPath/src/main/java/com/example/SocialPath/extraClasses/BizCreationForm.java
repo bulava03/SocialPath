@@ -37,4 +37,6 @@ public class BizCreationForm {
     private double latitude;
     private double longitude;
     private boolean onlyOnline;
+
+    private List<String> jobs;
 }

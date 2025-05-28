@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 @RequestMapping("/registration-biz")
@@ -53,6 +55,16 @@ public class RegistrationBizController {
             model.addAttribute("errorText", validation[1].toString().replaceAll("Optional\\[|\\]", ""));
             return "registration/registration-biz";
         } else {
+            List<String> jobsUpdated = new ArrayList<>();
+
+            for (String str : biz.getJobs()) {
+                if (!str.isEmpty()) {
+                    jobsUpdated.add(str);
+                }
+            }
+
+            biz.setJobs(jobsUpdated);
+
             User user = modelMapper.map(biz, User.class);
             user.setType(1);
             userService.addUser(user);

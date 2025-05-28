@@ -9,6 +9,7 @@ import com.example.SocialPath.repository.GroupRepository;
 import com.example.SocialPath.repository.UserRepository;
 import com.example.SocialPath.security.PasswordHasher;
 import com.example.SocialPath.service.FileStorageService;
+import com.example.SocialPath.service.ReverseGeolocationService;
 import com.example.SocialPath.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,6 +39,8 @@ public class UserServiceImpl implements UserService {
     private Validator validator;
     @Autowired
     private FileStorageService fileStorageService;
+    @Autowired
+    private ReverseGeolocationService reverseGeolocationService;
 
     @Override
     public Object[] validateUser(User user) {
@@ -98,14 +101,25 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
+    @Override
     public void addUser(User user) {
         user.setPassword(PasswordHasher.hashPassword(user.getPassword()));
+
+        if (user.getLatitude() != 0 && user.getLongitude() != 0) {
+            if (user.getConcreteAddress() == null || user.getConcreteAddress().isEmpty()) {
+                user.setConcreteAddress(reverseGeolocationService.getAddressFromCoordinates(user.getLatitude(), user.getLongitude()));
+            }
+        }
+
         userRepository.save(user);
     }
 
     @Override
     public void updateUser(UserUpdate userUpdate) {
-        userUpdate.setPassword(PasswordHasher.hashPassword(userUpdate.getPassword()));
         userRepository.updateFieldsByLogin(userUpdate.getLogin(), userUpdate);
     }
 
@@ -117,6 +131,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateBiz(UserUpdate userUpdate) {
+        if (userUpdate.getLatitude() != 0 && userUpdate.getLongitude() != 0) {
+            if (userUpdate.getConcreteAddress() == null || userUpdate.getConcreteAddress().isEmpty()) {
+                userUpdate.setConcreteAddress(reverseGeolocationService.getAddressFromCoordinates(userUpdate.getLatitude(), userUpdate.getLongitude()));
+            }
+        }
+
         userRepository.updateBizFieldsByLogin(userUpdate.getLogin(), userUpdate);
     }
 

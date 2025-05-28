@@ -8,6 +8,7 @@ import com.example.SocialPath.repository.GroupRepository;
 import com.example.SocialPath.repository.UserRepository;
 import com.example.SocialPath.service.FileStorageService;
 import com.example.SocialPath.service.GeoSearchService;
+import com.example.SocialPath.service.ReverseGeolocationService;
 import com.example.SocialPath.service.SearchService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class SearchServiceImpl implements SearchService {
@@ -29,15 +32,30 @@ public class SearchServiceImpl implements SearchService {
     private FileStorageService fileStorageService;
     @Autowired
     private GeoSearchService geoSearchService;
+    @Autowired
+    private ReverseGeolocationService reverseGeolocationService;
 
     @Override
     public Object[] searchUsersAndGroupsAndBizes(String searchValuesString, String thisLogin) throws IOException {
-        List<String> searchValues = Arrays.asList(searchValuesString.split(" "));
+        List<String> searchValues = Arrays.stream(searchValuesString.split("[,;]\\s*|\\s+"))
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
 
         List<User> usersList = searchValues.stream()
                 .flatMap(str -> userRepository.findMatchingUsers(str).stream())
                 .distinct()
                 .toList();
+
+        List<User> geoMatchedUsers = userRepository.findAll().stream()
+                .filter(user -> user.getType() == 1)
+                .filter(user -> reverseGeolocationService.countMatches(searchValues, user.getConcreteAddress()) > 0)
+                .toList();
+
+        Map<String, User> uniqueUsersMap = new LinkedHashMap<>();
+        Stream.concat(usersList.stream(), geoMatchedUsers.stream())
+                .forEach(user -> uniqueUsersMap.putIfAbsent(user.getLogin(), user));
+
+        usersList = new ArrayList<>(uniqueUsersMap.values());
 
         List<UserSearchResult> users = new ArrayList<>();
 
@@ -86,6 +104,22 @@ public class SearchServiceImpl implements SearchService {
             if (!element.getLogin().equals(thisLogin) && element.getType() == 1) {
                 UserSearchResult userSearchResult = modelMapper.map(element, UserSearchResult.class);
                 userSearchResult.setAnotherUserLogin(element.getLogin());
+
+                int matches = reverseGeolocationService.countMatches(searchValues, userSearchResult.getConcreteAddress());
+
+                String name = element.getName() != null ? element.getName().toLowerCase() : "";
+                String slogan = element.getSlogan() != null ? element.getSlogan().toLowerCase() : "";
+                String email = element.getEmail() != null ? element.getEmail().toLowerCase() : "";
+
+                for (String word : searchValues) {
+                    String lowerWord = word.toLowerCase();
+
+                    if (name.contains(lowerWord)) matches++;
+                    if (slogan.contains(lowerWord)) matches++;
+                    if (email.contains(lowerWord)) matches++;
+                }
+
+                userSearchResult.setMatches(matches);
 
                 String file;
                 if (element.getImageId() == null || element.getImageId().isEmpty()) {

@@ -61,4 +61,6 @@ public class UserUpdate {
     private double latitude;
     private double longitude;
     private boolean onlyOnline;
+
+    private List<String> jobs;
 }

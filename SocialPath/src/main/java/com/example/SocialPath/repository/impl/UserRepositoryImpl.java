@@ -38,6 +38,11 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public List<User> findAll() {
+        return mongoTemplate.findAll(User.class);
+    }
+
+    @Override
     public void addPublicationToUser(ObjectId publicationId, String userId) {
         Query query = new Query(Criteria.where("_id").is(userId));
         Update update = new Update().push("publications", publicationId);
@@ -86,7 +91,8 @@ public class UserRepositoryImpl implements UserRepository {
                 .set("concreteAddress", userUpdate.getConcreteAddress())
                 .set("longitude", userUpdate.getLongitude())
                 .set("latitude", userUpdate.getLatitude())
-                .set("onlyOnline", userUpdate.isOnlyOnline());
+                .set("onlyOnline", userUpdate.isOnlyOnline())
+                .set("jobs", userUpdate.getJobs());
         mongoTemplate.updateFirst(query, update, User.class);
     }
 

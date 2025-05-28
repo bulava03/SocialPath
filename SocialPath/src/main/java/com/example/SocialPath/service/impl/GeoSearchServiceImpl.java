@@ -26,25 +26,6 @@ public class GeoSearchServiceImpl implements GeoSearchService {
         return EARTH_RADIUS * c;
     }
 
-    public static List<UserSearchResult> mergeAlternating(
-            List<UserSearchResult> remoteServices,
-            List<UserSearchResult> localServices
-    ) {
-        List<UserSearchResult> result = new ArrayList<>();
-        int maxSize = Math.max(remoteServices.size(), localServices.size());
-
-        for (int i = 0; i < maxSize; i++) {
-            if (i < remoteServices.size()) {
-                result.add(remoteServices.get(i));
-            }
-            if (i < localServices.size()) {
-                result.add(localServices.get(i));
-            }
-        }
-
-        return result;
-    }
-
     private List<UserSearchResult> interleaveProportionally(List<UserSearchResult> offline, List<UserSearchResult> online) {
         List<UserSearchResult> result = new ArrayList<>();
         int oSize = offline.size();
@@ -72,32 +53,39 @@ public class GeoSearchServiceImpl implements GeoSearchService {
 
     @Override
     public List<UserSearchResult> findNearest(double userLat, double userLon, List<UserSearchResult> locations) {
-        double alpha = 0.4;
-        double beta = 0.6;
-        double gamma = 1.0;
+        double alpha = 0.2;  // вага відстані — менша, бо це менш важливо
+        double beta = 0.2;   // вага рейтингу — теж менш важлива
+        double gamma = 0.6;  // вага співпадінь — основна
 
-        // Визначаємо max відстань для нормалізації
+        // Максимальна відстань для нормалізації
         double maxDistance = locations.stream()
                 .filter(loc -> !loc.isOnlyOnline())
                 .mapToDouble(loc -> haversine(userLat, userLon, loc.getLatitude(), loc.getLongitude()))
                 .max()
                 .orElse(1.0); // захист від ділення на 0
 
-        // Обчислення Sᵢ
+        // Максимальна кількість співпадінь для нормалізації
+        int maxMatches = locations.stream()
+                .mapToInt(UserSearchResult::getMatches)  // припускаємо, що є метод getMatches()
+                .max()
+                .orElse(1);
+
         for (UserSearchResult loc : locations) {
-            double r = gradeService.getAverageGrade(loc.getLogin()); // 1–5 або 0 якщо не задано
+            double r = gradeService.getAverageGrade(loc.getLogin()); // 1–5 або 0, якщо не задано
             double R = (r > 0) ? (r - 1.0) / 4.0 : 0.5;
 
+            int matches = loc.getMatches();
+            double matchesNormalized = (double) matches / maxMatches;
+
             if (loc.isOnlyOnline()) {
-                loc.setScore(gamma * R);
+                loc.setScore(gamma * matchesNormalized + beta * R);
             } else {
                 double d = haversine(userLat, userLon, loc.getLatitude(), loc.getLongitude());
                 double D = 1.0 - d / maxDistance;
-                loc.setScore(alpha * D + beta * R);
+                loc.setScore(alpha * D + beta * R + gamma * matchesNormalized);
             }
         }
 
-        // Поділ на онлайн / офлайн
         List<UserSearchResult> online = locations.stream()
                 .filter(UserSearchResult::isOnlyOnline)
                 .sorted(Comparator.comparingDouble(UserSearchResult::getScore).reversed())
@@ -108,7 +96,6 @@ public class GeoSearchServiceImpl implements GeoSearchService {
                 .sorted(Comparator.comparingDouble(UserSearchResult::getScore).reversed())
                 .collect(Collectors.toList());
 
-        // Пропорційне чергування
         return interleaveProportionally(offline, online);
     }
 

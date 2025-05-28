@@ -34,6 +34,22 @@
                 <h2 class="name">Електронна пошта</h2>
                 <input class="field" id="email" th:value="${biz.email}" type="text" name="email">
 
+                <div class="jobs-section" style="padding-bottom: 50px;">
+                    <h2 class="name" style="margin-top: 0;">Сфери діяльності</h2>
+
+                    <th:block th:if="${biz.jobs != null}">
+                        <input th:if="${#lists.size(biz.jobs) == 0}" class="field jobs-field" name="jobs" type="text" />
+                    </th:block>
+
+                    <input th:if="${biz.jobs == null}" class="field jobs-field" name="jobs" type="text" />
+
+                    <th:block th:each="job, iterStat : ${biz.jobs}">
+                        <input class="field jobs-field" th:value="${job}" name="jobs" type="text" />
+                    </th:block>
+
+                    <button type="button" class="button add-job-button" style="margin-top: -20px;">Додати сферу діяльності</button>
+                </div>
+
                 <div class="map-section">
                     <input type="hidden" id="address" th:value="${concreteAddress}" name="concreteAddress">
                     <input type="hidden" id="latitude" th:value="${latitude}" name="latitude">
@@ -69,6 +85,8 @@
 <footer id="layoutFooter">
     <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
 </footer>
+
+<script src="/script/jobsSection.js"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.3/leaflet.js"></script>
 <script src="/script/locationMapBiz.js"></script>

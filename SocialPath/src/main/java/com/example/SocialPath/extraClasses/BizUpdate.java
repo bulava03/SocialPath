@@ -39,4 +39,6 @@ public class BizUpdate {
     private double latitude;
     private double longitude;
     private boolean onlyOnline;
+
+    private List<String> jobs;
 }
