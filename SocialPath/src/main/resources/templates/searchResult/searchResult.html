@@ -121,8 +121,8 @@
                                 <div class="content-cell"></div>
                                 <div class="content-cell">Електронна пошта: <span th:text="${elem.email}"></span></div>
                                 <div th:if="${elem.PhoneNumber != null}" class="content-cell">Номер телефону: <span th:text="${elem.phoneNumber}"></span></div>
-                                <div class="content-cell"></div>
-                                <div class="content-cell"></div>
+                                <div class="content-cell"><span th:text="'Адреса: ' + ${elem.concreteAddress}"></span></div>
+                                <div class="content-cell" th:if="${elem.jobs != ''}" th:text="${'Вид послуг: ' + elem.jobs}"></div>
                                 <div class="content-cell"></div>
                             </td>
                         </tr>

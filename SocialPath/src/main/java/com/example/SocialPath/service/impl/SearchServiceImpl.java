@@ -130,6 +130,23 @@ public class SearchServiceImpl implements SearchService {
                 }
                 userSearchResult.setFile(file);
 
+                StringBuilder jobsString = new StringBuilder();
+
+                if (element.getJobs() != null) {
+                    for (String job : element.getJobs()) {
+                        jobsString.append(job).append("; ");
+                    }
+                }
+
+                String result;
+                if (jobsString.isEmpty()) {
+                    result = "";
+                } else {
+                    result = jobsString.substring(0, jobsString.length() - 2);
+                }
+
+                userSearchResult.setJobs(result);
+
                 bizes.add(userSearchResult);
             }
         }

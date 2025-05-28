@@ -26,6 +26,15 @@
             <h2 style="text-align: center;" th:text="${user.slogan}"></h2>
             <p>Email: <span th:text="${user.email}"></span></p>
             <p>Телефон: <span th:text="${user.phoneNumber}"></span></p>
+            <th:block th:if="${user.jobs != null and user.jobs.size() > 0}">
+                <p th:if="${user.jobs.size() == 1}">Вид послуг: <span th:text="${user.jobs[0]}"></span></p>
+                <th:block th:unless="${user.jobs.size() == 1}">
+                    <p>Види послуг:</p>
+                    <ul style="margin-top: 0;">
+                        <li th:each="job : ${user.jobs}" th:text="${job}"></li>
+                    </ul>
+                </th:block>
+            </th:block>
 
             <div class="location-display" th:if="${user.latitude != null && user.longitude != null && user.concreteAddress != 'Дистанційно'}">
                 <!--<div class="location-address">

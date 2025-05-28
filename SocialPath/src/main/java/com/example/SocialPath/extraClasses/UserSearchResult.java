@@ -2,6 +2,8 @@ package com.example.SocialPath.extraClasses;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class UserSearchResult {
     private String login;
@@ -24,4 +26,5 @@ public class UserSearchResult {
     private boolean onlyOnline;
     private double score;
     private int matches;
+    private String jobs;
 }
