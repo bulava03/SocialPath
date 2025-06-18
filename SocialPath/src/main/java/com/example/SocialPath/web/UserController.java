@@ -65,6 +65,12 @@ public class UserController {
         model = handleAvatarService.handleAvatar(user, model, false);
         model.addAttribute("myUser", user);
 
+        if (user.getType() == 1) {
+            model.addAttribute("averageGrade", gradeService.getAverageGrade(user.getLogin()));
+            model.addAttribute("userGrade", gradeService.getAverageGrade(user.getLogin()));
+            model.addAttribute("reviews", gradeService.getReviewsByBizLogin(user.getLogin()));
+        }
+
         return "user/userPage";
     }
 
