@@ -109,8 +109,8 @@
 
       <button class="reply-btn" th:attr="onclick='makeVisible(\'' + ${comment.id} + '\')'">Reply</button>
       <button class="delete-btn" th:if="${comment.authorLogin == author.login || author.login == user.login}" th:attr="onclick='submitRemoveComment(\'' + ${comment.id} + '\',\'' + ${user.login} + '\')'">Delete</button>
-      <button class="report-btn-t1" th:if="${(comment.authorLogin == author.login || author.login == user.login) && comment.authorLogin != author.login}" th:attr="onclick='makeVisibleReport(\'' + ${comment.id} + '\')'">Report</button>
-      <button class="report-btn-t2" th:if="${comment.authorLogin != author.login && !(comment.authorLogin == author.login || author.login == user.login)}" th:attr="onclick='makeVisibleReport(\'' + ${comment.id} + '\')'">Report</button>
+      <!--<button class="report-btn-t1" th:if="${(comment.authorLogin == author.login || author.login == user.login) && comment.authorLogin != author.login}" th:attr="onclick='makeVisibleReport(\'' + ${comment.id} + '\')'">Report</button>
+      <button class="report-btn-t2" th:if="${comment.authorLogin != author.login && !(comment.authorLogin == author.login || author.login == user.login)}" th:attr="onclick='makeVisibleReport(\'' + ${comment.id} + '\')'">Report</button>--->
 
       <div class="reply-section" th:classappend="${comment.id}" style="display: none;">
         <textarea type="text" th:id="'publication-text-' + ${comment.id}" class="reply-field" th:classappend="${comment.id}" placeholder="Введіть тут Ваш коментар..."></textarea>

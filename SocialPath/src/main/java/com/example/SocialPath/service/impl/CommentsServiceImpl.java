@@ -158,10 +158,14 @@ public class CommentsServiceImpl implements CommentsService {
                 }
             }
 
+            String fullName = (author.getFirstName() != null && author.getLastName() != null)
+                    ? author.getFirstName() + " " + author.getLastName()
+                    : author.getName();
+
             PublicationPresentable toAdd = new PublicationPresentable(
                     publication.getId(),
                     author.getLogin(),
-                    author.getFirstName() + " " + author.getLastName(),
+                    fullName,
                     authorAvatar,
                     publication.getText(),
                     publication.getCreatedAt(),
@@ -217,10 +221,14 @@ public class CommentsServiceImpl implements CommentsService {
                 }
             }
 
+            String fullName = (author.getFirstName() != null && author.getLastName() != null)
+                    ? author.getFirstName() + " " + author.getLastName()
+                    : author.getName();
+
             PublicationPresentable toAdd = new PublicationPresentable(
                     publication.getId(),
                     author.getLogin(),
-                    author.getFirstName() + " " + author.getLastName(),
+                    fullName,
                     authorAvatar,
                     publication.getText(),
                     publication.getCreatedAt(),
