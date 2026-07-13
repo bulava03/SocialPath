@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>SocialPath</title>
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/leftFrameResultStyle.css">
+    <link rel="stylesheet" href="/style/backButtonStyle.css">
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/userIconStyle.css">
+</head>
+<body>
+<div th:insert="~{shared/layout2 :: #layoutHeader}"></div>
+
+<div class="container">
+    <form id="userToSubmit" th:action="@{/searchResult/getUserPage}" method="get">
+        <input class="field" id="anotherUserLogin" value="" type="hidden" name="anotherUserLogin" />
+    </form>
+
+    <div class="table-container" th:each="elem : ${users}">
+        <div class="table-wrapper">
+            <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
+                <tr>
+                    <td class="photo-cell">
+                        <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
+                             style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
+                        <img th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId}"
+                             style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="content-row">
+                        <div class="content-cell"></div>
+                        <div class="content-cell"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}"></b></div>
+                        <div class="content-cell"></div>
+                        <div class="content-cell" th:text="'Email: ' + ${elem.email}"></div>
+                        <div class="content-cell" th:if="${elem.phoneNumber != null}" th:text="'Phone number: ' + ${elem.phoneNumber}"></div>
+                        <div class="content-cell" th:if="${elem.country != null}" th:text="'Country: ' + ${elem.country}"></div>
+                        <div class="content-cell" th:if="${elem.region != null}" th:text="'Region: ' + ${elem.region}"></div>
+                        <div class="content-cell" th:if="${elem.city != null}" th:text="'City: ' + ${elem.city}"></div>
+                        <div class="content-cell" th:if="${elem.education != null}" th:text="'Education: ' + ${elem.education}"></div>
+                        <div class="content-cell" th:if="${elem.workplace != null}" th:text="'Workplace: ' + ${elem.workplace}"></div>
+                        <div class="content-cell" th:if="${login == author.login}">
+                            <form typeof="hidden" method="post" action="/user/removeFromFriendsMyPage">
+                                <input class="field" th:value="${elem.anotherUserLogin}"  type="hidden" name="id" />
+                                <input class="userButton rejectButton" style="width: 200px;" type="submit" value="Remove from friends">
+                            </form>
+                        </div>
+                        <div class="content-cell"></div>
+                        <div class="content-cell"></div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <form typeof="hidden" method="get" action="/user/anotherUserPage">
+        <input class="field" th:value="${login}" type="hidden" name="anotherUserLogin" />
+        <input class="backButton" type="submit" value="Back">
+    </form>
+</div>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/search.js"></script>
+<script src="/script/submitInSearchResultPage.js"></script>
+<script src="/script/dropdownUser.js"></script>
+<script src="/script/authorization/logout.js"></script>
+</body>
+</html>

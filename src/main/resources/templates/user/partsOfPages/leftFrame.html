@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <div id="left">
+        <img th:if="${avatar == null} and ${isAuthor}" src="/pictures/photo.png" alt="usericon">
+        <img th:if="${avatar != null} and ${isAuthor}"
+             th:src="'/images/' + ${avatar}" alt="Image">
+
+        <img th:if="${avatarAnother == null} and !${isAuthor}" src="/pictures/photo.png" alt="usericon">
+        <img th:if="${avatarAnother != null} and !${isAuthor}"
+             th:src="'/images/' + ${avatarAnother}" alt="Image"><br>
+
+            <h1 style="text-align: center;" th:text="${user.FirstName + ' ' + (user.LastName ?: '')}"></h1>
+            <p>Phone: <span th:text="${user.PhoneNumber}"></span></p>
+            <p>Email: <span th:text="${user.Email}"></span></p>
+            <p th:if="${user.DateOfBirth != null}">Date of birth: <span th:text="${#temporals.format(user.DateOfBirth, 'dd.MM.yyyy')}"></span></p>
+            <p th:if="${user.Country != null and user.Country != ''}">Country: <span th:text="${user.Country}"></span></p>
+            <p th:if="${user.Region != null and user.Region != ''}">Region: <span th:text="${user.Region}"></span></p>
+            <p th:if="${user.City != null and user.City != ''}">City: <span th:text="${user.City}"></span></p>
+            <p th:if="${user.Education != null and user.Education != ''}">Education: <span th:text="${user.Education}"></span></p>
+            <p th:if="${user.Workplace != null and user.Workplace != ''}">Workplace: <span th:text="${user.Workplace}"></span></p>
+
+
+        <div th:insert="~{user/partsOfPages/leftFrameButtons}"></div>
+    </div>
+</html>

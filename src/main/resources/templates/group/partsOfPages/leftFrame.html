@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <div id="left">
+    <img th:if="${groupAvatar == null}" src="/pictures/photo.png" alt="GroupIcon">
+    <img th:unless="${groupAvatar == null}"
+         th:src="'/images/' + ${groupAvatar}" alt="GroupIcon"><br>
+
+    <h1 style="text-align: center;" th:text="${group.name}"></h1>
+
+    <a class="leftFrameButton" th:if="${group.owner == author.login}" th:href="@{/group/getGroupUpdatingForm(id=${group.id})}">Manage group</a>
+
+    <a class="leftFrameButton" th:href="@{/group/getGroupsMembers(id=${group.id})}">Members</a>
+
+    <a class="leftFrameButton" th:href="@{/group/getGroupsAdmins(id=${group.id})}">Admins</a>
+
+    <form>
+      <input id="formGroupId" type="hidden" th:value="${group.id}" />
+    </form>
+
+    <button id="joinButton" class="leftFrameButton"
+            th:if="${not group.members.contains(author.login)}" onclick="joinGroup()">Join group</button>
+    <button id="leaveButton" class="leftFrameButton"
+            th:if="${group.members.contains(author.login) && group.owner != author.login}" onclick="leaveGroup()">Leave group</button>
+
+    <a class="leftFrameButton" th:if="${not group.members.contains(author.login)}" th:href="@{/report/getReportPage(id=${group.id})}">Report group</a>
+  </div>
+</html>

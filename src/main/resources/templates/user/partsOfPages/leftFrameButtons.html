@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <a class="leftFrameButton" th:href="@{/user/getUsersGroups(id=${user.login})}">Groups</a>
+
+    <a class="leftFrameButton" th:href="@{/user/getUsersFriends(id=${user.login})}">Friends</a>
+
+    <div th:if="${user.login == author.login}">
+        <a class="leftFrameButton" th:href="@{/user/getInvitationsToFriends(id=${user.login})}">Friend requests</a>
+    </div>
+
+    <div id="divLeftFrameButtons" th:if="${user.Login != author.Login}">
+        <form>
+            <input id="userLogin" th:value="${user.login}" type="hidden" />
+        </form>
+        <div th:if="${InRequests == 0}">
+            <button id="submitInvite" class="leftFrameButton" onclick="inviteToFriends()">Add friend</button>
+        </div>
+
+        <div th:if="${InRequests == 1}">
+            <button id="submitRemoveInvite" class="leftFrameButton" onclick="removeInviteToFriends()">Cancel friend request</button>
+        </div>
+
+        <div th:if="${InRequests == 2}">
+            <button id="submitAccept" class="leftFrameButton" onclick="acceptToFriends()">Accept friend request</button>
+            <button id="submitReject" class="leftFrameButton" onclick="rejectInvitationToFriends()">Decline friend request</button>
+        </div>
+
+        <div th:if="${InRequests == 3}">
+            <button id="submitRemove" class="leftFrameButton" onclick="removeFromFriends()">Remove from friends</button>
+        </div>
+    </div>
+</html>

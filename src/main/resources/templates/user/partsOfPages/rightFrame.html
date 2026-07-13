@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <div id="right">
+        <form id="searchForm" typeof="hidden" method="get" action="/searchResult/getSearchResult">
+            <input id="searchInput" type="hidden" name="SearchText">
+        </form>
+
+        <form id="pseudoSearchForm">
+            <input id="pseudoSearchInput" type="text" placeholder="Search...">
+            <input id="searchButton" type="submit" value="Search" onclick="submitSearch(event)">
+        </form>
+
+        <div th:if="${isAuthor}">
+            <br><br>
+            <div id="new-publication">
+                <form id="new-publication-form" enctype="multipart/form-data">
+                    <textarea id="publication-text" name="text" placeholder="Write a post..."></textarea>
+
+                    <div id="publication-media-preview" class="media-preview"></div>
+                    <input type="file" id="publication-media" name="media" accept="image/*,video/mp4" multiple style="display: none;">
+
+                    <div class="publication-actions">
+                        <button type="button" id="publication-add-media-btn" class="publication-add-media-btn">Add media</button>
+                        <button class="submit-btn" type="button" th:attr="onclick='submitPublication(\'' + ${user.login} + '\')'">Publish</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <br><br>
+
+        <div id="publications" th:fragment="publications">
+            <th:block th:if="${publications != null and publications.size() > 0}">
+                <th:block th:each="i : ${#numbers.sequence(publications.size() - 1, 0, -1)}">
+                    <div th:replace="~{renderComment/renderCommentUser :: renderComment(comment=${publications[i]})}"></div>
+                </th:block>
+            </th:block>
+            <p th:unless="${publications != null and publications.size() > 0}">No posts yet.</p>
+        </div>
+
+        <form id="commentReporter" method="post" action="/report/addReport">
+            <input class="field" th:value="${user.login}" type="hidden" name="idPage" />
+            <input class="field" value="Comment User" type="hidden" name="type" />
+            <input class="field" id="idPublicationReport" value="" type="hidden" name="idPublication" />
+            <input class="field" id="idCommentReport" value="" type="hidden" name="idComment" />
+            <input class="field" id="commentTextReport" value="" type="hidden" name="subject" />
+        </form>
+    </div>
+</html>

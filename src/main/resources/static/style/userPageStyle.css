@@ -1,0 +1,61 @@
+#page {
+    display: grid;
+    grid-template-columns: 25% 75%;
+    grid-template-rows: 100%;
+    height: 100%;
+}
+
+#left {
+    grid-column: 1;
+    background-color: #edc7a4;
+    padding-left: 20px;
+    padding-top: 40px;
+    padding-bottom: 50px;
+    padding-right: 20px;
+    color: #595959;
+    margin-left: 15px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+}
+
+#right {
+    grid-column: 2;
+    padding-left: 20px;
+    padding-right: 15px;
+    padding-top: 50px;
+    padding-bottom: 50px;
+}
+
+.leftFrameButton {
+    background-color: #e37f22;
+    display: block;
+    margin: 20px, 20px, 20px, 20px;
+    margin-top: 40px;
+    text-align: center;
+    border-radius: 12px;
+    border: 0;
+    width: 100%;
+    padding: 14px 5px;
+    outline: none;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.leftFrameButton:last-of-type {
+    margin-top: 20px;
+}
+
+.leftFrameButton:hover {
+    background-color: #fa9434;
+}
+
+#divLeftFrameButtons button {
+    margin-top: 20px;
+}
+
+a.leftFrameButton {
+    text-decoration: none;
+    box-sizing: border-box;
+}
