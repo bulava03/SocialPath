@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialPath</title>
+    <link rel="stylesheet" th:href="@{/style/layout.css}">
+    <link rel="stylesheet" th:href="@{/style/regFormStyle.css}">
+    <link rel="stylesheet" th:href="@{/style/gradientPage.css}">
+</head>
+<body>
+<div th:insert="~{shared/layout :: #layoutHeader}"></div>
+
+<div class="container">
+    <div class="regtitle">
+        <h1>Sign up</h1>
+    </div>
+    <div class="regform">
+        <form id="regform" method="post" action="/registration/registration">
+            <div class="reginput">
+                <h2 class="name">Login</h2>
+                <input class="field" id="login" th:value="${User.login}" type="text" name="login">
+                <h2 class="name">Password</h2>
+                <input class="field" id="password" type="password" name="password" autocomplete="new-password">
+                <h2 class="name">First name</h2>
+                <input class="field" id="name" th:value="${User.firstName}" type="text" name="firstName">
+                <h2 class="name">Last name</h2>
+                <input class="field" id="surname" th:value="${User.lastName}" type="text" name="lastName">
+                <h2 class="name">Phone number</h2>
+                <input class="field" id="phone" th:value="${User.phoneNumber}" type="text" name="phoneNumber">
+                <h2 class="name">Email</h2>
+                <input class="field" id="email" th:value="${User.email}" type="text" name="email">
+                <h2 class="name">Date of birth</h2>
+                <div class="dob-row">
+                <input class="field" id="dob-day" th:value="${User.year != -1 ? User.day : ''}"
+                       type="text" name="day" placeholder="Day" inputmode="numeric">
+                <select id="dob-month" name="month">
+                    <option value="" disabled hidden th:selected="${User.month == null}">Month</option>
+                    <option value="1" th:selected="${User.month == 'January'}">January</option>
+                    <option value="2" th:selected="${User.month == 'February'}">February</option>
+                    <option value="3" th:selected="${User.month == 'March'}">March</option>
+                    <option value="4" th:selected="${User.month == 'April'}">April</option>
+                    <option value="5" th:selected="${User.month == 'May'}">May</option>
+                    <option value="6" th:selected="${User.month == 'June'}">June</option>
+                    <option value="7" th:selected="${User.month == 'July'}">July</option>
+                    <option value="8" th:selected="${User.month == 'August'}">August</option>
+                    <option value="9" th:selected="${User.month == 'September'}">September</option>
+                    <option value="10" th:selected="${User.month == 'October'}">October</option>
+                    <option value="11" th:selected="${User.month == 'November'}">November</option>
+                    <option value="12" th:selected="${User.month == 'December'}">December</option>
+                </select>
+                <select id="dob-year" name="year">
+                    <option value="" disabled hidden th:selected="${User.year == -1 || User.year == 0}">Year</option>
+                    <option th:if="${User.year != -1 && User.year != 0}" th:value="${User.year}" th:text="${User.year}" selected></option>
+                </select>
+                </div>
+                <input type="hidden" id="dateOfBirth" name="dateOfBirth" value="">
+                <h2 class="name">Country</h2>
+                <select id="country" name="country">
+                    <option value="" disabled hidden th:selected="${#strings.isEmpty(User.Country)}">Country</option>
+                    <option th:if="${!#strings.isEmpty(User.Country)}"
+                            th:value="${User.Country}" th:text="${User.Country}" selected></option>
+                </select>
+                <h2 class="name">Region</h2>
+                <input class="field" id="region" th:value="${User.Region}" type="text" name="region">
+                <h2 class="name">City</h2>
+                <input class="field" id="city" th:value="${User.City}" type="text" name="city">
+                <h2 class="name">Education</h2>
+                <input class="field" id="education" th:value="${User.Education}" type="text" name="education">
+                <h2 class="name">Workplace</h2>
+                <input class="field" id="workplace" th:value="${User.Workplace}" type="text" name="workplace">
+                <input onclick="registerUser()" class="button" type="submit" value="Sign up">
+                <p class="errortext" id="errortext"></p>
+                <p class="errortext" th:text="${errorText}"></p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/generateYears.js"></script>
+<script src="/script/countryList.js"></script>
+<script src="/script/dateValidation.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+/* Shared avatar picker widget: centered round preview with change/remove actions. */
+.avatar-block {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.avatar-block img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255, 255, 255, 0.35);
+    background-color: #ffffff;
+    cursor: pointer;
+}
+
+.avatar-block img:hover {
+    border-color: #fa9434;
+}
+
+.avatar-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.avatar-button {
+    background-color: #e37f22;
+    color: #ffffff;
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.avatar-button:hover {
+    background-color: #fa9434;
+}
+
+.avatar-button-secondary {
+    background-color: rgba(255, 255, 255, 0.18);
+}
+
+.avatar-button-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}

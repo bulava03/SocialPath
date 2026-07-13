@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <header id="layoutHeader">
+        <div class="navbar-header">
+            <a id="bigbuttonlink" href="/user/authorisation">SocialPath</a>
+        </div>
+        <div class="userIcon">
+            <img th:if="${avatar == null}" id="usericon" width="30px" height="30px" alt="usericon"
+                 onclick="dropdownUser()" src="/pictures/photo.png">
+            <img th:unless="${avatar == null}" id="usericon" width="30px" height="30px" alt="usericon"
+                 onclick="dropdownUser()" th:src="'/images/' + ${avatar}">
+        </div>
+        <div id="dropdown" class="dropdown">
+            <a href="/user/getUserInfo">Personal information</a>
+            <a href="/user/getChangePasswordForm">Change password</a>
+            <a href="/group/getGroupCreationForm">Create a group</a>
+            <a href="#" onclick="logout()">Log out</a>
+        </div>
+    </header>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style/layout.css" />
+    <link rel="stylesheet" href="/style/userIconStyle.css" />
+    <link rel="stylesheet" href="/style/gradientPage.css" />
+    <link rel="stylesheet" href="/style/searchResultStyle.css">
+    <link rel="stylesheet" href="/style/searchStyle.css">
+    <title>SocialPath</title>
+</head>
+<body>
+<div th:insert="~{shared/layout2 :: #layoutHeader}"></div>
+
+<div class="container">
+    <div class="search-container">
+        <form id="searchForm" th:action="@{/searchResult/getSearchResult}" method="get">
+            <input id="searchInput" type="hidden" name="searchText">
+        </form>
+
+        <form id="pseudoSearchForm">
+            <input id="pseudoSearchInput" type="text" placeholder="Search...">
+            <input id="searchButton" type="submit" value="Search" onclick="submitSearch(event)">
+        </form>
+    </div>
+
+    <form id="userToSubmit" th:action="@{/searchResult/getUserPage}" method="get">
+        <input class="field" id="anotherUserLogin" value="" type="hidden" name="anotherUserLogin" />
+    </form>
+
+    <form id="groupToSubmit" th:action="@{/searchResult/getGroupPage}" method="get">
+        <input class="field" id="groupId" value="" type="hidden" name="groupId" />
+    </form>
+
+    <div class="container-search">
+        <div id="table-left">
+            <h3 class="table-title">People</h3>
+
+            <div class="table-container">
+                <div th:each="elem : ${users}" class="table-wrapper">
+                    <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
+                        <tr>
+                            <td>
+                                <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
+                                     width="50px" height="50px" alt="usericon">
+                                <img th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId}"
+                                     width="50px" height="50px" alt="usericon">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="content-row">
+                                <div class="content-cell"></div>
+                                <div class="content-cell"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}"></b></div>
+                                <div class="content-cell"></div>
+                                <div class="content-cell">Email: <span th:text="${elem.email}"></span></div>
+                                <div th:if="${elem.PhoneNumber != null}" class="content-cell">Phone number: <span th:text="${elem.phoneNumber}"></span></div>
+                                <div th:if="${elem.Country != null}" class="content-cell">Country: <span th:text="${elem.country}"></span></div>
+                                <div th:if="${elem.Region != null}" class="content-cell">Region: <span th:text="${elem.region}"></span></div>
+                                <div th:if="${elem.City != null}" class="content-cell">City: <span th:text="${elem.city}"></span></div>
+                                <div th:if="${elem.Education != null}" class="content-cell">Education: <span th:text="${elem.education}"></span></div>
+                                <div th:if="${elem.Workplace != null}" class="content-cell">Workplace: <span th:text="${elem.workplace}"></span></div>
+                                <div class="content-cell"></div>
+                                <div class="content-cell"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="table-centre">
+            <h3 class="table-title">Groups</h3>
+
+            <div class="table-container">
+                <div th:each="elem : ${groups}" class="table-wrapper">
+                    <table th:attr="onclick='submitGroup(\'' + ${elem.id} + '\')'">
+                        <tr>
+                            <td>
+                                <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
+                                     width="50px" height="50px" alt="usericon">
+                                <img th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId}"
+                                     width="50px" height="50px" alt="usericon">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="content-row">
+                                <div class="content-cell"></div>
+                                <div class="content-cell"><b th:text="${elem.name}"></b></div>
+                                <div class="content-cell"></div>
+                                <div class="content-cell"></div>
+                                <div class="content-cell"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src="/script/search.js"></script>
+<script src="/script/submitInSearchResultPage.js"></script>
+<script src="/script/dropdownUser.js"></script>
+<script src="/script/authorization/logout.js"></script>
+</body>
+</html>

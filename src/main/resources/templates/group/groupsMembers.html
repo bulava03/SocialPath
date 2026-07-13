@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialPath</title>
+    <link rel="stylesheet" th:href="@{/style/gradientPage.css}" />
+    <link rel="stylesheet" th:href="@{/style/leftFrameResultStyle.css}" />
+    <link rel="stylesheet" th:href="@{/style/backButtonStyle.css}" />
+    <link rel="stylesheet" th:href="@{/style/layout.css}" />
+    <link rel="stylesheet" th:href="@{/style/userIconStyle.css}" />
+</head>
+<body>
+<div th:insert="~{shared/layout2 :: #layoutHeader}"></div>
+
+<form id="userToSubmit" th:action="@{/searchResult/getUserPage}" method="get">
+    <input class="field" id="anotherUserLogin" value="" type="hidden" name="anotherUserLogin" />
+</form>
+
+<div class="table-container">
+    <div th:each="elem : ${users}" class="table-wrapper">
+        <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
+            <tr>
+                <td class="photo-cell">
+                    <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
+                         style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
+                    <img th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId}"
+                         style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
+                </td>
+            </tr>
+            <tr>
+                <td class="content-row">
+                    <div class="content-cell"></div>
+                    <div class="content-cell"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}"></b></div>
+                    <div class="content-cell"></div>
+                    <div class="content-cell">Email: <span th:text="${elem.email}"></span></div>
+                    <div class="content-cell" th:if="${elem.phoneNumber != null and elem.phoneNumber != ''}">Phone number: <span th:text="${elem.phoneNumber}"></span></div>
+                    <div class="content-cell" th:if="${elem.country != null and elem.country != ''}">Country: <span th:text="${elem.country}"></span></div>
+                    <div class="content-cell" th:if="${elem.region != null and elem.region != ''}">Region: <span th:text="${elem.region}"></span></div>
+                    <div class="content-cell" th:if="${elem.city != null and elem.city != ''}">City: <span th:text="${elem.city}"></span></div>
+                    <div class="content-cell" th:if="${elem.education != null and elem.education != ''}">Education: <span th:text="${elem.education}"></span></div>
+                    <div class="content-cell" th:if="${elem.workplace != null and elem.workplace != ''}">Workplace: <span th:text="${elem.workplace}"></span></div>
+
+                    <div style="text-align: center;" th:if="${(not admins.contains(elem.anotherUserLogin) and admins.contains(author.login)) or (owner == author.login and elem.anotherUserLogin != owner)}">
+                        <form typeof="hidden" method="post" action="/group/removeUserFromGroup">
+                            <input class="field" th:value="${groupId}" type="hidden" name="groupId" />
+                            <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="userId" />
+                            <input class="userButton rejectButton" style="width: 250px;" type="submit" value="Remove from group">
+                        </form>
+                    </div>
+
+                    <th:block th:if="${author.login == owner}">
+                        <div style="text-align: center;" th:if="!${admins.contains(elem.AnotherUserLogin)}">
+                            <form typeof="hidden" method="post" action="/group/addToAdmins">
+                                <input class="field" th:value="${groupId}" type="hidden" name="groupId" />
+                                <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="userId" />
+                                <input class="userButton acceptButton" style="width: 250px;" type="submit" value="Make admin">
+                            </form>
+                        </div>
+                    </th:block>
+
+                    <div style="text-align: center;" th:if="${author.login == owner and elem.anotherUserLogin != owner and admins.contains(elem.anotherUserLogin)}">
+                        <form typeof="hidden" method="post" action="/group/removeFromAdmins">
+                            <input class="field" th:value="${groupId}" type="hidden" name="groupId" />
+                            <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="userId" />
+                            <input class="userButton rejectButton" style="width: 250px;" type="submit" value="Remove from admins">
+                        </form>
+                    </div>
+
+
+                    <div class="content-cell"></div>
+                    <div class="content-cell"></div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div style="margin-left: 20px; margin-right: 20px;">
+    <form th:action="@{/searchResult/getGroupPage}" method="get">
+        <input class="field" th:value="${groupId}" type="hidden" name="groupId" />
+        <input class="backButton" type="submit" value="Back">
+    </form>
+</div>
+
+<br><br>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}"></span> - SocialPath</p>
+</footer>
+
+<script src="/script/search.js"></script>
+<script src="/script/submitInSearchResultPage.js"></script>
+<script src="/script/dropdownUser.js"></script>
+<script src="/script/authorization/logout.js"></script>
+</body>
+</html>
