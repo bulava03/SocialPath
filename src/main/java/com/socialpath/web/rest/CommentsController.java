@@ -1,8 +1,8 @@
 package com.socialpath.web.rest;
 
-import com.socialpath.document.Group;
-import com.socialpath.document.Publication;
-import com.socialpath.document.User;
+import com.socialpath.entity.Group;
+import com.socialpath.entity.Publication;
+import com.socialpath.entity.User;
 import com.socialpath.dto.request.DelComment;
 import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
@@ -14,7 +14,6 @@ import com.socialpath.service.CommentsService;
 import com.socialpath.service.GroupService;
 import com.socialpath.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.bson.types.ObjectId;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -76,7 +75,7 @@ public class CommentsController {
             return OperationResult.of("OK");
         }
 
-        Publication parent = commentsService.findById(new ObjectId(delComment.getIdPublication()));
+        Publication parent = commentsService.findById(Long.valueOf(delComment.getIdPublication()));
         if (parent == null) {
             throw new IllegalArgumentException("Empty content or missing target");
         }
@@ -140,7 +139,7 @@ public class CommentsController {
             return OperationResult.of("OK");
         }
 
-        if (commentsService.findById(new ObjectId(delComment.getIdPublication())) == null) {
+        if (commentsService.findById(Long.valueOf(delComment.getIdPublication())) == null) {
             throw new ResourceNotFoundException("Publication not found: " + delComment.getIdPublication());
         }
         commentsService.removeComment(delComment);
@@ -148,7 +147,7 @@ public class CommentsController {
     }
 
     private Group requireGroup(String groupId) {
-        Group group = groupService.findGroupById(new ObjectId(groupId));
+        Group group = groupService.findGroupById(Long.valueOf(groupId));
         if (group == null) {
             throw new ResourceNotFoundException("Group not found: " + groupId);
         }

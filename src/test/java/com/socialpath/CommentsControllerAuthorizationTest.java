@@ -1,14 +1,13 @@
 package com.socialpath;
 
-import com.socialpath.document.Group;
-import com.socialpath.document.Publication;
+import com.socialpath.entity.Group;
+import com.socialpath.entity.Publication;
 import com.socialpath.dto.request.DelComment;
 import com.socialpath.exception.ForbiddenOperationException;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.GroupService;
 import com.socialpath.service.UserService;
 import com.socialpath.web.rest.CommentsController;
-import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,9 +30,9 @@ class CommentsControllerAuthorizationTest {
     private GroupService groupService;
     private CommentsController controller;
 
-    private final ObjectId publicationId = new ObjectId();
-    private final ObjectId commentId = new ObjectId();
-    private final ObjectId groupId = new ObjectId();
+    private final Long publicationId = 10L;
+    private final Long commentId = 11L;
+    private final Long groupId = 12L;
 
     @BeforeEach
     void setUp() {
@@ -52,7 +51,7 @@ class CommentsControllerAuthorizationTest {
                 new UsernamePasswordAuthenticationToken(login, null, List.of()));
     }
 
-    private Publication publication(ObjectId id, String author) {
+    private Publication publication(Long id, String author) {
         Publication publication = new Publication();
         publication.setId(id);
         publication.setAuthorId(author);

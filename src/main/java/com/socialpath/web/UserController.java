@@ -1,6 +1,6 @@
 package com.socialpath.web;
 
-import com.socialpath.document.User;
+import com.socialpath.entity.User;
 import com.socialpath.dto.request.ChangePasswordForm;
 import com.socialpath.dto.request.FoundedUser;
 import com.socialpath.dto.request.LeftFrameRequest;

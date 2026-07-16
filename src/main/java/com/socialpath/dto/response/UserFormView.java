@@ -1,10 +1,6 @@
 package com.socialpath.dto.response;
 
 import lombok.Data;
-import org.bson.types.ObjectId;
-
-import java.util.List;
-
 /**
  * Flat view model of a user for rendering the registration and profile-edit
  * forms. The date of birth is split into day/month/year so the form can bind
@@ -26,8 +22,4 @@ public class UserFormView {
     private String city;
     private String education;
     private String workplace;
-    private List<ObjectId> groups;
-    private List<String> friends;
-    private List<String> friendInvites;
-    private List<ObjectId> publications;
 }

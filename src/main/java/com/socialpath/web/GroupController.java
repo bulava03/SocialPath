@@ -1,7 +1,7 @@
 package com.socialpath.web;
 
-import com.socialpath.document.Group;
-import com.socialpath.document.User;
+import com.socialpath.entity.Group;
+import com.socialpath.entity.User;
 import com.socialpath.dto.request.GroupCreationForm;
 import com.socialpath.dto.request.GroupUserRequest;
 import com.socialpath.dto.request.LeftFrameRequest;
@@ -18,7 +18,6 @@ import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.ModelAttributesService;
 import com.socialpath.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -194,7 +193,7 @@ public class GroupController {
     }
 
     private Group requireGroup(String groupId) {
-        Group group = groupService.findGroupById(new ObjectId(groupId));
+        Group group = groupService.findGroupById(Long.valueOf(groupId));
         if (group == null) {
             throw new ResourceNotFoundException("Group not found: " + groupId);
         }

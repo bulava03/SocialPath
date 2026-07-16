@@ -1,9 +1,9 @@
 package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import com.socialpath.document.Group;
-import com.socialpath.document.Publication;
-import com.socialpath.document.User;
+import com.socialpath.entity.Group;
+import com.socialpath.entity.Publication;
+import com.socialpath.entity.User;
 import com.socialpath.dto.request.DelComment;
 import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
@@ -13,9 +13,10 @@ import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.FileStorageService;
-import org.bson.types.ObjectId;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -23,6 +24,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Publications and comments over one self-referencing table. Where the
+ * document model attached publications to a user/group array and comments to
+ * a parent's comments array, here placement is expressed by the row itself:
+ * author_login for user pages, group_id for group pages, parent_id for
+ * comments. Creating and deleting therefore touch a single aggregate.
+ */
 @Service
 @RequiredArgsConstructor
 public class CommentsServiceImpl implements CommentsService {
@@ -30,109 +38,71 @@ public class CommentsServiceImpl implements CommentsService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private final CommentsRepository commentsRepository;
-    private final ModelMapper modelMapper;
     private final FileStorageService fileStorageService;
 
     @Override
     public void addNewUserPublication(NewPublication newPublication) throws IOException {
-        Publication publication = modelMapper.map(newPublication, Publication.class);
-
-        if (newPublication.getMedia() == null) {
-            newPublication.setMedia(new ArrayList<>());
-        }
-
-        List<String> mediaIds = new ArrayList<>();
-        for (MultipartFile file : newPublication.getMedia()) {
-            mediaIds.add(fileStorageService.storeFile(file));
-        }
-        publication.setMedia(mediaIds);
-
-        publication.setCreatedAt(LocalDateTime.now());
-        Publication savedPublication = commentsRepository.save(publication);
-        ObjectId publicationId = savedPublication.getId();
-        userRepository.addPublicationToUser(publicationId, newPublication.getAuthorId());
+        Publication publication = newPublication(newPublication.getText(), newPublication.getAuthorId(),
+                newPublication.getMedia());
+        commentsRepository.save(publication);
     }
 
     @Override
     public void addNewGroupPublication(NewPublication newPublication) throws IOException {
-        Publication publication = modelMapper.map(newPublication, Publication.class);
-
-        if (newPublication.getMedia() == null) {
-            newPublication.setMedia(new ArrayList<>());
-        }
-
-        List<String> mediaIds = new ArrayList<>();
-        for (MultipartFile file : newPublication.getMedia()) {
-            mediaIds.add(fileStorageService.storeFile(file));
-        }
-        publication.setMedia(mediaIds);
-
-        publication.setCreatedAt(LocalDateTime.now());
-        Publication savedPublication = commentsRepository.save(publication);
-        ObjectId publicationId = savedPublication.getId();
-        groupRepository.addPublicationToGroup(publicationId, new ObjectId(newPublication.getGroupId()));
+        Publication publication = newPublication(newPublication.getText(), newPublication.getAuthorId(),
+                newPublication.getMedia());
+        publication.setGroupId(Long.valueOf(newPublication.getGroupId()));
+        commentsRepository.save(publication);
     }
 
     @Override
     public List<PublicationPresentable> loadComments(String type, String idInType) throws IOException {
-        List<ObjectId> ids;
         if (type.equals("User")) {
-            ids = userRepository.getPublicationsIdList(idInType);
-        } else {
-            Group group = groupRepository.findById(new ObjectId(idInType)).orElse(null);
-            if (group != null) {
-                return getPublications(group.getPublications());
-            } else {
-                return null;
-            }
+            return getPublications(commentsRepository.findUserPublicationIds(idInType));
         }
-        return getPublications(ids);
+        Group group = groupRepository.findById(Long.valueOf(idInType)).orElse(null);
+        if (group == null) {
+            return null;
+        }
+        return getPublications(commentsRepository.findGroupPublicationIds(group.getId()));
     }
 
     @Override
-    public List<ObjectId> getCommentsIdsUser(String login) {
+    public List<Long> getCommentsIdsUser(String login) {
         User user = userRepository.findByLogin(login);
-        if (user != null) {
-            if (user.getPublications() != null) {
-                return user.getPublications();
-            } else {
-                return new ArrayList<>();
-            }
+        if (user == null) {
+            return new ArrayList<>();
         }
-        return new ArrayList<>();
+        return commentsRepository.findUserPublicationIds(login);
     }
 
     @Override
-    public List<ObjectId> getCommentsIdsGroup(ObjectId groupId) {
+    public List<Long> getCommentsIdsGroup(Long groupId) {
         Group group = groupRepository.findById(groupId).orElse(null);
-        if (group != null) {
-            if (group.getPublications() != null) {
-                return group.getPublications();
-            } else {
-                return new ArrayList<>();
-            }
+        if (group == null) {
+            return new ArrayList<>();
         }
-        return new ArrayList<>();
+        return commentsRepository.findGroupPublicationIds(groupId);
     }
 
     @Override
-    public List<PublicationPresentable> loadComments(List<ObjectId> commentIds) throws IOException {
+    public List<PublicationPresentable> loadComments(List<Long> commentIds) throws IOException {
         return getPublications(commentIds);
     }
 
     @Override
-    public Publication findById(ObjectId id) {
+    public Publication findById(Long id) {
         return commentsRepository.findById(id).orElse(null);
     }
 
     @Override
-    public List<PublicationPresentable> getPublications(List<ObjectId> ids) throws IOException {
+    public List<PublicationPresentable> getPublications(List<Long> ids) throws IOException {
         if (ids == null) {
             return null;
         }
 
         List<PublicationPresentable> publications = new ArrayList<>();
-        for (ObjectId element : ids) {
+        for (Long element : ids) {
             Publication publication = commentsRepository.findById(element).orElse(null);
             if (publication == null) {
                 continue;
@@ -144,16 +114,19 @@ public class CommentsServiceImpl implements CommentsService {
 
     /**
      * Builds the view model for one publication, including its author info,
-     * media ids (served via /images/{id}) and nested comments.
+     * media ids (served via /images/{id}) and nested comments, loaded by
+     * parent_id in insertion order.
      * @param publication the stored publication
      * @return the presentable form of the publication
      */
     private PublicationPresentable toPresentable(Publication publication) throws IOException {
         User author = userRepository.findByLogin(publication.getAuthorId());
 
-        List<PublicationPresentable> publicationComments = publication.getComments() != null
-                ? getPublications(publication.getComments())
-                : null;
+        List<Publication> children = commentsRepository.findByParentIdOrderByCreatedAtAscIdAsc(publication.getId());
+        List<PublicationPresentable> publicationComments = new ArrayList<>();
+        for (Publication child : children) {
+            publicationComments.add(toPresentable(child));
+        }
 
         List<String> media = publication.getMedia() != null
                 ? publication.getMedia()
@@ -200,77 +173,86 @@ public class CommentsServiceImpl implements CommentsService {
 
     @Override
     public void addNewComment(NewComment newComment) throws IOException {
-        Publication comment = modelMapper.map(newComment, Publication.class);
-
-        if (newComment.getMedia() == null) {
-            newComment.setMedia(new ArrayList<>());
-        }
-
-        List<String> mediaIds = new ArrayList<>();
-        for (MultipartFile file : newComment.getMedia()) {
-            mediaIds.add(fileStorageService.storeFile(file));
-        }
-        comment.setMedia(mediaIds);
-
-        comment.setCreatedAt(LocalDateTime.now());
-        comment.setAuthorId(newComment.getAuthorLogin());
-        Publication savedComment = commentsRepository.save(comment);
-        ObjectId commentId = savedComment.getId();
-        commentsRepository.pushCommentId(commentId, newComment.getIdPublication());
-    }
-
-    @Override
-    public void removePublicationUser(DelComment delComment) {
-        userRepository.removePublicationFromUser(delComment.getLogin(), delComment.getIdComment());
-        deletePublicationTree(delComment.getIdComment());
-    }
-
-    @Override
-    public void removePublicationGroup(DelComment delComment) {
-        groupRepository.removePublicationFromGroup(new ObjectId(delComment.getGroupId()), delComment.getIdComment());
-        deletePublicationTree(delComment.getIdComment());
-    }
-
-    @Override
-    public void removeComment(DelComment delComment) {
-        commentsRepository.removeCommentFromPublication(new ObjectId(delComment.getIdPublication()), delComment.getIdComment());
-        deletePublicationTree(delComment.getIdComment());
+        Publication comment = newPublication(newComment.getText(), newComment.getAuthorLogin(),
+                newComment.getMedia());
+        comment.setParentId(newComment.getIdPublication());
+        commentsRepository.save(comment);
     }
 
     /**
-     * Deletes a publication together with its whole comment subtree: first the
-     * media files of every node in the tree, then all documents in one batch.
-     * This is the single owner of the delete cascade; keeping the file cleanup
-     * and the document cleanup side by side is what guarantees neither
-     * documents nor GridFS files are ever orphaned.
+     * Builds a fresh publication entity. Explicit construction instead of
+     * ModelMapper on purpose: the request DTOs carry groupId/authorId
+     * properties whose names partially match the entity's Long id, which
+     * makes implicit mapping ambiguous (and it also has nothing sensible to
+     * do with the multipart media list).
+     * @param text publication text
+     * @param authorLogin the author's login
+     * @param files uploaded media, may be null
+     * @return a new, unsaved publication with media stored and timestamp set
+     */
+    private Publication newPublication(String text, String authorLogin,
+                                       List<MultipartFile> files) throws IOException {
+        Publication publication = new Publication();
+        publication.setText(text);
+        publication.setAuthorId(authorLogin);
+        publication.setMedia(storeMedia(files));
+        publication.setCreatedAt(LocalDateTime.now());
+        return publication;
+    }
+
+    @Override
+    @Transactional
+    public void removePublicationUser(DelComment delComment) {
+        deletePublicationTree(delComment.getIdComment());
+    }
+
+    @Override
+    @Transactional
+    public void removePublicationGroup(DelComment delComment) {
+        deletePublicationTree(delComment.getIdComment());
+    }
+
+    @Override
+    @Transactional
+    public void removeComment(DelComment delComment) {
+        deletePublicationTree(delComment.getIdComment());
+    }
+
+    private List<String> storeMedia(List<MultipartFile> files) throws IOException {
+        List<String> mediaIds = new ArrayList<>();
+        if (files == null) {
+            return mediaIds;
+        }
+        for (MultipartFile file : files) {
+            mediaIds.add(fileStorageService.storeFile(file));
+        }
+        return mediaIds;
+    }
+
+    /**
+     * Deletes a publication together with its whole comment subtree. The
+     * database owns the row cascade: deleting the root row lets ON DELETE
+     * CASCADE atomically remove the subtree and its publication_media rows.
+     * The application's job is the part the database cannot do — the media
+     * files on disk. Their ids are collected up front for the whole subtree
+     * with one recursive CTE, and the files are removed only after the
+     * transaction commits: a rollback must never leave rows pointing at
+     * already-deleted files.
      * @param rootId id of the publication or comment to delete
      */
-    private void deletePublicationTree(ObjectId rootId) {
-        List<Publication> tree = new ArrayList<>();
-        collectTree(rootId, tree);
+    private void deletePublicationTree(Long rootId) {
+        List<String> fileIds = commentsRepository.findSubtreeMediaFileIds(rootId);
+        commentsRepository.deleteById(rootId);
 
-        for (Publication node : tree) {
-            if (node.getMedia() != null) {
-                for (String fileId : node.getMedia()) {
-                    fileStorageService.deleteFileById(fileId);
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    fileIds.forEach(fileStorageService::deleteFileById);
                 }
-            }
-        }
-
-        commentsRepository.deleteAllById(tree.stream().map(Publication::getId).toList());
-    }
-
-    private void collectTree(ObjectId id, List<Publication> accumulator) {
-        Publication publication = commentsRepository.findById(id).orElse(null);
-        if (publication == null) {
-            return;
-        }
-        accumulator.add(publication);
-        if (publication.getComments() != null) {
-            for (ObjectId childId : publication.getComments()) {
-                collectTree(childId, accumulator);
-            }
+            });
+        } else {
+            fileIds.forEach(fileStorageService::deleteFileById);
         }
     }
-
 }

@@ -1,6 +1,6 @@
 package com.socialpath.service;
 
-import com.socialpath.document.Report;
+import com.socialpath.entity.Report;
 
 /**
  * Stores moderation reports raised against comments or groups.

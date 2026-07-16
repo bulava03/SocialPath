@@ -1,6 +1,6 @@
 package com.socialpath;
 
-import com.socialpath.document.User;
+import com.socialpath.entity.User;
 import com.socialpath.helper.CheckHelper;
 import org.junit.jupiter.api.Test;
 

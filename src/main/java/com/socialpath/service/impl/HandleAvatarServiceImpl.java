@@ -1,7 +1,7 @@
 package com.socialpath.service.impl;
 
-import com.socialpath.document.Group;
-import com.socialpath.document.User;
+import com.socialpath.entity.Group;
+import com.socialpath.entity.User;
 import com.socialpath.dto.request.UserUpdate;
 import com.socialpath.dto.response.GroupSearchResult;
 import com.socialpath.service.FileStorageService;

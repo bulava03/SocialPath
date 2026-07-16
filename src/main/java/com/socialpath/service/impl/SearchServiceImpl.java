@@ -1,8 +1,8 @@
 package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import com.socialpath.document.Group;
-import com.socialpath.document.User;
+import com.socialpath.entity.Group;
+import com.socialpath.entity.User;
 import com.socialpath.dto.response.GroupSearchResult;
 import com.socialpath.dto.response.SearchResults;
 import com.socialpath.dto.response.UserSearchResult;

@@ -1,8 +1,9 @@
 package com.socialpath.service;
 
-import com.socialpath.document.User;
+import com.socialpath.entity.User;
 import com.socialpath.dto.response.GroupSearchResult;
 import com.socialpath.dto.response.UserSearchResult;
+import com.socialpath.dto.request.RegistrationForm;
 import com.socialpath.dto.request.UserUpdate;
 import com.socialpath.validation.ValidationResult;
 
@@ -16,11 +17,12 @@ import java.util.List;
 public interface UserService {
 
     /**
-     * Validates a new user against its Bean Validation constraints.
-     * @param user the user to validate
+     * Validates raw registration input against its Bean Validation
+     * constraints (including the plaintext password rules).
+     * @param form the submitted registration form
      * @return success, or a failure carrying the first violation message
      */
-    ValidationResult validateUser(User user);
+    ValidationResult validateRegistration(RegistrationForm form);
 
     /**
      * Validates a profile update against its Bean Validation constraints.
@@ -30,7 +32,7 @@ public interface UserService {
     ValidationResult validateUserUpdate(UserUpdate user);
 
     /**
-     * Looks up a user by login, which is also the document id.
+     * Looks up a user by login, which is also the primary key.
      * @param login the login to look up
      * @return the user, or null if none exists
      */
@@ -108,18 +110,4 @@ public interface UserService {
      * @param anotherId the other side
      */
     void removeFromFriends(String myId, String anotherId);
-
-    /**
-     * Adds a group reference to a user's membership list.
-     * @param login the member
-     * @param groupId the group joined
-     */
-    void addGroup(String login, String groupId);
-
-    /**
-     * Removes a group reference from a user's membership list.
-     * @param login the member
-     * @param groupId the group left
-     */
-    void removeGroup(String login, String groupId);
 }

@@ -1,6 +1,6 @@
 package com.socialpath;
 
-import com.socialpath.document.Group;
+import com.socialpath.entity.Group;
 import com.socialpath.dto.request.GroupUserRequest;
 import com.socialpath.exception.ForbiddenOperationException;
 import com.socialpath.exception.ResourceNotFoundException;
@@ -9,7 +9,6 @@ import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.ModelAttributesService;
 import com.socialpath.service.UserService;
 import com.socialpath.web.GroupController;
-import org.bson.types.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +31,7 @@ class GroupControllerAuthorizationTest {
     private GroupService groupService;
     private GroupController controller;
 
-    private final ObjectId groupId = new ObjectId();
+    private final Long groupId = 20L;
     private Group group;
 
     @BeforeEach
@@ -145,7 +144,7 @@ class GroupControllerAuthorizationTest {
     @Test
     void removeUserFromGroup_UnknownGroup_NotFound() {
         loginAs("owner");
-        ObjectId missing = new ObjectId();
+        Long missing = 999L;
         when(groupService.findGroupById(missing)).thenReturn(null);
 
         GroupUserRequest request = request("member");

@@ -1,69 +1,117 @@
 package com.socialpath.service.impl;
 
-import com.mongodb.client.gridfs.model.GridFSFile;
 import com.socialpath.service.FileStorageService;
-import lombok.RequiredArgsConstructor;
-import org.bson.types.ObjectId;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.gridfs.GridFsOperations;
-import org.springframework.data.mongodb.gridfs.GridFsResource;
-import org.springframework.data.mongodb.gridfs.GridFsTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Objects;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Locale;
+import java.util.UUID;
+import java.util.regex.Pattern;
 
+/**
+ * File-system media storage. Ids are server-generated ({uuid}.{ext}), never
+ * derived from client-supplied names, and every id is validated against a
+ * strict pattern plus a normalized-path containment check before touching the
+ * disk, so a crafted id like "../../etc/passwd" can never escape the media
+ * directory.
+ */
 @Service
-@RequiredArgsConstructor
 public class FileStorageServiceImpl implements FileStorageService {
 
-    private final GridFsTemplate gridFsTemplate;
-    private final GridFsOperations gridFsOperations;
+    /** {uuid} optionally followed by a short alphanumeric extension. */
+    private static final Pattern FILE_ID = Pattern.compile("[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}(\\.[a-z0-9]{1,10})?");
+    private static final Pattern EXTENSION = Pattern.compile("[a-z0-9]{1,10}");
 
-    @Override
-    public String storeFile(MultipartFile file) throws IOException {
-        return gridFsTemplate.store(
-                file.getInputStream(),
-                Objects.requireNonNull(file.getOriginalFilename()),
-                file.getContentType()).toString();
+    private final Path root;
+
+    public FileStorageServiceImpl(@Value("${app.media.dir}") String mediaDir) {
+        this.root = Path.of(mediaDir).toAbsolutePath().normalize();
+        try {
+            Files.createDirectories(root);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Cannot create media directory " + root, e);
+        }
     }
 
     @Override
-    public GridFsResource getFileById(String fileId) {
-        GridFSFile gridFsFile = gridFsTemplate.findOne(byId(fileId));
-        // The null check is intentional despite IDE/Sonar flagging it as always
-        // false: GridFsOperations.findOne is documented to return null when no
-        // file matches, but its package's @NonNullApi default is not overridden
-        // with @Nullable on this method, so static analysis wrongly infers
-        // non-null. A dangling imageId (pointing at an already-deleted file)
-        // really does yield null here, and dropping the check would NPE on the
-        // next line; callers rely on null meaning "no image".
-        return gridFsFile == null ? null : gridFsOperations.getResource(gridFsFile);
+    public String storeFile(MultipartFile file) throws IOException {
+        String fileId = UUID.randomUUID() + extensionOf(file.getOriginalFilename());
+        Files.copy(file.getInputStream(), root.resolve(fileId), StandardCopyOption.REPLACE_EXISTING);
+        return fileId;
+    }
+
+    @Override
+    public Resource getFileById(String fileId) {
+        Path path = resolveSafely(fileId);
+        if (path == null || !Files.isRegularFile(path)) {
+            return null;
+        }
+        return new FileSystemResource(path);
     }
 
     @Override
     public boolean isVideo(String fileId) {
-        // See getFileById: findOne can return null in practice (missing file),
-        // even though static analysis flags this check as always true.
-        GridFSFile gridFsFile = gridFsTemplate.findOne(byId(fileId));
-        return gridFsFile != null && gridFsFile.getFilename().toLowerCase().endsWith(".mp4");
+        Path path = resolveSafely(fileId);
+        return path != null && Files.isRegularFile(path)
+                && fileId.toLowerCase(Locale.ROOT).endsWith(".mp4");
     }
 
     @Override
     public void deleteFileById(String fileId) {
-        gridFsTemplate.delete(byId(fileId));
+        Path path = resolveSafely(fileId);
+        if (path == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Cannot delete media file " + fileId, e);
+        }
     }
 
     /**
-     * Builds an id query for a GridFS file. The stored id is a String form of
-     * an ObjectId (see storeFile), so it is parsed back to ObjectId here to
-     * match the type of the _id field consistently across every lookup.
-     * @param fileId string form of the GridFS file's ObjectId
-     * @return a query matching that single file
+     * Resolves a file id inside the media directory, or returns null when the
+     * id is malformed or would resolve outside of it.
+     * @param fileId the id to resolve
+     * @return the resolved path, or null
      */
-    private Query byId(String fileId) {
-        return new Query(Criteria.where("_id").is(new ObjectId(fileId)));
+    private Path resolveSafely(String fileId) {
+        if (fileId == null || !FILE_ID.matcher(fileId).matches()) {
+            return null;
+        }
+        Path path = root.resolve(fileId).normalize();
+        if (!path.startsWith(root)) {
+            return null;
+        }
+        return path;
+    }
+
+    /**
+     * Extracts a safe, lowercase extension (with a leading dot) from the
+     * uploaded file name, or an empty string when there is none usable.
+     * @param originalFilename the client-supplied file name
+     * @return ".ext" or ""
+     */
+    private String extensionOf(String originalFilename) {
+        if (originalFilename == null) {
+            return "";
+        }
+        int dot = originalFilename.lastIndexOf('.');
+        if (dot < 0 || dot == originalFilename.length() - 1) {
+            return "";
+        }
+        String extension = originalFilename.substring(dot + 1).toLowerCase(Locale.ROOT);
+        if (!EXTENSION.matcher(extension).matches()) {
+            return "";
+        }
+        return "." + extension;
     }
 }

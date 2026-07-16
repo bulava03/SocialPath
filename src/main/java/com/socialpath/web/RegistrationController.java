@@ -1,6 +1,7 @@
 package com.socialpath.web;
 
-import com.socialpath.document.User;
+import com.socialpath.entity.User;
+import com.socialpath.dto.request.RegistrationForm;
 import com.socialpath.dto.response.UserFormView;
 import com.socialpath.helper.ConvertHelper;
 import com.socialpath.validation.ValidationResult;
@@ -13,6 +14,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+/**
+ * Registration flow. The form binds to {@link RegistrationForm} (raw input,
+ * including the plaintext password with its own constraints) rather than to
+ * the entity; the entity is created only after the input has been validated.
+ */
 @Controller
 @RequestMapping("/registration")
 @RequiredArgsConstructor
@@ -30,34 +36,35 @@ public class RegistrationController {
     }
 
     @PostMapping("/registration")
-    public String registration(User user, Model model) {
-        if (userService.findByLogin(user.getLogin()) != null) {
-            model.addAttribute("User", toFormView(user));
+    public String registration(RegistrationForm form, Model model) {
+        if (userService.findByLogin(form.getLogin()) != null) {
+            model.addAttribute("User", toFormView(form));
             model.addAttribute("errorText", "This login is already taken.");
             return "registration/registration";
         }
 
-        ValidationResult validation = userService.validateUser(user);
+        ValidationResult validation = userService.validateRegistration(form);
         if (!validation.isSuccess()) {
-            model.addAttribute("User", toFormView(user));
+            model.addAttribute("User", toFormView(form));
             model.addAttribute("errorText", validation.getMessage());
             return "registration/registration";
         }
 
-        if (user.getDateOfBirth() != null) {
-            user.setDateOfBirth(user.getDateOfBirth().toLocalDate().atStartOfDay());
+        if (form.getDateOfBirth() != null) {
+            form.setDateOfBirth(form.getDateOfBirth().toLocalDate().atStartOfDay());
         }
+        User user = modelMapper.map(form, User.class);
         userService.addUser(user);
 
         return "redirect:/";
     }
 
-    private UserFormView toFormView(User user) {
-        UserFormView userForm = modelMapper.map(user, UserFormView.class);
-        if (user.getDateOfBirth() != null) {
-            userForm.setDay(user.getDateOfBirth().getDayOfMonth());
-            userForm.setMonth(ConvertHelper.monthToString(user.getDateOfBirth().getMonthValue()));
-            userForm.setYear(user.getDateOfBirth().getYear());
+    private UserFormView toFormView(RegistrationForm form) {
+        UserFormView userForm = modelMapper.map(form, UserFormView.class);
+        if (form.getDateOfBirth() != null) {
+            userForm.setDay(form.getDateOfBirth().getDayOfMonth());
+            userForm.setMonth(ConvertHelper.monthToString(form.getDateOfBirth().getMonthValue()));
+            userForm.setYear(form.getDateOfBirth().getYear());
         } else {
             userForm.setYear(-1);
         }

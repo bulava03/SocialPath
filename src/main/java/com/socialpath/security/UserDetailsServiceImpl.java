@@ -1,6 +1,6 @@
 package com.socialpath.security;
 
-import com.socialpath.document.User;
+import com.socialpath.entity.User;
 import com.socialpath.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;

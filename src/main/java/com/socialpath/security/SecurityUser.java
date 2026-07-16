@@ -1,6 +1,6 @@
 package com.socialpath.security;
 
-import com.socialpath.document.User;
+import com.socialpath.entity.User;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

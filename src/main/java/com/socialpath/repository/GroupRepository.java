@@ -1,21 +1,28 @@
 package com.socialpath.repository;
 
-import com.socialpath.document.Group;
-import org.bson.types.ObjectId;
-import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.mongodb.repository.Query;
-import org.springframework.data.mongodb.repository.Update;
+import com.socialpath.entity.Group;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Repository
-public interface GroupRepository extends MongoRepository<Group, ObjectId> {
+public interface GroupRepository extends JpaRepository<Group, Long> {
     List<Group> findByNameIn(List<String> searchValues);
 
-    default List<String> findMembersById(ObjectId id) {
+    /**
+     * Finds all groups the given login is a member of (replaces the
+     * user-side groups array of the document model).
+     * @param memberLogin the member's login
+     * @return the groups the user belongs to
+     */
+    List<Group> findByMembersContains(String memberLogin);
+
+    default List<String> findMembersById(Long id) {
         Group group = findById(id).orElse(null);
         if (group != null) {
             return group.getMembers();
@@ -23,7 +30,7 @@ public interface GroupRepository extends MongoRepository<Group, ObjectId> {
         return null;
     }
 
-    default List<String> findAdminsById(ObjectId id) {
+    default List<String> findAdminsById(Long id) {
         Group group = findById(id).orElse(null);
         if (group != null) {
             return group.getAdmins();
@@ -31,76 +38,48 @@ public interface GroupRepository extends MongoRepository<Group, ObjectId> {
         return null;
     }
 
-
-    default void addAdmin(ObjectId groupId, String newAdminId) {
+    default void addAdmin(Long groupId, String newAdminId) {
         Group group = findById(groupId).orElse(null);
-        if (group != null) {
-            List<String> admins = group.getAdmins();
-            admins.add(newAdminId);
-            group.setAdmins(admins);
+        if (group != null && !group.getAdmins().contains(newAdminId)) {
+            group.getAdmins().add(newAdminId);
             save(group);
         }
     }
 
-    default void addUserToGroup(ObjectId groupId, String userId) {
+    default void removeFromAdmins(Long groupId, String userId) {
         Group group = findById(groupId).orElse(null);
         if (group != null) {
-            List<String> logins = group.getMembers();
-            logins.add(userId);
-            group.setMembers(logins);
+            group.getAdmins().remove(userId);
             save(group);
         }
     }
 
-    default void removeFromAdmins(ObjectId groupId, String userId) {
+    default void removeFromGroup(Long groupId, String userId) {
         Group group = findById(groupId).orElse(null);
         if (group != null) {
-            List<String> admins = group.getAdmins();
-            admins.remove(userId);
-            group.setAdmins(admins);
+            group.getMembers().remove(userId);
             save(group);
         }
     }
 
-    default void removeFromGroup(ObjectId groupId, String userId) {
+    @Transactional
+    @Modifying
+    @Query("update Group g set g.name = :name, g.imageId = :imageId where g.id = :id")
+    void updateGroup(@Param("id") Long id, @Param("name") String name, @Param("imageId") String imageId);
+
+    default void addMember(Long groupId, String memberId) {
         Group group = findById(groupId).orElse(null);
-        if (group != null) {
-            List<String> logins = group.getMembers();
-            logins.remove(userId);
-            group.setMembers(logins);
+        if (group != null && !group.getMembers().contains(memberId)) {
+            group.getMembers().add(memberId);
             save(group);
         }
     }
 
-    default void addPublicationToGroup(ObjectId publicationId, ObjectId groupId) {
+    default void removeMember(Long groupId, String memberId) {
         Group group = findById(groupId).orElse(null);
         if (group != null) {
-            List<ObjectId> publicationsUpdated = group.getPublications() == null ? new ArrayList<>() : group.getPublications();
-            publicationsUpdated.add(publicationId);
-            group.setPublications(publicationsUpdated);
+            group.getMembers().remove(memberId);
             save(group);
         }
     }
-
-    default void removePublicationFromGroup(ObjectId groupId, ObjectId publicationId) {
-        Group group = findById(groupId).orElse(null);
-        if (group != null) {
-            List<ObjectId> publications = group.getPublications();
-            publications.remove(publicationId);
-            group.setPublications(publications);
-            save(group);
-        }
-    }
-
-    @Query("{ '_id': ?0 }")
-    @Update("{ '$set': { 'name': ?1, 'imageId': ?2 }}")
-    void updateGroup(ObjectId id, String name, String imageId);
-
-    @Query("{ '_id': ?0 }")
-    @Update("{ '$push': { 'members': ?1 }}")
-    void addMember(ObjectId groupId, String memberId);
-
-    @Query("{ '_id': ?0 }")
-    @Update("{ '$pull': { 'members': ?1 }}")
-    void removeMember(ObjectId groupId, String memberId);
 }

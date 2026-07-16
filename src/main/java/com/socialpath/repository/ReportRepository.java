@@ -1,10 +1,9 @@
 package com.socialpath.repository;
 
-import com.socialpath.document.Report;
-import org.bson.types.ObjectId;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import com.socialpath.entity.Report;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ReportRepository extends MongoRepository<Report, ObjectId> {
+public interface ReportRepository extends JpaRepository<Report, Long> {
 }

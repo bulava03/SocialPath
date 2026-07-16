@@ -1,10 +1,11 @@
 package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import com.socialpath.document.Group;
-import com.socialpath.document.User;
+import com.socialpath.entity.Group;
+import com.socialpath.entity.User;
 import com.socialpath.dto.response.GroupSearchResult;
 import com.socialpath.dto.response.UserSearchResult;
+import com.socialpath.dto.request.RegistrationForm;
 import com.socialpath.dto.request.UserUpdate;
 import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
@@ -13,15 +14,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.socialpath.service.UserService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * User accounts and the social graph. Where the MongoDB edition issued
+ * targeted $push/$pull updates on embedded arrays, this edition mutates the
+ * mapped collections inside a transaction and lets JPA write the join tables
+ * (friendships, friend_invites). Group membership is no longer mirrored on
+ * the user: it is owned by group_members and queried through GroupRepository.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -33,8 +41,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public ValidationResult validateUser(User user) {
-        Set<ConstraintViolation<User>> violations = validator.validate(user);
+    public ValidationResult validateRegistration(RegistrationForm form) {
+        Set<ConstraintViolation<RegistrationForm>> violations = validator.validate(form);
 
         if (!violations.isEmpty()) {
             return ValidationResult.failure(violations.stream()
@@ -71,18 +79,41 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void updateUser(UserUpdate userUpdate) {
-        userRepository.updateFieldsByLogin(userUpdate.getLogin(), userUpdate);
+        User user = userRepository.findByLogin(userUpdate.getLogin());
+        if (user == null) {
+            return;
+        }
+        user.setFirstName(userUpdate.getFirstName());
+        user.setLastName(userUpdate.getLastName());
+        user.setEmail(userUpdate.getEmail());
+        user.setPhoneNumber(userUpdate.getPhoneNumber());
+        user.setDateOfBirth(userUpdate.getDateOfBirth());
+        user.setCountry(userUpdate.getCountry());
+        user.setRegion(userUpdate.getRegion());
+        user.setCity(userUpdate.getCity());
+        user.setEducation(userUpdate.getEducation());
+        user.setWorkplace(userUpdate.getWorkplace());
+        user.setImageId(userUpdate.getImageId());
+        userRepository.save(user);
     }
 
     @Override
+    @Transactional
     public void updatePassword(String login, String rawPassword) {
-        userRepository.updatePasswordByLogin(login, passwordEncoder.encode(rawPassword));
+        User user = userRepository.findByLogin(login);
+        if (user == null) {
+            return;
+        }
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        userRepository.save(user);
     }
 
     @Override
     public List<UserSearchResult> findUsersFriends(String login) throws IOException {
-        List<String> usersFriends = userRepository.findUsersFriends(login);
+        User user = userRepository.findByLogin(login);
+        List<String> usersFriends = user != null ? user.getFriends() : null;
 
         if (usersFriends == null) {
             return null;
@@ -91,13 +122,10 @@ public class UserServiceImpl implements UserService {
         List<User> usersFriendsObj = userRepository.findByLoginIn(usersFriends);
 
         List<UserSearchResult> usersFriendsPresentable = new ArrayList<>();
-        for (User user : usersFriendsObj
-             ) {
-            if (!user.getLogin().equals(login)) {
-                UserSearchResult toAdd = modelMapper.map(user, UserSearchResult.class);
-
-
-                toAdd.setAnotherUserLogin(user.getLogin());
+        for (User friend : usersFriendsObj) {
+            if (!friend.getLogin().equals(login)) {
+                UserSearchResult toAdd = modelMapper.map(friend, UserSearchResult.class);
+                toAdd.setAnotherUserLogin(friend.getLogin());
                 usersFriendsPresentable.add(toAdd);
             }
         }
@@ -107,17 +135,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<GroupSearchResult> findUsersGroups(String login) throws IOException {
-        List<ObjectId> userGroupsIds = userRepository.findUsersGroups(login);
-
-        if (userGroupsIds == null) {
-            return null;
-        }
-
-        List<Group> usersGroupsObj = groupRepository.findAllById(userGroupsIds);
+        List<Group> usersGroups = groupRepository.findByMembersContains(login);
 
         List<GroupSearchResult> usersGroupsPresentable = new ArrayList<>();
-        for (Group group : usersGroupsObj
-             ) {
+        for (Group group : usersGroups) {
             GroupSearchResult groupSearchResult = modelMapper.map(group, GroupSearchResult.class);
             groupSearchResult.setId(group.getId().toString());
             usersGroupsPresentable.add(groupSearchResult);
@@ -128,59 +149,88 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserSearchResult> findUsersFriendsInvitations(String login) throws IOException {
-        List<String> usersFriends = userRepository.findUsersFriendsInvitations(login);
+        User user = userRepository.findByLogin(login);
+        List<String> inviters = user != null ? user.getFriendInvites() : null;
 
-        if (usersFriends == null) {
+        if (inviters == null) {
             return null;
         }
 
-        List<User> usersFriendsObj = userRepository.findByLoginIn(usersFriends);
+        List<User> invitersObj = userRepository.findByLoginIn(inviters);
 
-        List<UserSearchResult> usersFriendsPresentable = new ArrayList<>();
-        for (User user : usersFriendsObj
-             ) {
-            if (!user.getLogin().equals(login)) {
-                UserSearchResult toAdd = modelMapper.map(user, UserSearchResult.class);
-
-
-                toAdd.setAnotherUserLogin(user.getLogin());
-                usersFriendsPresentable.add(toAdd);
+        List<UserSearchResult> invitersPresentable = new ArrayList<>();
+        for (User inviter : invitersObj) {
+            if (!inviter.getLogin().equals(login)) {
+                UserSearchResult toAdd = modelMapper.map(inviter, UserSearchResult.class);
+                toAdd.setAnotherUserLogin(inviter.getLogin());
+                invitersPresentable.add(toAdd);
             }
         }
 
-        return usersFriendsPresentable;
+        return invitersPresentable;
     }
 
     @Override
+    @Transactional
     public void acceptToFriends(String myId, String anotherId) {
-        userRepository.addToFriends(myId, anotherId);
-        userRepository.addToFriends(anotherId, myId);
+        addFriendOneWay(myId, anotherId);
+        addFriendOneWay(anotherId, myId);
     }
 
     @Override
+    @Transactional
     public void inviteUser(String myId, String anotherId) {
-        userRepository.inviteUser(myId, anotherId);
+        User invited = userRepository.findByLogin(anotherId);
+        if (invited == null) {
+            return;
+        }
+        if (invited.getFriendInvites() == null) {
+            invited.setFriendInvites(new ArrayList<>());
+        }
+        if (!invited.getFriendInvites().contains(myId)) {
+            invited.getFriendInvites().add(myId);
+            userRepository.save(invited);
+        }
     }
 
     @Override
+    @Transactional
     public void removeFromInvitations(String myId, String anotherId) {
-        userRepository.removeFromInvitations(myId, anotherId);
+        User user = userRepository.findByLogin(myId);
+        if (user == null || user.getFriendInvites() == null) {
+            return;
+        }
+        user.getFriendInvites().remove(anotherId);
+        userRepository.save(user);
     }
 
     @Override
+    @Transactional
     public void removeFromFriends(String myId, String anotherId) {
-        userRepository.removeFromFriends(myId, anotherId);
-        userRepository.removeFromFriends(anotherId, myId);
+        removeFriendOneWay(myId, anotherId);
+        removeFriendOneWay(anotherId, myId);
     }
 
-    @Override
-    public void addGroup(String login, String  groupId) {
-        userRepository.addGroup(login, new ObjectId(groupId));
+    private void addFriendOneWay(String owner, String friend) {
+        User user = userRepository.findByLogin(owner);
+        if (user == null) {
+            return;
+        }
+        if (user.getFriends() == null) {
+            user.setFriends(new ArrayList<>());
+        }
+        if (!user.getFriends().contains(friend)) {
+            user.getFriends().add(friend);
+            userRepository.save(user);
+        }
     }
 
-    @Override
-    public void removeGroup(String login, String groupId) {
-        userRepository.removeGroup(login, new ObjectId(groupId));
+    private void removeFriendOneWay(String owner, String friend) {
+        User user = userRepository.findByLogin(owner);
+        if (user == null || user.getFriends() == null) {
+            return;
+        }
+        user.getFriends().remove(friend);
+        userRepository.save(user);
     }
-
 }
