@@ -1,8 +1,8 @@
 package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import com.socialpath.document.Group;
-import com.socialpath.document.User;
+import com.socialpath.entity.Group;
+import com.socialpath.entity.User;
 import com.socialpath.dto.request.GroupCreationForm;
 import com.socialpath.dto.response.UserSearchResult;
 import com.socialpath.validation.ValidationResult;
@@ -10,10 +10,8 @@ import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.GroupService;
-import com.socialpath.service.UserService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import org.bson.types.ObjectId;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,7 +26,6 @@ public class GroupServiceImpl implements GroupService {
     private final HandleAvatarService handleAvatarService;
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
-    private final UserService userService;
     private final ModelMapper modelMapper;
     private final Validator validator;
 
@@ -45,29 +42,26 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public Group addGroup(Group group) {
+        // The owner starts as the sole member and admin. Membership now lives
+        // only in group_members/group_admins, so there is no user-side list to
+        // keep in sync (the document model synchronized two arrays here).
         group.setMembers(new ArrayList<>(Collections.singletonList(group.getOwner())));
         group.setAdmins(new ArrayList<>(Collections.singletonList(group.getOwner())));
-        Group savedGroup = groupRepository.save(group);
-        ObjectId groupId = savedGroup.getId();
-        userRepository.addGroupToUser(groupId, group.getOwner());
-        return savedGroup;
+        return groupRepository.save(group);
     }
 
     @Override
-    public Group findGroupById(ObjectId id) {
+    public Group findGroupById(Long id) {
         return groupRepository.findById(id).orElse(null);
     }
 
     @Override
-    public List<UserSearchResult> findGroupsMembers(ObjectId id) throws IOException {
+    public List<UserSearchResult> findGroupsMembers(Long id) throws IOException {
         List<String> groupsMembers = groupRepository.findMembersById(id);
         List<User> membersObj = userRepository.findByLoginIn(groupsMembers);
         List<UserSearchResult> groupsMembersPresentable = new ArrayList<>();
-        for (User user : membersObj
-             ) {
+        for (User user : membersObj) {
             UserSearchResult toAdd = modelMapper.map(user, UserSearchResult.class);
-
-
             toAdd.setAnotherUserLogin(user.getLogin());
             groupsMembersPresentable.add(toAdd);
         }
@@ -75,20 +69,17 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public List<String> findGroupsAdmins(ObjectId id) {
+    public List<String> findGroupsAdmins(Long id) {
         return groupRepository.findAdminsById(id);
     }
 
     @Override
-    public List<UserSearchResult> findGroupsAdminsPresentable(ObjectId id) throws IOException {
+    public List<UserSearchResult> findGroupsAdminsPresentable(Long id) throws IOException {
         List<String> groupsAdmins = groupRepository.findAdminsById(id);
         List<User> adminsObj = userRepository.findByLoginIn(groupsAdmins);
         List<UserSearchResult> groupsAdminsPresentable = new ArrayList<>();
-        for (User user : adminsObj
-        ) {
+        for (User user : adminsObj) {
             UserSearchResult toAdd = modelMapper.map(user, UserSearchResult.class);
-
-
             toAdd.setAnotherUserLogin(user.getLogin());
             groupsAdminsPresentable.add(toAdd);
         }
@@ -96,24 +87,19 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public void removeFromAdmins(ObjectId groupId, String userId) {
+    public void removeFromAdmins(Long groupId, String userId) {
         groupRepository.removeFromAdmins(groupId, userId);
     }
 
-    private void removeFromGroup(ObjectId groupId, String userId) {
-        userRepository.removeFromGroups(userId, groupId);
-        groupRepository.removeFromGroup(groupId, userId);
-    }
-
     @Override
-    public void addToAdmins(ObjectId groupId, String userId) {
+    public void addToAdmins(Long groupId, String userId) {
         groupRepository.addAdmin(groupId, userId);
     }
 
     @Override
-    public void removeUserFromGroup(ObjectId groupId, String userId) {
-        removeFromAdmins(groupId, userId);
-        removeFromGroup(groupId, userId);
+    public void removeUserFromGroup(Long groupId, String userId) {
+        groupRepository.removeFromAdmins(groupId, userId);
+        groupRepository.removeFromGroup(groupId, userId);
     }
 
     @Override
@@ -127,11 +113,11 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public void addMember(String groupId, String memberId) {
-        groupRepository.addMember(new ObjectId(groupId), memberId);
+        groupRepository.addMember(Long.valueOf(groupId), memberId);
     }
 
     @Override
     public void removeMember(String groupId, String memberId) {
-        groupRepository.removeMember(new ObjectId(groupId), memberId);
+        groupRepository.removeMember(Long.valueOf(groupId), memberId);
     }
 }

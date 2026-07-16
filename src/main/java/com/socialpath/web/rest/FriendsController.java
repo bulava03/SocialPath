@@ -1,6 +1,6 @@
 package com.socialpath.web.rest;
 
-import com.socialpath.document.User;
+import com.socialpath.entity.User;
 import com.socialpath.dto.response.OperationResult;
 import com.socialpath.exception.ResourceNotFoundException;
 import com.socialpath.security.SecurityUtils;

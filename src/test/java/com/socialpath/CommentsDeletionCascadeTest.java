@@ -1,74 +1,54 @@
 package com.socialpath;
 
-import com.socialpath.document.Publication;
 import com.socialpath.dto.request.DelComment;
 import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.FileStorageService;
 import com.socialpath.service.impl.CommentsServiceImpl;
-import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.modelmapper.ModelMapper;
 
 import java.util.List;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Guards the delete cascade invariant: removing a publication must delete the
- * media files of every node in its comment subtree, not only the root's, and
- * must delete every document of the subtree.
+ * Guards the delete invariant of the publication tree. Rows are removed by
+ * the database's ON DELETE CASCADE from a single root delete; the service is
+ * responsible for the part the database cannot do — collecting the media
+ * file ids of the whole subtree (recursive CTE) and removing those files.
+ * Without an active transaction (as in these unit tests) the files are
+ * removed immediately; inside a transaction the cleanup runs after commit.
  */
 class CommentsDeletionCascadeTest {
 
     private CommentsRepository commentsRepository;
     private FileStorageService fileStorageService;
-    private UserRepository userRepository;
     private CommentsServiceImpl service;
 
-    private final ObjectId publicationId = new ObjectId();
-    private final ObjectId commentId = new ObjectId();
-    private final ObjectId replyId = new ObjectId();
+    private final Long publicationId = 1L;
+    private final Long commentId = 2L;
 
     @BeforeEach
     void setUp() {
         commentsRepository = mock(CommentsRepository.class);
         fileStorageService = mock(FileStorageService.class);
-        userRepository = mock(UserRepository.class);
         service = new CommentsServiceImpl(
-                userRepository,
+                mock(UserRepository.class),
                 mock(GroupRepository.class),
                 commentsRepository,
-                mock(ModelMapper.class),
                 fileStorageService);
     }
 
-    private Publication node(ObjectId id, List<String> media, List<ObjectId> comments) {
-        Publication publication = new Publication();
-        publication.setId(id);
-        publication.setAuthorId("alice");
-        publication.setMedia(media);
-        publication.setComments(comments);
-        return publication;
-    }
-
     @Test
-    void removePublicationUser_DeletesMediaOfWholeSubtree() {
+    void removePublicationUser_DeletesRootRowAndMediaOfWholeSubtree() {
         // publication (photo1) -> comment (photo2) -> reply (photo3)
-        when(commentsRepository.findById(publicationId))
-                .thenReturn(Optional.of(node(publicationId, List.of("photo1"), List.of(commentId))));
-        when(commentsRepository.findById(commentId))
-                .thenReturn(Optional.of(node(commentId, List.of("photo2"), List.of(replyId))));
-        when(commentsRepository.findById(replyId))
-                .thenReturn(Optional.of(node(replyId, List.of("photo3"), null)));
+        when(commentsRepository.findSubtreeMediaFileIds(publicationId))
+                .thenReturn(List.of("photo1", "photo2", "photo3"));
 
         DelComment delComment = new DelComment();
         delComment.setIdPublication("publications");
@@ -77,22 +57,18 @@ class CommentsDeletionCascadeTest {
 
         service.removePublicationUser(delComment);
 
+        // One root delete; the database cascade removes the subtree rows.
+        verify(commentsRepository).deleteById(publicationId);
+        // Media files of every node in the subtree are cleaned up.
         verify(fileStorageService).deleteFileById("photo1");
         verify(fileStorageService).deleteFileById("photo2");
         verify(fileStorageService).deleteFileById("photo3");
-        verify(userRepository).removePublicationFromUser("alice", publicationId);
-
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<ObjectId>> deleted = ArgumentCaptor.forClass(List.class);
-        verify(commentsRepository).deleteAllById(deleted.capture());
-        assertEquals(3, deleted.getValue().size());
-        assertTrue(deleted.getValue().containsAll(List.of(publicationId, commentId, replyId)));
     }
 
     @Test
     void removeComment_DeletesOnlyItsOwnSubtree() {
-        when(commentsRepository.findById(commentId))
-                .thenReturn(Optional.of(node(commentId, List.of("photo2"), null)));
+        when(commentsRepository.findSubtreeMediaFileIds(commentId))
+                .thenReturn(List.of("photo2"));
 
         DelComment delComment = new DelComment();
         delComment.setIdPublication(publicationId.toString());
@@ -100,12 +76,8 @@ class CommentsDeletionCascadeTest {
 
         service.removeComment(delComment);
 
+        verify(commentsRepository).deleteById(commentId);
+        verify(commentsRepository, never()).deleteById(publicationId);
         verify(fileStorageService).deleteFileById("photo2");
-        verify(commentsRepository).removeCommentFromPublication(publicationId, commentId);
-
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<ObjectId>> deleted = ArgumentCaptor.forClass(List.class);
-        verify(commentsRepository).deleteAllById(deleted.capture());
-        assertEquals(List.of(commentId), deleted.getValue());
     }
 }

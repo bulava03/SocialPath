@@ -8,7 +8,6 @@ import com.socialpath.service.CommentsService;
 import com.socialpath.service.GroupService;
 import com.socialpath.service.ModelAttributesService;
 import com.socialpath.service.UserService;
-import org.bson.types.ObjectId;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,11 +42,11 @@ public class CommentsViewController {
     public String loadCommentsGroup(String groupId, Model model) throws IOException {
         String authorLogin = SecurityUtils.getCurrentLogin();
 
-        List<PublicationPresentable> publications = commentsService.loadComments(commentsService.getCommentsIdsGroup(new ObjectId(groupId)));
+        List<PublicationPresentable> publications = commentsService.loadComments(commentsService.getCommentsIdsGroup(Long.valueOf(groupId)));
 
         model.addAttribute("publications", publications);
         model.addAttribute("author", new UserLogin(authorLogin, ""));
-        model.addAttribute("group", groupService.findGroupById(new ObjectId(groupId)));
+        model.addAttribute("group", groupService.findGroupById(Long.valueOf(groupId)));
 
         return "group/partsOfPages/rightFrame :: publications";
     }

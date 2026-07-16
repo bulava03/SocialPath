@@ -1,6 +1,6 @@
 package com.socialpath;
 
-import com.socialpath.document.Report;
+import com.socialpath.entity.Report;
 import com.socialpath.dto.request.NewReport;
 import com.socialpath.helper.ReportHelper;
 import org.junit.jupiter.api.Test;

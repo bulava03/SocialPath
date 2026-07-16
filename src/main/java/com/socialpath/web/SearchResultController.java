@@ -1,14 +1,13 @@
 package com.socialpath.web;
 
 import lombok.RequiredArgsConstructor;
-import com.socialpath.document.Group;
-import com.socialpath.document.User;
+import com.socialpath.entity.Group;
+import com.socialpath.entity.User;
 import com.socialpath.dto.request.*;
 import com.socialpath.dto.response.*;
 import com.socialpath.security.SecurityUtils;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.*;
-import org.bson.types.ObjectId;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,12 +50,12 @@ public class SearchResultController {
     public String getGroupPage(FoundedGroup foundedGroup, Model model) throws IOException {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
 
-        if (groupService.findGroupById(new ObjectId(foundedGroup.getGroupId())) == null) {
+        if (groupService.findGroupById(Long.valueOf(foundedGroup.getGroupId())) == null) {
             model = modelAttributesService.usersAttributes(model, user, true, commentsService.loadComments("User", user.getLogin()));
             return "user/userPage";
         }
 
-        Group group = groupService.findGroupById(new ObjectId(foundedGroup.getGroupId()));
+        Group group = groupService.findGroupById(Long.valueOf(foundedGroup.getGroupId()));
 
         model.addAttribute("group", group);
         model.addAttribute("author", new UserLogin(user.getLogin(), ""));

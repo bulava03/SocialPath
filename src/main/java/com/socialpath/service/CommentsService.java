@@ -1,18 +1,17 @@
 package com.socialpath.service;
 
-import com.socialpath.document.Publication;
+import com.socialpath.entity.Publication;
 import com.socialpath.dto.request.DelComment;
 import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
 import com.socialpath.dto.response.PublicationPresentable;
-import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.util.List;
 
 /**
- * The publication/comment feed. Publications and comments share one recursive
- * document model (a {@link Publication} referencing child publications), so
+ * The publication/comment feed. Publications and comments share one
+ * self-referencing table (a {@link Publication} with an optional parent), so
  * the same operations serve both a top-level post and a nested comment.
  */
 public interface CommentsService {
@@ -42,28 +41,28 @@ public interface CommentsService {
      * @param commentIds the publication ids to load
      * @return the publications as view models
      */
-    List<PublicationPresentable> loadComments(List<ObjectId> commentIds) throws IOException;
+    List<PublicationPresentable> loadComments(List<Long> commentIds) throws IOException;
 
     /**
      * Returns the ids of a user's top-level publications.
      * @param login the page owner
      * @return the publication ids
      */
-    List<ObjectId> getCommentsIdsUser(String login);
+    List<Long> getCommentsIdsUser(String login);
 
     /**
      * Returns the ids of a group's top-level publications.
      * @param groupId the group id
      * @return the publication ids
      */
-    List<ObjectId> getCommentsIdsGroup(ObjectId groupId);
+    List<Long> getCommentsIdsGroup(Long groupId);
 
     /**
      * Looks up a single publication or comment by id.
      * @param id the publication id
      * @return the publication, or null if none exists
      */
-    Publication findById(ObjectId id);
+    Publication findById(Long id);
 
     /**
      * Resolves publication ids into their presentable form, recursively
@@ -71,7 +70,7 @@ public interface CommentsService {
      * @param ids the publication ids
      * @return the publications as view models, or null if ids is null
      */
-    List<PublicationPresentable> getPublications(List<ObjectId> ids) throws IOException;
+    List<PublicationPresentable> getPublications(List<Long> ids) throws IOException;
 
     /**
      * Adds a comment under an existing publication.

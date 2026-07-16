@@ -1,6 +1,6 @@
 package com.socialpath.web;
 
-import com.socialpath.document.Report;
+import com.socialpath.entity.Report;
 import com.socialpath.dto.request.LeftFrameRequest;
 import com.socialpath.dto.request.NewReport;
 import com.socialpath.dto.response.UserLogin;

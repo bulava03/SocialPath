@@ -1,21 +1,35 @@
 # SocialPath
 
-A social network built with Spring Boot and MongoDB: profiles, friends, groups,
-publications with media and threaded comments, moderation reports, and
-site-wide search.
+A social network web application built with Spring Boot and MySQL. Users
+create profiles, connect as friends, join groups, publish posts with photos
+and video, discuss them in threaded comments, and report content for
+moderation.
 
-Started as a university project, then substantially reworked: real
-authentication and authorization, media streaming instead of inline Base64,
-a consolidated delete cascade, English UI with i18n-ready validation messages,
-and a test suite around the security-sensitive logic.
+## Features
+
+- **Accounts** — registration with validated input, JWT-based sessions,
+  password change, profile editing (bio fields, birth date, location,
+  education, workplace) and avatar upload.
+- **Friends** — invitations, accepting/declining, friend lists, removal;
+  friendship is always mutual.
+- **Groups** — anyone can create a group and becomes its owner; owners
+  appoint admins, admins moderate content and membership; users join and
+  leave freely.
+- **Publications** — text posts with up to five attached photos or an mp4
+  video, on the user's own page or in a group.
+- **Comments** — nested, unlimited depth: a comment can be replied to just
+  like a post. Authors, page owners and group moderators can delete a post
+  or comment together with its whole reply subtree and all attached media.
+- **Reports** — users report publications, comments or groups; reports are
+  stored with status tracking for a moderation workflow.
+- **Search** — one search box across user profiles (name, contacts,
+  location, education, workplace) and group names.
 
 ## Tech stack
 
-- Java 21, Spring Boot 3.3 (Web MVC, Security, Validation)
-- MongoDB + GridFS (Spring Data)
-- Thymeleaf server-rendered pages and AJAX-loaded HTML fragments
-- JWT (jjwt), BCrypt
-- JUnit 5 + Mockito, Checkstyle, GitHub Actions
+Java 21 · Spring Boot 3.3 (Web MVC, Security, Validation) · MySQL 8 ·
+Spring Data JPA (Hibernate) · Flyway · Thymeleaf · JWT (jjwt) · BCrypt ·
+JUnit 5 + Mockito · Testcontainers · Checkstyle · GitHub Actions · Docker
 
 ## Getting started
 
@@ -25,69 +39,92 @@ The only prerequisite is Docker:
 docker compose up --build
 ```
 
-Then open http://localhost:8080, register a user and explore.
+Open http://localhost:8080, register a user and explore. To run against
+your own MySQL instead, start MySQL 8 on `localhost:3306` and run
+`./mvnw spring-boot:run`. Flyway creates and versions the schema on first
+start.
 
-To run locally instead, start a MongoDB on `localhost:27017` and run:
+Configuration is environment-based:
 
-```bash
-./mvnw spring-boot:run
-```
+| Variable      | Default          | Purpose                                  |
+|---------------|------------------|------------------------------------------|
+| `DB_HOST`     | `localhost`      | MySQL host                                |
+| `DB_PORT`     | `3306`           | MySQL port                                |
+| `DB_NAME`     | `socialpath`     | Database name                             |
+| `DB_USER`     | `root`           | Database user                             |
+| `DB_PASSWORD` | `root`           | Database password                         |
+| `MEDIA_DIR`   | `./media`        | Directory for uploaded media (a named Docker volume in compose) |
+| `JWT_SECRET`  | dev-only default | HMAC key for session tokens — set a long random value in any real deployment |
 
-Configuration is environment-based (see `application.properties`):
+Run the test suite with `./mvnw verify` (requires a Docker daemon: the
+context test boots the application against a throwaway MySQL via
+Testcontainers, exercising the Flyway migration end to end).
 
-| Variable     | Default          | Purpose                          |
-|--------------|------------------|----------------------------------|
-| `MONGO_HOST` | `localhost`      | MongoDB host                     |
-| `MONGO_PORT` | `27017`          | MongoDB port                     |
-| `JWT_SECRET` | dev-only default | HMAC key for session tokens — set a long random value in any real deployment |
+## Architecture
 
-## Security model
+Classic layered Spring MVC. Thymeleaf renders full pages; interactive parts
+(feeds, comments, membership buttons) are HTML fragments re-rendered on the
+server and swapped in by small vanilla-JS fetch calls — no front-end
+framework. Controllers stay thin and delegate to a service layer that owns
+validation, authorization checks and transactions; persistence is Spring
+Data JPA repositories over a Flyway-versioned schema (`db/migration`),
+with Hibernate running in `ddl-auto=none` — the database schema has exactly
+one owner.
 
-- **Authentication**: login issues a JWT stored in an `HttpOnly`, `Secure`,
-  `SameSite=Strict` cookie set by the server. The token never passes through
-  front-end JavaScript; `SameSite=Strict` is also the CSRF defence for the
-  cookie-based session, which is why the Spring CSRF filter is disabled.
-- **Passwords**: BCrypt (strength 12) via a single Spring `PasswordEncoder`.
-- **Authorization**: every mutating endpoint checks ownership — publications
-  and comments can be deleted by their author, the page owner, or group
-  moderators; group management (removing members, appointing admins) is
-  restricted to the owner/admins. Violations raise `ForbiddenOperationException`,
-  translated to a redirect for pages and a `403` JSON body for REST.
-- **Validation**: Bean Validation on both create and update paths, with
-  messages externalized to `ValidationMessages.properties`. Client-side checks
-  exist for UX only; the server is the source of truth.
+Uploaded media lives on the file system (a Docker volume) under
+server-generated `{uuid}.{ext}` names. Every file id is validated against a
+strict pattern and a normalized-path containment check before any disk
+access, so a crafted id cannot escape the media directory.
 
-## Architecture notes
+## Data model
 
-- **Media**: uploads live in GridFS and are streamed by `ImageController`
-  (`GET /images/{id}`) with long-lived cache headers — GridFS ids are
-  immutable, so browsers cache aggressively. Pages carry only links, images
-  lazy-load, videos fetch metadata until played.
-- **Feed**: publications and comments share one recursive document model
-  (`Publication` referencing child `Publication`s), rendered server-side as
-  Thymeleaf fragments and loaded over AJAX — one template is the single
-  source of markup for both initial render and updates.
-- **Delete cascade**: removing a publication deletes the media files of every
-  node in its comment subtree and then all documents in one batch. The cascade
-  has a single owner in the service layer and a regression test
-  (`CommentsDeletionCascadeTest`) guarding the invariant.
-- **REST contract**: JSON bodies with semantic results
-  (`{"result": "INVITED"}`) and proper HTTP statuses; errors are
-  `{"error": "..."}` with 400/403/404, unauthenticated requests get 401.
+Ten tables around a natural primary key: `users.login` is immutable,
+embedded in JWTs and URLs, and referenced by every relation.
 
-## Testing
+- `friendships` stores mutual friendship as mirrored rows (one per
+  direction), making membership checks a simple indexed lookup from either
+  side; pending invitations live in `friend_invites`.
+- `social_groups` (named so because `GROUPS` is a reserved word in MySQL 8)
+  with `group_members` and `group_admins` join tables; the owner is always
+  present in both.
+- `publications` holds posts **and** comments in one table with a
+  self-referencing `parent_id` (adjacency list): a comment is simply a
+  publication with a parent. A row's placement is expressed by its columns —
+  `author_login` for user pages, `group_id` for group feeds, `parent_id`
+  for replies. Attached files are ordered rows in `publication_media`.
+- Deleting a post is one root `DELETE`: `ON DELETE CASCADE` atomically
+  removes the reply subtree and its media rows. The application handles the
+  part the database cannot — files on disk: their ids are collected up
+  front with a single recursive CTE over the subtree, and the files are
+  removed only after the transaction commits, so a rollback never leaves
+  rows pointing at deleted files.
+- Search is a multi-field case-insensitive `LIKE` query; a `FULLTEXT` index
+  is the designated next step if profiles grow large.
 
-```bash
-./mvnw verify
-```
+## Security
 
-Unit tests cover JWT issuing/validation, the authorization rules for group
-management and comment deletion, the delete cascade, validation plumbing and
-helpers. Checkstyle runs as part of the build.
+- **Authentication** — login issues a JWT stored in an `HttpOnly`, `Secure`,
+  `SameSite=Strict` cookie set by the server; the token never passes through
+  front-end JavaScript, and `SameSite=Strict` doubles as the CSRF defence
+  for the cookie-based session.
+- **Passwords** — BCrypt (strength 12).
+- **Authorization** — every mutating endpoint checks ownership: publications
+  and comments are deletable by their author, the page owner or group
+  moderators; group management is restricted to the owner and admins.
+  Violations raise a dedicated exception, translated to a redirect for pages
+  and a `403` JSON body for REST endpoints.
+- **Validation** — Bean Validation with externalized messages. Raw input is
+  validated on dedicated form DTOs (e.g. `RegistrationForm` owns the
+  plaintext-password rules), while entity constraints describe the stored
+  data, so JPA's persist-time validation stays enabled as a second line of
+  defence.
 
-## Roadmap
+## Testing & CI
 
-- Batch the feed queries (`$in` lookups for publications and authors) to
-  remove the current N+1 pattern
-- Feed pagination
-- Testcontainers-based integration tests against a real MongoDB
+Unit tests cover the security-sensitive paths: JWT parsing and validation,
+endpoint authorization rules, and the publication-deletion invariant (media
+of the whole reply subtree is cleaned up alongside the rows). An integration
+test boots the full context against a real MySQL via Testcontainers. Every
+push runs the suite plus Checkstyle through GitHub Actions, and the
+multi-stage Dockerfile builds a slim runtime image running as a non-root
+user.

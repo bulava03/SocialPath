@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Locally stored uploaded media
+media/

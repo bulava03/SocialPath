@@ -1,6 +1,6 @@
 package com.socialpath.web.rest;
 
-import com.socialpath.document.User;
+import com.socialpath.entity.User;
 import com.socialpath.dto.response.UserLogin;
 import com.socialpath.security.JwtTokenProvider;
 import com.socialpath.service.UserService;

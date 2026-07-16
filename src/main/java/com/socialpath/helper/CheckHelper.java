@@ -1,6 +1,6 @@
 package com.socialpath.helper;
 
-import com.socialpath.document.User;
+import com.socialpath.entity.User;
 
 
 public class CheckHelper {

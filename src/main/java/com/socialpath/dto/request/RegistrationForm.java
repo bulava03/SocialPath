@@ -1,20 +1,26 @@
-package com.socialpath.document;
+package com.socialpath.dto.request;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
-import org.bson.types.ObjectId;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.MongoId;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
-import java.util.List;
-
+/**
+ * Raw registration input. This is where constraints on user-typed values
+ * live — most importantly the 8–20 character rule for the plaintext
+ * password, which must never sit on the entity: the entity stores a BCrypt
+ * hash (~60 characters) and is validated again by JPA at persist time.
+ * Property names deliberately match the registration form's field names and
+ * the {@link com.socialpath.entity.User} entity, so both the form binding
+ * and the ModelMapper conversion work without configuration.
+ */
 @Data
-@Document(collection = "user")
-public class User {
-    @MongoId
+public class RegistrationForm {
     @NotBlank(message = "{user.login.required}")
     @Size(max = 20, message = "{user.login.size}")
     private String login;
@@ -22,8 +28,6 @@ public class User {
     @NotBlank(message = "{user.password.required}")
     @Size(min = 8, max = 20, message = "{user.password.size}")
     private String password;
-
-    private String imageId;
 
     @NotBlank(message = "{user.firstName.required}")
     @Pattern(regexp = "^[a-zA-Z]+$", message = "{user.firstName.pattern}")
@@ -52,10 +56,4 @@ public class User {
     private String city;
     private String education;
     private String workplace;
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private LocalDateTime ban;
-    private List<ObjectId> groups;
-    private List<String> friends;
-    private List<String> friendInvites;
-    private List<ObjectId> publications;
 }

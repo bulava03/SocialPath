@@ -1,21 +1,23 @@
 package com.socialpath.service;
 
-import org.springframework.data.mongodb.gridfs.GridFsResource;
+import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
 /**
- * Stores and retrieves user-uploaded media in MongoDB GridFS. File ids are the
- * string form of the GridFS ObjectId and are what documents reference as their
- * imageId / media entries.
+ * Stores and retrieves user-uploaded media on the local file system (a Docker
+ * volume in the compose setup). File ids are generated file names of the form
+ * {uuid}.{ext} and are what entities reference as their imageId / media
+ * entries. Replaces the GridFS storage of the MongoDB edition.
  */
 public interface FileStorageService {
 
     /**
-     * Stores an uploaded file in GridFS, preserving its content type.
+     * Stores an uploaded file, keeping its extension so the content type can
+     * be derived when serving it back.
      * @param file the uploaded file
-     * @return the new file's id, as a string
+     * @return the new file's id
      */
     String storeFile(MultipartFile file) throws IOException;
 
@@ -24,7 +26,7 @@ public interface FileStorageService {
      * @param fileId the file id
      * @return the resource, or null if no file has that id
      */
-    GridFsResource getFileById(String fileId);
+    Resource getFileById(String fileId);
 
     /**
      * Reports whether a stored file is a video (used to pick the render tag).

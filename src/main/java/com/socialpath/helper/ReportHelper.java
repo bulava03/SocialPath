@@ -1,6 +1,6 @@
 package com.socialpath.helper;
 
-import com.socialpath.document.Report;
+import com.socialpath.entity.Report;
 import com.socialpath.dto.request.NewReport;
 
 public class ReportHelper {

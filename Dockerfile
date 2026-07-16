@@ -13,7 +13,9 @@ RUN mvn -q package -DskipTests
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-RUN useradd --system --no-create-home appuser
+RUN useradd --system --no-create-home appuser \
+    && mkdir -p /var/socialpath/media \
+    && chown appuser /var/socialpath/media
 USER appuser
 
 COPY --from=build /app/target/*.jar app.jar

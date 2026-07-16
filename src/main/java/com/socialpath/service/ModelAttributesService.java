@@ -1,6 +1,6 @@
 package com.socialpath.service;
 
-import com.socialpath.document.User;
+import com.socialpath.entity.User;
 import com.socialpath.dto.response.PublicationPresentable;
 import com.socialpath.dto.response.UserSearchResult;
 import com.socialpath.dto.request.UserUpdate;

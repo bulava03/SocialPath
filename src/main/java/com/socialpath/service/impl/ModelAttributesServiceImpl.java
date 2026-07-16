@@ -1,7 +1,7 @@
 package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import com.socialpath.document.User;
+import com.socialpath.entity.User;
 import com.socialpath.dto.request.*;
 import com.socialpath.dto.response.*;
 import com.socialpath.helper.ConvertHelper;

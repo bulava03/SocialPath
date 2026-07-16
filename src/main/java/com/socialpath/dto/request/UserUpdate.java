@@ -2,11 +2,9 @@ package com.socialpath.dto.request;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
-import org.bson.types.ObjectId;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 public class UserUpdate {
@@ -44,8 +42,4 @@ public class UserUpdate {
     private String city;
     private String education;
     private String workplace;
-    private List<ObjectId> groups;
-    private List<String> friends;
-    private List<String> friendInvites;
-    private List<ObjectId> publications;
 }
