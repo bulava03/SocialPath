@@ -18,6 +18,7 @@
             <h1>About the group</h1>
         </div>
         <div class="authForm">
+            <p class="errorText errorText-top" th:if="${errorText}" th:text="${errorText}"></p>
             <form id="regForm" method="post" action="/group/updateGroup" enctype="multipart/form-data">
                 <div class="authInput">
                     <input type="hidden" th:value="${group.id}" name="groupId">
@@ -29,7 +30,8 @@
                             <label for="file" class="avatar-button">Change photo</label>
                             <button type="button" id="remove-photo" class="avatar-button avatar-button-secondary">Remove</button>
                         </div>
-                        <input id="file" type="file" name="file" accept="image/*" class="visually-hidden">
+                        <p id="avatar-note" class="avatar-note" hidden>Preview is not available for this file. It will be checked and converted when you save.</p>
+                        <input id="file" type="file" name="file" accept="image/*,.heic,.heif,.avif" class="visually-hidden">
                         <input type="hidden" id="removeImage" name="removeImage" value="false">
                     </div>
                     <h2 class="name">Group name</h2>
@@ -40,7 +42,6 @@
             <div id="backForm">
                 <a class="button" id="buttonBack" th:href="@{/searchResult/getGroupPage(groupId=${group.id})}">Back</a>
             </div>
-            <p class="errorText" th:text="${errorText}" th:if="${errorText}"></p>
             <p id="errorText" class="errorText"></p>
         </div>
 </div>

@@ -18,5 +18,10 @@ jobs:
           java-version: '21'
           cache: maven
 
+      # System libraries the bundled ffmpeg needs on Linux (the same ones the
+      # Dockerfile installs), so the HEIC/AVIF tests run instead of skipping.
+      - name: Install ffmpeg runtime libraries
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libxcb1 libxcb-shm0 libasound2t64 libpulse0
+
       - name: Build and test
         run: ./mvnw --batch-mode verify

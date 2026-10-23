@@ -13,6 +13,12 @@ RUN mvn -q package -DskipTests
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
+# System libraries the bundled ffmpeg (HEIC/AVIF avatars) links against and a
+# minimal JRE image lacks. Locally on Windows/macOS nothing has to be installed.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libxcb1 libxcb-shm0 libasound2t64 libpulse0 \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN useradd --system --no-create-home appuser \
     && mkdir -p /var/socialpath/media \
     && chown appuser /var/socialpath/media
@@ -21,4 +27,6 @@ USER appuser
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# appuser has no home directory: the bundled ffmpeg (HEIC/AVIF avatars) is
+# extracted to a writable cache directory instead.
+ENTRYPOINT ["java", "-Dorg.bytedeco.javacpp.cachedir=/tmp/javacpp-cache", "-jar", "app.jar"]

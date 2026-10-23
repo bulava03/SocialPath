@@ -33,4 +33,4 @@ build/
 .vscode/
 
 # Locally stored uploaded media
-media/
+/media/

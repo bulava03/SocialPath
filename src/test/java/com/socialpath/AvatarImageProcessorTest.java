@@ -3,6 +3,7 @@ package com.socialpath;
 import com.socialpath.exception.InvalidImageException;
 import com.socialpath.media.AvatarImageProcessor;
 import com.socialpath.media.AvatarImageProcessor.ProcessedAvatar;
+import com.socialpath.media.HeifImageConverter;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
 
@@ -21,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AvatarImageProcessorTest {
 
-    private final AvatarImageProcessor processor = new AvatarImageProcessor();
+    private final AvatarImageProcessor processor = new AvatarImageProcessor(new HeifImageConverter());
 
     @Test
     void process_LargeLandscapePhoto_ProducesSquareFullAndThumbnail() throws IOException {
@@ -84,7 +85,7 @@ class AvatarImageProcessorTest {
     @Test
     void process_ResolutionAboveLimit_IsRejectedBeforeDecoding() throws IOException {
         // Arrange: a limit of 10,000 pixels and a 200x100 picture
-        AvatarImageProcessor strictProcessor = new AvatarImageProcessor(10_000);
+        AvatarImageProcessor strictProcessor = new AvatarImageProcessor(new HeifImageConverter(), 10_000);
         byte[] png = encode(solidImage(200, 100, BufferedImage.TYPE_INT_RGB, Color.BLUE), "png");
 
         // Act & Assert

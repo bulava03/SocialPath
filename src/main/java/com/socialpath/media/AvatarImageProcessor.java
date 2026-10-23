@@ -3,6 +3,8 @@ package com.socialpath.media;
 import com.socialpath.exception.InvalidImageException;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.geometry.Positions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +17,8 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Iterator;
 
@@ -37,13 +41,16 @@ public class AvatarImageProcessor {
     private static final long DEFAULT_MAX_PIXELS = 50_000_000L;
     private static final float JPEG_QUALITY = 0.85f;
 
+    private final HeifImageConverter heifImageConverter;
     private final long maxPixels;
 
-    public AvatarImageProcessor() {
-        this(DEFAULT_MAX_PIXELS);
+    @Autowired
+    public AvatarImageProcessor(HeifImageConverter heifImageConverter) {
+        this(heifImageConverter, DEFAULT_MAX_PIXELS);
     }
 
-    public AvatarImageProcessor(long maxPixels) {
+    public AvatarImageProcessor(HeifImageConverter heifImageConverter, long maxPixels) {
+        this.heifImageConverter = heifImageConverter;
         this.maxPixels = maxPixels;
         // Picks up image format plugins (WebP) bundled inside the application jar.
         ImageIO.scanForPlugins();
@@ -58,13 +65,32 @@ public class AvatarImageProcessor {
     }
 
     /**
-     * Processes an uploaded or stored picture. The source is read twice: once
-     * to check the dimensions without decoding the pixels, once to decode.
+     * Processes an uploaded or stored picture. HEIC/HEIF/AVIF photos are first
+     * converted to PNG, since ImageIO cannot read them.
      * @param source the picture (an upload or a stored file)
      * @return the full version and the thumbnail as JPEG bytes
      * @throws InvalidImageException when the picture cannot be used
      */
     public ProcessedAvatar process(InputStreamSource source) throws IOException {
+        if (!heifImageConverter.isHeif(source)) {
+            return processReadable(source);
+        }
+        Path png = heifImageConverter.convertToPng(source);
+        try {
+            return processReadable(new FileSystemResource(png));
+        } finally {
+            Files.deleteIfExists(png);
+        }
+    }
+
+    /**
+     * Processes a picture in a format ImageIO can read. The source is read
+     * twice: once to check the dimensions without decoding the pixels, once
+     * to decode.
+     * @param source the picture
+     * @return the full version and the thumbnail as JPEG bytes
+     */
+    private ProcessedAvatar processReadable(InputStreamSource source) throws IOException {
         int shortSide = checkDimensions(source);
         int fullSide = Math.min(FULL_SIZE, shortSide);
 
@@ -99,7 +125,7 @@ public class AvatarImageProcessor {
                     ? Collections.emptyIterator()
                     : ImageIO.getImageReaders(imageStream);
             if (!readers.hasNext()) {
-                throw new InvalidImageException("Unsupported image format. Please use JPEG, PNG, GIF or WebP.");
+                throw new InvalidImageException("Unsupported image format. Please use JPEG, PNG, GIF, WebP, HEIC or AVIF.");
             }
 
             ImageReader reader = readers.next();

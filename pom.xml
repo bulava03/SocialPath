@@ -18,6 +18,11 @@
 
 	<properties>
 		<java.version>21</java.version>
+		<javacpp.version>1.5.14</javacpp.version>
+		<ffmpeg.version>8.1.2-${javacpp.version}</ffmpeg.version>
+		<!-- Overridden by the natives-* profiles; on an unlisted platform the
+		     build still works and HEIC/AVIF uploads are reported as unsupported. -->
+		<javacpp.platform.native>linux-x86_64</javacpp.platform.native>
 	</properties>
 
 	<dependencies>
@@ -64,6 +69,31 @@
 			<groupId>com.twelvemonkeys.imageio</groupId>
 			<artifactId>imageio-webp</artifactId>
 			<version>3.10.1</version>
+		</dependency>
+		<!-- ffmpeg bundled as a library: decodes HEIC/AVIF photos without any
+		     system installation. Only the Java classes here; the native binary
+		     for the build machine's platform comes from the profiles below. -->
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>javacpp</artifactId>
+			<version>${javacpp.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>ffmpeg</artifactId>
+			<version>${ffmpeg.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>javacpp</artifactId>
+			<version>${javacpp.version}</version>
+			<classifier>${javacpp.platform.native}</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>ffmpeg</artifactId>
+			<version>${ffmpeg.version}</version>
+			<classifier>${javacpp.platform.native}</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -112,6 +142,71 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<!-- Picks the native ffmpeg binary for the platform the build runs on
+	     (a Docker build runs on Linux, a local build on Windows/macOS). -->
+	<profiles>
+		<profile>
+			<id>natives-windows-x86_64</id>
+			<activation>
+				<os>
+					<family>windows</family>
+					<arch>amd64</arch>
+				</os>
+			</activation>
+			<properties>
+				<javacpp.platform.native>windows-x86_64</javacpp.platform.native>
+			</properties>
+		</profile>
+		<profile>
+			<id>natives-linux-x86_64</id>
+			<activation>
+				<os>
+					<name>Linux</name>
+					<arch>amd64</arch>
+				</os>
+			</activation>
+			<properties>
+				<javacpp.platform.native>linux-x86_64</javacpp.platform.native>
+			</properties>
+		</profile>
+		<profile>
+			<id>natives-linux-arm64</id>
+			<activation>
+				<os>
+					<name>Linux</name>
+					<arch>aarch64</arch>
+				</os>
+			</activation>
+			<properties>
+				<javacpp.platform.native>linux-arm64</javacpp.platform.native>
+			</properties>
+		</profile>
+		<profile>
+			<id>natives-macosx-x86_64</id>
+			<activation>
+				<os>
+					<family>mac</family>
+					<arch>x86_64</arch>
+				</os>
+			</activation>
+			<properties>
+				<javacpp.platform.native>macosx-x86_64</javacpp.platform.native>
+			</properties>
+		</profile>
+		<profile>
+			<id>natives-macosx-arm64</id>
+			<activation>
+				<os>
+					<family>mac</family>
+					<arch>aarch64</arch>
+				</os>
+			</activation>
+			<properties>
+				<javacpp.platform.native>macosx-arm64</javacpp.platform.native>
+			</properties>
+		</profile>
+	</profiles>
 
 	<build>
 		<plugins>

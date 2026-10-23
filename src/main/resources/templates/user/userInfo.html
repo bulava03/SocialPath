@@ -16,6 +16,8 @@
 <div class="container">
   <div class="authtitle"><h1>About me</h1></div>
   <div class="authform">
+    <!-- Server-side errors go on top: the form is long and the page reloads scrolled up. -->
+    <p class="errortext errortext-top" th:if="${errorText}" th:text="${errorText}"></p>
     <form id="regform" method="post" action="/user/changeUserInfo" enctype="multipart/form-data">
       <div class="authinput">
         <div class="avatar-block">
@@ -26,7 +28,8 @@
             <label for="file" class="avatar-button">Change photo</label>
             <button type="button" id="remove-photo" class="avatar-button avatar-button-secondary">Remove</button>
           </div>
-          <input id="file" type="file" name="file" accept="image/*" class="visually-hidden">
+          <p id="avatar-note" class="avatar-note" hidden>Preview is not available for this file. It will be checked and converted when you save.</p>
+          <input id="file" type="file" name="file" accept="image/*,.heic,.heif,.avif" class="visually-hidden">
           <input type="hidden" id="removeImage" name="removeImage" value="false">
         </div>
         <h2 class="name">First name</h2>
@@ -85,7 +88,6 @@
       <a class="button" id="buttonback" href="/user/authorisation">To my page</a>
     </div>
     <p class="errortext" id="errortext"></p>
-    <p class="errortext" th:text="${errorText}"></p>
   </div>
 </div>
 
