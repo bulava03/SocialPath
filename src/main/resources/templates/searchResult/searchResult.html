@@ -25,21 +25,13 @@
         </form>
     </div>
 
-    <form id="userToSubmit" th:action="@{/searchResult/getUserPage}" method="get">
-        <input class="field" id="anotherUserLogin" value="" type="hidden" name="anotherUserLogin" />
-    </form>
-
-    <form id="groupToSubmit" th:action="@{/searchResult/getGroupPage}" method="get">
-        <input class="field" id="groupId" value="" type="hidden" name="groupId" />
-    </form>
-
     <div class="container-search">
         <div id="table-left">
             <h3 class="table-title">People</h3>
 
             <div class="table-container">
                 <div th:each="elem : ${users}" class="table-wrapper">
-                    <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
+                    <table>
                         <tr>
                             <td>
                                 <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
@@ -51,7 +43,7 @@
                         <tr>
                             <td class="content-row">
                                 <div class="content-cell"></div>
-                                <div class="content-cell"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}"></b></div>
+                                <div class="content-cell"><a class="card-link" th:href="@{/searchResult/getUserPage(anotherUserLogin=${elem.anotherUserLogin})}"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}"></b></a></div>
                                 <div class="content-cell"></div>
                                 <div class="content-cell">Email: <span th:text="${elem.email}"></span></div>
                                 <div th:if="${elem.PhoneNumber != null}" class="content-cell">Phone number: <span th:text="${elem.phoneNumber}"></span></div>
@@ -74,7 +66,7 @@
 
             <div class="table-container">
                 <div th:each="elem : ${groups}" class="table-wrapper">
-                    <table th:attr="onclick='submitGroup(\'' + ${elem.id} + '\')'">
+                    <table>
                         <tr>
                             <td>
                                 <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
@@ -86,7 +78,7 @@
                         <tr>
                             <td class="content-row">
                                 <div class="content-cell"></div>
-                                <div class="content-cell"><b th:text="${elem.name}"></b></div>
+                                <div class="content-cell"><a class="card-link" th:href="@{/searchResult/getGroupPage(groupId=${elem.id})}"><b th:text="${elem.name}"></b></a></div>
                                 <div class="content-cell"></div>
                                 <div class="content-cell"></div>
                                 <div class="content-cell"></div>
@@ -100,7 +92,6 @@
     </div>
 </div>
 <script src="/script/search.js"></script>
-<script src="/script/submitInSearchResultPage.js"></script>
 <script src="/script/dropdownUser.js"></script>
 <script src="/script/authorization/logout.js"></script>
 </body>

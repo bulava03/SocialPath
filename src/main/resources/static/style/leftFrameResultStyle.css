@@ -114,3 +114,25 @@ tr {
 #decisionButtonsTable {
     background: none;
 }
+
+/* Stretched link: the name link covers the whole card, so the card stays
+   clickable; forms inside the card sit above it and keep working. */
+.table-wrapper {
+    position: relative;
+}
+
+.card-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.card-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+}
+
+.table-wrapper form {
+    position: relative;
+    z-index: 1;
+}

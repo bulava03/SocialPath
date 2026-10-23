@@ -13,8 +13,8 @@
     border-radius: 15px;
 }
 
-.commentImage:hover {
-    cursor: pointer;
+.avatar-link {
+    text-decoration: none;
 }
 
 .comment-divider {

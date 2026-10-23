@@ -12,13 +12,9 @@
 <div th:insert="~{shared/layout2 :: #layoutHeader}"></div>
 
 <div class="container">
-    <form id="userToSubmit" th:action="@{/searchResult/getUserPage}" method="get">
-        <input class="field" id="anotherUserLogin" value="" type="hidden" name="anotherUserLogin" />
-    </form>
-
     <div class="table-container">
         <div class="table-wrapper" th:each="elem : ${users}">
-            <table th:attr="onclick='submitUser(\'' + ${elem.anotherUserLogin} + '\')'">
+            <table>
                 <tr>
                     <td class="photo-cell">
                         <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
@@ -29,7 +25,7 @@
                 </tr>
                 <td class="content-row">
                     <div class="content-cell"></div>
-                    <div class="content-cell"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}"></b></div>
+                    <div class="content-cell"><a class="card-link" th:href="@{/searchResult/getUserPage(anotherUserLogin=${elem.anotherUserLogin})}"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}"></b></a></div>
                     <div class="content-cell"></div>
                     <div class="content-cell">Email: <span th:text="${elem.email}"></span></div>
                     <div class="content-cell" th:if="${elem.phoneNumber != null}">Phone number: <span th:text="${elem.phoneNumber}"></span></div>
@@ -78,7 +74,6 @@
 
 <script src="/script/dropdownUser.js"></script>
 <script src="/script/search.js"></script>
-<script src="/script/submitInSearchResultPage.js"></script>
 <script src="/script/authorization/logout.js"></script>
 </body>
 </html>

@@ -12,13 +12,9 @@
 <div th:insert="~{shared/layout2 :: #layoutHeader}"></div>
 
 <div class="container">
-    <form id="groupToSubmit" action="/../searchResult/getGroupPage" method="get">
-        <input class="field" id="groupId" value="" type="hidden" name="groupId">
-    </form>
-
     <div class="table-container">
         <div th:each="elem : ${groups}" class="table-wrapper">
-            <table th:attr="onclick='submitGroup(\'' + ${elem.id} + '\')'">
+            <table>
                 <tr>
                     <td class="photo-cell">
                         <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
@@ -30,7 +26,7 @@
                 <tr>
                     <td class="content-row">
                         <div class="content-cell"></div>
-                        <div class="content-cell"><b th:text="${elem.name}"></b></div>
+                        <div class="content-cell"><a class="card-link" th:href="@{/searchResult/getGroupPage(groupId=${elem.id})}"><b th:text="${elem.name}"></b></a></div>
                         <div class="content-cell"></div>
                         <div class="content-cell"></div>
                         <div class="content-cell"></div>
@@ -51,7 +47,6 @@
 </footer>
 
 <script src="/script/search.js"></script>
-<script src="/script/submitInSearchResultPage.js"></script>
 <script src="/script/dropdownUser.js"></script>
 <script src="/script/authorization/logout.js"></script>
 </body>

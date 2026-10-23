@@ -1,17 +1,13 @@
 <html xmlns:th="http://www.thymeleaf.org">
   <th:block th:fragment="renderComment(comment)">
     <div class="comment" th:id="${comment.id}">
-      <img class="commentImage" th:if="${comment.authorImageId == null}" src="/usericon.png" alt="usericon"
-           th:attr="data-login=${comment.authorLogin}"
-           onclick="sendAnotherUserForm(this)">
-      <img class="commentImage" th:unless="${comment.authorImageId == null}" th:src="'/images/' + ${comment.authorImageId}" alt="usericon"
-           width="30px" height="30px"
-           th:attr="data-login=${comment.authorLogin}"
-           onclick="sendAnotherUserForm(this)">
-      <a class="username" href="#"
-         th:text="${comment.authorName}"
-         th:attr="data-login=${comment.authorLogin}"
-         onclick="sendAnotherUserForm(this)"></a>
+      <a class="avatar-link" th:href="@{/user/anotherUserPage(anotherUserLogin=${comment.authorLogin})}">
+        <img class="commentImage" th:if="${comment.authorImageId == null}" src="/usericon.png" alt="usericon">
+        <img class="commentImage" th:unless="${comment.authorImageId == null}" th:src="'/images/' + ${comment.authorImageId}" alt="usericon"
+             width="30px" height="30px">
+      </a>
+      <a class="username" th:href="@{/user/anotherUserPage(anotherUserLogin=${comment.authorLogin})}"
+         th:text="${comment.authorName}"></a>
       <div class="commentText" th:text="${comment.text}"></div>
       <div class="commentMedia">
         <div th:if="${comment.media != null and !comment.media.isEmpty()}">
