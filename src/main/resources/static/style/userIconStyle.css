@@ -9,12 +9,30 @@
     border-radius: 40px;
 }
 
+/* The avatar is wrapped in a button only to open the menu; the button itself
+   must stay invisible so the absolutely positioned avatar looks as before. */
+.usericon-button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Highlight the avatar while the menu is open. */
+.userIcon:has(+ #dropdown:popover-open) #usericon {
+    background-color: #fa9434;
+}
+
+/* The menu is a native popover: the browser shows it, and closes it on an
+   outside click or Esc. Popovers carry default styles (fixed, centered,
+   bordered), reset here so the menu stays right under the avatar. No
+   display property here: the browser toggles it. */
 .dropdown {
-    display: none;
     position: absolute;
-    margin-bottom: -100%;
-    top: 70px;
-    right: 25px;
+    inset: 70px 25px auto auto;
+    margin: 0;
+    padding: 0;
+    border: none;
     background-color: #000000;
     width: 175px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
@@ -23,7 +41,8 @@
     overflow: visible;
 }
 
-.dropdown a {
+.dropdown a,
+.dropdown-logout button {
     color: #ffffff;
     padding: 12px 16px;
     font-size: 14px;
@@ -32,7 +51,8 @@
     display: block;
 }
 
-.dropdown a:hover {
+.dropdown a:hover,
+.dropdown-logout button:hover {
     background-color: #303030;
     text-decoration: none;
     color: #ffffff;
@@ -42,12 +62,19 @@
     border-radius: 15px 15px 0px 0px;
 }
 
-.dropdown a:last-of-type {
+.dropdown-logout {
+    margin: 0;
+}
+
+/* Make the logout button look exactly like the links above it. */
+.dropdown-logout button {
+    width: 100%;
+    background: none;
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
     border-radius: 0px 0px 15px 15px;
 }
 
-.show {
-    display: block;
-}
 
 

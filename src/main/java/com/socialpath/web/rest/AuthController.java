@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
 import java.time.Duration;
 
 /**
@@ -65,8 +66,9 @@ public class AuthController {
     }
 
     /**
-     * Logs out by expiring the auth cookie.
-     * @return 204 with an expired Set-Cookie header
+     * Logs out by expiring the auth cookie. Submitted by a plain form, so it
+     * answers with a redirect to the start page (303: follow up with GET).
+     * @return 303 to "/" with an expired Set-Cookie header
      */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
@@ -78,7 +80,8 @@ public class AuthController {
                 .maxAge(0)
                 .build();
 
-        return ResponseEntity.noContent()
+        return ResponseEntity.status(HttpStatus.SEE_OTHER)
+                .location(URI.create("/"))
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .build();
     }
