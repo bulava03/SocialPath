@@ -51,7 +51,7 @@ public class RegistrationForm {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime dateOfBirth;
 
-    private String country;
+    private String countryCode;
     private String region;
     private String city;
     private String education;

@@ -29,7 +29,7 @@
                     <div class="content-cell"></div>
                     <div class="content-cell" th:text="'Email: ' + ${elem.email}">Email</div>
                     <div class="content-cell" th:if="${elem.phoneNumber != null and elem.phoneNumber != ''}" th:text="'Phone number: ' + ${elem.phoneNumber}">Phone Number</div>
-                    <div class="content-cell" th:if="${elem.country != null and elem.country != ''}" th:text="'Country: ' + ${elem.country}">Country</div>
+                    <div class="content-cell" th:if="${elem.countryName != null and elem.countryName != ''}" th:text="'Country: ' + ${elem.countryName}">Country</div>
                     <div class="content-cell" th:if="${elem.region != null and elem.region != ''}" th:text="'Region: ' + ${elem.region}">Region</div>
                     <div class="content-cell" th:if="${elem.city != null and elem.city != ''}" th:text="'City: ' + ${elem.city}">City</div>
                     <div class="content-cell" th:if="${elem.education != null and elem.education != ''}" th:text="'Education: ' + ${elem.education}">Education</div>

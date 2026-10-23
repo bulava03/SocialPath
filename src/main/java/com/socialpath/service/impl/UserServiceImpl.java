@@ -11,6 +11,7 @@ import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.validation.ValidationResult;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.socialpath.service.CountryService;
 import com.socialpath.service.UserService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -39,6 +40,7 @@ public class UserServiceImpl implements UserService {
     private final ModelMapper modelMapper;
     private final Validator validator;
     private final PasswordEncoder passwordEncoder;
+    private final CountryService countryService;
 
     @Override
     public ValidationResult validateRegistration(RegistrationForm form) {
@@ -47,6 +49,9 @@ public class UserServiceImpl implements UserService {
         if (!violations.isEmpty()) {
             return ValidationResult.failure(violations.stream()
                     .map(ConstraintViolation::getMessage).toList());
+        }
+        if (!countryService.isValidCode(form.getCountryCode())) {
+            return ValidationResult.failure("Unknown country.");
         }
         return ValidationResult.success();
     }
@@ -58,6 +63,9 @@ public class UserServiceImpl implements UserService {
         if (!violations.isEmpty()) {
             return ValidationResult.failure(violations.stream()
                     .map(ConstraintViolation::getMessage).toList());
+        }
+        if (!countryService.isValidCode(user.getCountryCode())) {
+            return ValidationResult.failure("Unknown country.");
         }
         return ValidationResult.success();
     }
@@ -90,7 +98,7 @@ public class UserServiceImpl implements UserService {
         user.setEmail(userUpdate.getEmail());
         user.setPhoneNumber(userUpdate.getPhoneNumber());
         user.setDateOfBirth(userUpdate.getDateOfBirth());
-        user.setCountry(userUpdate.getCountry());
+        user.setCountry(countryService.resolve(userUpdate.getCountryCode()));
         user.setRegion(userUpdate.getRegion());
         user.setCity(userUpdate.getCity());
         user.setEducation(userUpdate.getEducation());

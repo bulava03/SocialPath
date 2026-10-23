@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -79,7 +80,10 @@ public class User {
     @Column(name = "date_of_birth")
     private LocalDateTime dateOfBirth;
 
-    private String country;
+    @ManyToOne
+    @JoinColumn(name = "country_code")
+    private Country country;
+
     private String region;
     private String city;
     private String education;

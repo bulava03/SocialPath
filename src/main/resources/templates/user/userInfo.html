@@ -64,10 +64,10 @@
         </div>
         <input type="hidden" id="dateOfBirth" name="dateOfBirth" value="">
         <h2 class="name">Country</h2>
-        <select id="country" name="country">
-          <option value="" disabled hidden th:selected="${#strings.isEmpty(user.country)}">Country</option>
-          <option th:if="${!#strings.isEmpty(user.country)}"
-                  th:value="${user.country}" th:text="${user.country}" selected></option>
+        <select id="country" name="countryCode">
+          <option value="" th:selected="${#strings.isEmpty(user.countryCode)}">Country</option>
+          <option th:each="c : ${countries}" th:value="${c.code}" th:text="${c.name}"
+                  th:selected="${c.code == user.countryCode}"></option>
         </select>
         <h2 class="name">Region</h2>
         <input class="field" id="region" th:value="${user.region}" type="text" name="region">
@@ -97,7 +97,6 @@
 <script src="/script/dropdownUser.js"></script>
 <script src="/script/validateAvatarSize.js"></script>
 <script src="/script/avatarPreview.js"></script>
-<script src="/script/countryList.js"></script>
 <script src="/script/authorization/logout.js"></script>
 </body>
 </html>

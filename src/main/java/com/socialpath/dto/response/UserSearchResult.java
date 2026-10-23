@@ -12,7 +12,7 @@ public class UserSearchResult {
     private String lastName;
     private String email;
     private String phoneNumber;
-    private String country;
+    private String countryName;
     private String region;
     private String city;
     private String education;

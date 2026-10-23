@@ -6,6 +6,7 @@ import com.socialpath.dto.request.*;
 import com.socialpath.dto.response.*;
 import com.socialpath.helper.ConvertHelper;
 import com.socialpath.service.CommentsService;
+import com.socialpath.service.CountryService;
 import com.socialpath.service.ModelAttributesService;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class ModelAttributesServiceImpl implements ModelAttributesService {
 
     private final CommentsService commentsService;
     private final ModelMapper modelMapper;
+    private final CountryService countryService;
 
     @Override
     public Model usersAttributes(Model model, User user, boolean isAuthor, List<PublicationPresentable> comments) {
@@ -38,6 +40,7 @@ public class ModelAttributesServiceImpl implements ModelAttributesService {
 
         model.addAttribute("user", userFormUpdate);
         model.addAttribute("author", login);
+        model.addAttribute("countries", countryService.findAll());
         return model;
     }
 
@@ -48,6 +51,7 @@ public class ModelAttributesServiceImpl implements ModelAttributesService {
 
         model.addAttribute("user", userFormUpdate);
         model.addAttribute("author", login);
+        model.addAttribute("countries", countryService.findAll());
         return model;
     }
 

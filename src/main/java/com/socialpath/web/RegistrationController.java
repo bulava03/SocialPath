@@ -1,18 +1,23 @@
 package com.socialpath.web;
 
+import com.socialpath.entity.Country;
 import com.socialpath.entity.User;
 import com.socialpath.dto.request.RegistrationForm;
 import com.socialpath.dto.response.UserFormView;
 import com.socialpath.helper.ConvertHelper;
 import com.socialpath.validation.ValidationResult;
+import com.socialpath.service.CountryService;
 import com.socialpath.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.List;
 
 /**
  * Registration flow. The form binds to {@link RegistrationForm} (raw input,
@@ -26,6 +31,12 @@ public class RegistrationController {
 
     private final UserService userService;
     private final ModelMapper modelMapper;
+    private final CountryService countryService;
+
+    @ModelAttribute("countries")
+    public List<Country> countries() {
+        return countryService.findAll();
+    }
 
     @GetMapping()
     public String getRegistrationPage(Model model) {
@@ -54,6 +65,7 @@ public class RegistrationController {
             form.setDateOfBirth(form.getDateOfBirth().toLocalDate().atStartOfDay());
         }
         User user = modelMapper.map(form, User.class);
+        user.setCountry(countryService.resolve(form.getCountryCode()));
         userService.addUser(user);
 
         return "redirect:/";

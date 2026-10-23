@@ -13,7 +13,7 @@
             <p>Phone: <span th:text="${user.PhoneNumber}"></span></p>
             <p>Email: <span th:text="${user.Email}"></span></p>
             <p th:if="${user.DateOfBirth != null}">Date of birth: <span th:text="${#temporals.format(user.DateOfBirth, 'dd.MM.yyyy')}"></span></p>
-            <p th:if="${user.Country != null and user.Country != ''}">Country: <span th:text="${user.Country}"></span></p>
+            <p th:if="${user.country != null}">Country: <span th:text="${user.country.name}"></span></p>
             <p th:if="${user.Region != null and user.Region != ''}">Region: <span th:text="${user.Region}"></span></p>
             <p th:if="${user.City != null and user.City != ''}">City: <span th:text="${user.City}"></span></p>
             <p th:if="${user.Education != null and user.Education != ''}">Education: <span th:text="${user.Education}"></span></p>

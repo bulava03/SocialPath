@@ -57,10 +57,10 @@
                 </div>
                 <input type="hidden" id="dateOfBirth" name="dateOfBirth" value="">
                 <h2 class="name">Country</h2>
-                <select id="country" name="country">
-                    <option value="" disabled hidden th:selected="${#strings.isEmpty(User.Country)}">Country</option>
-                    <option th:if="${!#strings.isEmpty(User.Country)}"
-                            th:value="${User.Country}" th:text="${User.Country}" selected></option>
+                <select id="country" name="countryCode">
+                    <option value="" th:selected="${#strings.isEmpty(User.countryCode)}">Country</option>
+                    <option th:each="c : ${countries}" th:value="${c.code}" th:text="${c.name}"
+                            th:selected="${c.code == User.countryCode}"></option>
                 </select>
                 <h2 class="name">Region</h2>
                 <input class="field" id="region" th:value="${User.Region}" type="text" name="region">
@@ -82,7 +82,6 @@
     <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
 </footer>
 
-<script src="/script/countryList.js"></script>
 <script src="/script/dateValidation.js"></script>
 </body>
 </html>

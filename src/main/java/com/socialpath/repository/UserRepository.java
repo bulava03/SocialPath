@@ -34,11 +34,12 @@ public interface UserRepository extends JpaRepository<User, String> {
      */
     @Query("""
             select u from User u
+            left join u.country c
             where lower(u.firstName) like lower(concat('%', :q, '%'))
                or lower(u.lastName) like lower(concat('%', :q, '%'))
                or lower(u.email) like lower(concat('%', :q, '%'))
                or lower(u.phoneNumber) like lower(concat('%', :q, '%'))
-               or lower(u.country) like lower(concat('%', :q, '%'))
+               or lower(c.name) like lower(concat('%', :q, '%'))
                or lower(u.region) like lower(concat('%', :q, '%'))
                or lower(u.city) like lower(concat('%', :q, '%'))
                or lower(u.education) like lower(concat('%', :q, '%'))

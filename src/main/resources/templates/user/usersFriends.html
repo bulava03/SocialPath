@@ -30,7 +30,7 @@
                         <div class="content-cell"></div>
                         <div class="content-cell" th:text="'Email: ' + ${elem.email}"></div>
                         <div class="content-cell" th:if="${elem.phoneNumber != null}" th:text="'Phone number: ' + ${elem.phoneNumber}"></div>
-                        <div class="content-cell" th:if="${elem.country != null}" th:text="'Country: ' + ${elem.country}"></div>
+                        <div class="content-cell" th:if="${elem.countryName != null}" th:text="'Country: ' + ${elem.countryName}"></div>
                         <div class="content-cell" th:if="${elem.region != null}" th:text="'Region: ' + ${elem.region}"></div>
                         <div class="content-cell" th:if="${elem.city != null}" th:text="'City: ' + ${elem.city}"></div>
                         <div class="content-cell" th:if="${elem.education != null}" th:text="'Education: ' + ${elem.education}"></div>

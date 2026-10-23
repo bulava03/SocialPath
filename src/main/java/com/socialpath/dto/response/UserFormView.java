@@ -17,7 +17,7 @@ public class UserFormView {
     private int day;
     private String month;
     private int year;
-    private String country;
+    private String countryCode;
     private String region;
     private String city;
     private String education;
