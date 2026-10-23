@@ -1,13 +1,10 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
     <div id="right">
-        <form id="searchForm" typeof="hidden" method="get" action="/searchResult/getSearchResult">
-            <input id="searchInput" type="hidden" name="SearchText">
-        </form>
-
-        <form id="pseudoSearchForm">
-            <input id="pseudoSearchInput" type="text" placeholder="Search...">
-            <input id="searchButton" type="submit" value="Search" onclick="submitSearch(event)">
+        <form id="searchForm" method="get" action="/searchResult/getSearchResult">
+            <input id="searchInput" type="text" name="searchText" placeholder="Search..."
+                   required pattern=".*\S.*" title="Enter something to search for">
+            <input id="searchButton" type="submit" value="Search">
         </form>
 
         <div th:if="${isAuthor}">

@@ -25,6 +25,10 @@ public class SearchServiceImpl implements SearchService {
 
     @Override
     public SearchResults searchUsersAndGroups(String searchValuesString, String thisLogin) throws IOException {
+        if (searchValuesString == null || searchValuesString.isBlank()) {
+            return new SearchResults(List.of(), List.of());
+        }
+
         List<String> searchValues = Arrays.stream(searchValuesString.split("[,;]\\s*|\\s+"))
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
@@ -52,8 +56,12 @@ public class SearchServiceImpl implements SearchService {
 
         List<GroupSearchResult> groups = new ArrayList<>();
 
-        List<Group> groupsList = groupRepository.findByNameIn(searchValues);
-        for (Group group : groupsList) {
+        Map<Long, Group> uniqueGroupsMap = new LinkedHashMap<>();
+        searchValues.stream()
+                .flatMap(str -> groupRepository.findByNameContaining(str).stream())
+                .forEach(group -> uniqueGroupsMap.putIfAbsent(group.getId(), group));
+
+        for (Group group : uniqueGroupsMap.values()) {
             GroupSearchResult groupSearchResult = modelMapper.map(group, GroupSearchResult.class);
             groupSearchResult.setId(group.getId().toString());
 

@@ -12,7 +12,14 @@ import java.util.List;
 
 @Repository
 public interface GroupRepository extends JpaRepository<Group, Long> {
-    List<Group> findByNameIn(List<String> searchValues);
+    /**
+     * Case-insensitive substring search over group names, the same matching
+     * rule as the user search.
+     * @param searchValue the substring to look for
+     * @return groups whose name contains the substring
+     */
+    @Query("select g from Group g where lower(g.name) like lower(concat('%', :q, '%'))")
+    List<Group> findByNameContaining(@Param("q") String searchValue);
 
     /**
      * Finds all groups the given login is a member of (replaces the
