@@ -9,7 +9,7 @@
                 <img th:if="${avatar == null}" id="usericon" width="30px" height="30px" alt="usericon"
                      src="/pictures/photo.png">
                 <img th:unless="${avatar == null}" id="usericon" width="30px" height="30px" alt="usericon"
-                     th:src="'/images/' + ${avatar}">
+                     th:src="'/images/' + ${avatar} + '?size=thumb'">
             </button>
         </div>
         <div id="dropdown" class="dropdown" popover>

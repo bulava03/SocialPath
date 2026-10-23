@@ -22,6 +22,14 @@ public interface FileStorageService {
     String storeFile(MultipartFile file) throws IOException;
 
     /**
+     * Stores content the server generated itself (such as a resized avatar)
+     * under an id chosen by the caller.
+     * @param fileId the id to store under, in the same {uuid}.{ext} form
+     * @param content the file content
+     */
+    void storeFile(String fileId, byte[] content) throws IOException;
+
+    /**
      * Retrieves a stored file by id for streaming.
      * @param fileId the file id
      * @return the resource, or null if no file has that id

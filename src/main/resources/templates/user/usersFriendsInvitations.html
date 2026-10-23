@@ -19,7 +19,7 @@
                     <td class="photo-cell">
                         <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
                              style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
-                        <img th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId}"
+                        <img th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId} + '?size=thumb'"
                              style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
                     </td>
                 </tr>

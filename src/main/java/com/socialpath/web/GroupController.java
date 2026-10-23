@@ -9,6 +9,7 @@ import com.socialpath.dto.response.GroupSearchResult;
 import com.socialpath.dto.response.UserLogin;
 import com.socialpath.dto.response.UserSearchResult;
 import com.socialpath.exception.ForbiddenOperationException;
+import com.socialpath.exception.InvalidImageException;
 import com.socialpath.exception.ResourceNotFoundException;
 import com.socialpath.validation.ValidationResult;
 import com.socialpath.security.SecurityUtils;
@@ -150,6 +151,33 @@ public class GroupController {
             throw new ForbiddenOperationException("Only the group owner can edit the group");
         }
 
+        return showGroupUpdatingForm(groupFounded, user, model);
+    }
+
+    @PostMapping("/updateGroup")
+    public String updateGroup(Group group, String groupId, MultipartFile file,
+                              @RequestParam(name = "removeImage", defaultValue = "false") boolean removeImage,
+                              Model model)
+            throws IOException {
+        User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
+        Group groupFounded = requireGroup(groupId);
+
+        if (!isOwner(groupFounded, user.getLogin())) {
+            throw new ForbiddenOperationException("Only the group owner can edit the group");
+        }
+
+        group.setId(groupFounded.getId());
+        try {
+            groupService.updateGroup(group, file, removeImage);
+        } catch (InvalidImageException e) {
+            model.addAttribute("errorText", e.getMessage());
+            return showGroupUpdatingForm(groupFounded, user, model);
+        }
+
+        return "redirect:/searchResult/getGroupPage?groupId=" + group.getId();
+    }
+
+    private String showGroupUpdatingForm(Group groupFounded, User user, Model model) {
         GroupSearchResult group = modelMapper.map(groupFounded, GroupSearchResult.class);
         group.setId(groupFounded.getId().toString());
         group = handleAvatarService.resolveDisplayAvatar(groupFounded, group);
@@ -159,23 +187,6 @@ public class GroupController {
         model = handleAvatarService.handleAvatar(user, model, false);
 
         return "group/groupUpdatingForm";
-    }
-
-    @PostMapping("/updateGroup")
-    public String updateGroup(Group group, String groupId, MultipartFile file,
-                              @RequestParam(name = "removeImage", defaultValue = "false") boolean removeImage)
-            throws IOException {
-        String login = SecurityUtils.getCurrentLogin();
-        Group groupFounded = requireGroup(groupId);
-
-        if (!isOwner(groupFounded, login)) {
-            throw new ForbiddenOperationException("Only the group owner can edit the group");
-        }
-
-        group.setId(groupFounded.getId());
-        groupService.updateGroup(group, file, removeImage);
-
-        return "redirect:/searchResult/getGroupPage?groupId=" + group.getId();
     }
 
     private void demoteAdmin(GroupUserRequest request) {

@@ -4,7 +4,7 @@
   <div class="comment" th:id="${comment.id}">
     <a class="avatar-link" th:href="@{/user/anotherUserPage(anotherUserLogin=${comment.authorLogin})}">
       <img class="commentImage" th:if="${comment.authorImageId == null}" src="/usericon.png" alt="usericon">
-      <img class="commentImage" th:unless="${comment.authorImageId == null}" th:src="'/images/' + ${comment.authorImageId}" alt="usericon"
+      <img class="commentImage" th:unless="${comment.authorImageId == null}" th:src="'/images/' + ${comment.authorImageId} + '?size=thumb'" alt="usericon"
            width="30px" height="30px">
     </a>
     <a class="username" th:href="@{/user/anotherUserPage(anotherUserLogin=${comment.authorLogin})}"

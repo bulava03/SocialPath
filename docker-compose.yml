@@ -23,6 +23,8 @@ services:
       DB_USER: root
       DB_PASSWORD: root
       MEDIA_DIR: /var/socialpath/media
+      # Set to true for one start to convert avatars uploaded before avatar processing.
+      AVATAR_CONVERT_ON_STARTUP: ${AVATAR_CONVERT_ON_STARTUP:-false}
       # Override in real deployments: JWT_SECRET=<long random string>
       JWT_SECRET: ${JWT_SECRET:-local-dev-only-secret-key-change-me-0123456789abcdef0123456789abcdef}
     volumes:

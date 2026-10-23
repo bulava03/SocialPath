@@ -20,7 +20,7 @@
       <div class="authinput">
         <div class="avatar-block">
           <img id="avatar-preview"
-               th:src="${avatar != null} ? '/images/' + ${avatar} : '/pictures/photo.png'"
+               th:src="${avatar != null} ? '/images/' + ${avatar} + '?size=thumb' : '/pictures/photo.png'"
                alt="Photo" title="Change photo">
           <div class="avatar-actions">
             <label for="file" class="avatar-button">Change photo</label>
@@ -78,7 +78,7 @@
         <h2 class="name">Workplace</h2>
         <input class="field" id="workplace" th:value="${user.workplace}" type="text" name="workplace">
 
-        <input onclick="validateAvatarSize()" class="button" type="submit" value="Save" />
+        <input onclick="registerUser()" class="button" type="submit" value="Save" />
       </div>
     </form>
     <div id="backform">
@@ -94,7 +94,6 @@
 </footer>
 
 <script src="/script/dateValidation.js"></script>
-<script src="/script/validateAvatarSize.js"></script>
 <script src="/script/avatarPreview.js"></script>
 </body>
 </html>

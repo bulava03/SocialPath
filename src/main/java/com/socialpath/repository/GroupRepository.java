@@ -74,6 +74,11 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     @Query("update Group g set g.name = :name, g.imageId = :imageId where g.id = :id")
     void updateGroup(@Param("id") Long id, @Param("name") String name, @Param("imageId") String imageId);
 
+    @Transactional
+    @Modifying
+    @Query("update Group g set g.imageId = :imageId where g.id = :id")
+    void updateImageId(@Param("id") Long id, @Param("imageId") String imageId);
+
     default void addMember(Long groupId, String memberId) {
         Group group = findById(groupId).orElse(null);
         if (group != null && !group.getMembers().contains(memberId)) {

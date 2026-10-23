@@ -2,9 +2,11 @@ package com.socialpath.repository;
 
 import com.socialpath.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,6 +25,13 @@ public interface UserRepository extends JpaRepository<User, String> {
     }
 
     List<User> findByLoginIn(List<String> logins);
+
+    List<User> findByImageIdIsNotNull();
+
+    @Transactional
+    @Modifying
+    @Query("update User u set u.imageId = :imageId where u.login = :login")
+    void updateImageId(@Param("login") String login, @Param("imageId") String imageId);
 
     /**
      * Case-insensitive substring search across the profile fields, the SQL

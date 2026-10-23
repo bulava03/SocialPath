@@ -26,8 +26,8 @@ import java.util.regex.Pattern;
 @Service
 public class FileStorageServiceImpl implements FileStorageService {
 
-    /** {uuid} optionally followed by a short alphanumeric extension. */
-    private static final Pattern FILE_ID = Pattern.compile("[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}(\\.[a-z0-9]{1,10})?");
+    /** {uuid}, an optional _thumb suffix, then an optional short alphanumeric extension. */
+    private static final Pattern FILE_ID = Pattern.compile("[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}(_thumb)?(\\.[a-z0-9]{1,10})?");
     private static final Pattern EXTENSION = Pattern.compile("[a-z0-9]{1,10}");
 
     private final Path root;
@@ -46,6 +46,15 @@ public class FileStorageServiceImpl implements FileStorageService {
         String fileId = UUID.randomUUID() + extensionOf(file.getOriginalFilename());
         Files.copy(file.getInputStream(), root.resolve(fileId), StandardCopyOption.REPLACE_EXISTING);
         return fileId;
+    }
+
+    @Override
+    public void storeFile(String fileId, byte[] content) throws IOException {
+        Path path = resolveSafely(fileId);
+        if (path == null) {
+            throw new IllegalArgumentException("Invalid file id: " + fileId);
+        }
+        Files.write(path, content);
     }
 
     @Override

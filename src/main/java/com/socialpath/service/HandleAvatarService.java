@@ -19,6 +19,18 @@ import java.io.IOException;
 public interface HandleAvatarService {
 
     /**
+     * Id of the thumbnail stored next to an avatar: "{uuid}.jpg" has its
+     * thumbnail at "{uuid}_thumb.jpg".
+     * @param imageId the avatar id
+     * @return the thumbnail id
+     */
+    static String thumbnailIdOf(String imageId) {
+        int dot = imageId.lastIndexOf('.');
+        String base = dot < 0 ? imageId : imageId.substring(0, dot);
+        return base + "_thumb.jpg";
+    }
+
+    /**
      * Adds a user's avatar image id to the model.
      * @param user the user whose avatar is shown
      * @param model the model to populate
@@ -65,4 +77,27 @@ public interface HandleAvatarService {
      * @return the same view model, for chaining
      */
     GroupSearchResult resolveDisplayAvatar(Group group, GroupSearchResult result);
+
+    /**
+     * Tells whether a stored avatar predates avatar processing (it has no
+     * thumbnail yet) and should be converted.
+     * @param imageId the stored avatar id, possibly null or empty
+     * @return true when there is an avatar without a thumbnail
+     */
+    boolean needsProcessing(String imageId);
+
+    /**
+     * Converts a stored avatar into the processed form (square full version
+     * plus thumbnail) under a new id. The old file is left in place; the
+     * caller deletes it once the new id is saved.
+     * @param imageId the stored avatar id
+     * @return the new avatar id
+     */
+    String reprocessStoredAvatar(String imageId) throws IOException;
+
+    /**
+     * Deletes an avatar together with its thumbnail. No-op for an empty id.
+     * @param imageId the avatar id, possibly null or empty
+     */
+    void deleteAvatar(String imageId);
 }

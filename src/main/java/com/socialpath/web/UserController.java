@@ -8,6 +8,7 @@ import com.socialpath.dto.request.UserUpdate;
 import com.socialpath.dto.response.GroupSearchResult;
 import com.socialpath.dto.response.UserLogin;
 import com.socialpath.dto.response.UserSearchResult;
+import com.socialpath.exception.InvalidImageException;
 import com.socialpath.helper.CheckHelper;
 import com.socialpath.validation.ValidationResult;
 import com.socialpath.security.SecurityUtils;
@@ -92,26 +93,43 @@ public class UserController {
 
     @PostMapping("/changeUserInfo")
     public String changeUserInfo(UserUpdate user, MultipartFile file, Model model) throws IOException {
-        String login = SecurityUtils.getCurrentLogin();
+        User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
 
         ValidationResult validation = userService.validateUserUpdate(user);
         if (!validation.isSuccess()) {
-            model = modelAttributesService.userInfoModel(model, user, login);
-            model.addAttribute("errorText", validation.getMessage());
-            return "user/userInfo";
+            return showUserInfoWithError(model, user, myUser, validation.getMessage());
         }
-
-        User myUser = userService.findByLogin(login);
 
         if (user.getDateOfBirth() != null) {
             user.setDateOfBirth(user.getDateOfBirth().toLocalDate().atStartOfDay());
         }
-        user = handleAvatarService.updateAvatar(user, myUser, file);
+        try {
+            user = handleAvatarService.updateAvatar(user, myUser, file);
+        } catch (InvalidImageException e) {
+            return showUserInfoWithError(model, user, myUser, e.getMessage());
+        }
         user.setLogin(myUser.getLogin());
 
         userService.updateUser(user);
 
         return "redirect:/user/authorisation";
+    }
+
+    /**
+     * Shows the profile form again with the submitted values and an error.
+     * The current avatar is kept in the model so the header and the avatar
+     * picker still show it.
+     * @param model the model to populate
+     * @param user the submitted profile update
+     * @param myUser the persisted user
+     * @param errorText the message to show
+     * @return the profile form view
+     */
+    private String showUserInfoWithError(Model model, UserUpdate user, User myUser, String errorText) {
+        model = modelAttributesService.userInfoModel(model, user, myUser.getLogin());
+        model = handleAvatarService.handleAvatar(myUser, model, false);
+        model.addAttribute("errorText", errorText);
+        return "user/userInfo";
     }
 
     @GetMapping("/getUsersGroups")

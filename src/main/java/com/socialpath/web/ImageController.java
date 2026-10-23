@@ -1,6 +1,7 @@
 package com.socialpath.web;
 
 import com.socialpath.service.FileStorageService;
+import com.socialpath.service.HandleAvatarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
 import java.net.URLConnection;
@@ -29,13 +31,24 @@ public class ImageController {
     private final FileStorageService fileStorageService;
 
     /**
-     * Streams a stored file by its id.
+     * Streams a stored file by its id. With size=thumb an avatar is served as
+     * its thumbnail; files without one (publication media, avatars not yet
+     * converted) fall back to the full file.
      * @param id media file id
+     * @param size "thumb" for the thumbnail, absent for the full file
      * @return the file bytes with a best-effort content type, or 404
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Resource> getImage(@PathVariable String id) throws IOException {
-        Resource resource = fileStorageService.getFileById(id);
+    public ResponseEntity<Resource> getImage(@PathVariable String id,
+                                             @RequestParam(name = "size", required = false) String size)
+            throws IOException {
+        Resource resource = null;
+        if ("thumb".equals(size)) {
+            resource = fileStorageService.getFileById(HandleAvatarService.thumbnailIdOf(id));
+        }
+        if (resource == null) {
+            resource = fileStorageService.getFileById(id);
+        }
         if (resource == null) {
             return ResponseEntity.notFound().build();
         }

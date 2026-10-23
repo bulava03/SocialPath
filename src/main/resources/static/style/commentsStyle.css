@@ -11,6 +11,7 @@
 
 .commentImage {
     border-radius: 15px;
+    object-fit: cover;
 }
 
 .avatar-link {

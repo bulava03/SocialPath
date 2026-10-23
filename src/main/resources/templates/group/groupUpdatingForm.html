@@ -23,7 +23,7 @@
                     <input type="hidden" th:value="${group.id}" name="groupId">
                     <div class="avatar-block">
                         <img id="avatar-preview"
-                             th:src="${!#strings.isEmpty(group.imageId)} ? '/images/' + ${group.imageId} : '/pictures/photo.png'"
+                             th:src="${!#strings.isEmpty(group.imageId)} ? '/images/' + ${group.imageId} + '?size=thumb' : '/pictures/photo.png'"
                              alt="Photo" title="Change photo">
                         <div class="avatar-actions">
                             <label for="file" class="avatar-button">Change photo</label>
