@@ -51,7 +51,8 @@
                 </select>
                 <select id="dob-year" name="year">
                     <option value="" disabled hidden th:selected="${User.year == -1 || User.year == 0}">Year</option>
-                    <option th:if="${User.year != -1 && User.year != 0}" th:value="${User.year}" th:text="${User.year}" selected></option>
+                    <option th:each="y : ${#numbers.sequence(#dates.year(#dates.createNow()), 1900, -1)}"
+                            th:value="${y}" th:text="${y}" th:selected="${y == User.year}"></option>
                 </select>
                 </div>
                 <input type="hidden" id="dateOfBirth" name="dateOfBirth" value="">
@@ -81,7 +82,6 @@
     <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
 </footer>
 
-<script src="/script/generateYears.js"></script>
 <script src="/script/countryList.js"></script>
 <script src="/script/dateValidation.js"></script>
 </body>
