@@ -21,7 +21,5 @@
             th:if="${not group.members.contains(author.login)}" onclick="joinGroup()">Join group</button>
     <button id="leaveButton" class="leftFrameButton"
             th:if="${group.members.contains(author.login) && group.owner != author.login}" onclick="leaveGroup()">Leave group</button>
-
-    <a class="leftFrameButton" th:if="${not group.members.contains(author.login)}" th:href="@{/report/getReportPage(id=${group.id})}">Report group</a>
   </div>
 </html>

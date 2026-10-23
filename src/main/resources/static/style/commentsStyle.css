@@ -54,10 +54,7 @@
 }
 
 .reply-btn,
-.delete-btn,
-.report-btn-t1,
-.report-btn-t2,
-.report-btn-t3 {
+.delete-btn {
     background-color: #007bff;
     color: white;
     border: none;
@@ -67,45 +64,23 @@
     margin-top: 10px;
 }
 
-.reply-btn,
-.report-btn-t3 {
+.reply-btn {
     margin-left: 60px;
 }
 
-.delete-btn,
-.report-btn-t2 {
+.delete-btn {
     margin-left: 123px;
     margin-top: -25px;
-}
-
-.delete-btn {
-    background-color: #dc3545;
-}
-
-.report-btn-t1 {
-    margin-left: 190px;
-    margin-top: -25px;
-}
-
-.report-btn-t1,
-.report-btn-t2,
-.report-btn-t3 {
     background-color: #dc3545;
 }
 
 .reply-btn:hover,
-.delete-btn:hover,
-.report-btn-t1:hover,
-.report-btn-t2:hover,
-.report-btn-t3:hover {
+.delete-btn:hover {
     opacity: 0.8;
 }
 
 .reply-btn:disabled,
-.delete-btn:disabled,
-.report-btn-t1:disabled,
-.report-btn-t2:disabled,
-.report-btn-t3:disabled {
+.delete-btn:disabled {
     background-color: #6c757d;
     cursor: not-allowed;
 }

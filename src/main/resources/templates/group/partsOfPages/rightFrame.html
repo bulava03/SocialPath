@@ -37,13 +37,5 @@
       </th:block>
       <p th:unless="${publications != null and publications.size() > 0}">No posts yet.</p>
     </div>
-
-    <form id="commentReporter" method="post" action="/report/addReport">
-      <input class="field" th:value="${group.id}" type="hidden" name="idPage" />
-      <input class="field" value="Comment Group" type="hidden" name="type" />
-      <input class="field" id="idPublicationReport" value="" type="hidden" name="idPublication" />
-      <input class="field" id="idCommentReport" value="" type="hidden" name="idComment" />
-      <input class="field" id="commentTextReport" value="" type="hidden" name="subject" />
-    </form>
   </div>
 </html>

@@ -2,8 +2,7 @@
 
 A social network web application built with Spring Boot and MySQL. Users
 create profiles, connect as friends, join groups, publish posts with photos
-and video, discuss them in threaded comments, and report content for
-moderation.
+and video, and discuss them in threaded comments.
 
 ## Features
 
@@ -20,8 +19,6 @@ moderation.
 - **Comments** — nested, unlimited depth: a comment can be replied to just
   like a post. Authors, page owners and group moderators can delete a post
   or comment together with its whole reply subtree and all attached media.
-- **Reports** — users report publications, comments or groups; reports are
-  stored with status tracking for a moderation workflow.
 - **Search** — one search box across user profiles (name, contacts,
   location, education, workplace) and group names.
 

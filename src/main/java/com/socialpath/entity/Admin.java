@@ -16,7 +16,4 @@ public class Admin {
 
     @Column(name = "password", length = 72)
     private String password;
-
-    @Column(name = "report_id")
-    private Long report;
 }
