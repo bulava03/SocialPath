@@ -28,12 +28,10 @@
         <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
     </footer>
 
-    <script src="/script/getAddingCommentForm.js"></script>
     
     <script th:if="${user.Login != author.Login}" src="/script/friendsAnotherUserPage.js"></script>
-    <script src="/script/comments/userComments.js"></script>
+    <script src="/script/comments.js"></script>
 
-    <script src="/script/comments/publicationMedia.js"></script>
 
 
 </body>

@@ -105,7 +105,7 @@
     </div>
 
     <button class="reply-btn" th:if="${group.members.contains(author.login)}" th:attr="onclick='makeVisible(\'' + ${comment.id} + '\')'">Reply</button>
-    <button class="delete-btn" th:if="${comment.authorLogin == author.login || group.admins.contains(author.login)}" th:attr="onclick='submitRemoveComment(\'' + ${comment.id} + '\',\'' + ${group.id} + '\')'">Delete</button>
+    <button class="delete-btn" th:if="${comment.authorLogin == author.login || group.admins.contains(author.login)}" th:attr="onclick='submitRemoveComment(\'' + ${comment.id} + '\')'">Delete</button>
 
     <div class="reply-section" th:classappend="${comment.id}" style="display: none;">
       <textarea type="text" th:id="'publication-text-' + ${comment.id}" class="reply-field" th:classappend="${comment.id}" placeholder="Write your comment here..."></textarea>
@@ -115,7 +115,7 @@
 
       <div class="publication-actions">
         <button type="button" th:id="'publication-add-media-btn-' + ${comment.id}" class="publication-add-media-btn">Add media</button>
-        <button class="publish-btn" th:attr="onclick='submitComment(\'' + ${comment.id} + '\',\'' + ${group.id} + '\')'">Publish</button>
+        <button class="publish-btn" th:attr="onclick='submitComment(\'' + ${comment.id} + '\')'">Publish</button>
       </div>
     </div>
 
