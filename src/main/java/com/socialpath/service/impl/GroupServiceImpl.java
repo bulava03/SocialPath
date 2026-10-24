@@ -12,6 +12,7 @@ import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.GroupService;
 import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -62,17 +63,25 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public List<UserSearchResult> findGroupsMembers(Long id) throws IOException {
-        return toSearchResults(groupRepository.findMembersById(id));
+        return toSearchResults(groupMembers(id));
     }
 
     @Override
     public List<String> findGroupsAdmins(Long id) {
-        return groupRepository.findAdminsById(id);
+        return groupAdmins(id);
     }
 
     @Override
     public List<UserSearchResult> findGroupsAdminsPresentable(Long id) throws IOException {
-        return toSearchResults(groupRepository.findAdminsById(id));
+        return toSearchResults(groupAdmins(id));
+    }
+
+    private List<String> groupMembers(Long id) {
+        return groupRepository.findById(id).map(Group::getMembers).orElse(List.of());
+    }
+
+    private List<String> groupAdmins(Long id) {
+        return groupRepository.findById(id).map(Group::getAdmins).orElse(List.of());
     }
 
     private List<UserSearchResult> toSearchResults(List<String> logins) {
@@ -92,6 +101,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    @Transactional
     public void removeUserFromGroup(Long groupId, String userId) {
         groupRepository.removeFromAdmins(groupId, userId);
         groupRepository.removeMember(groupId, userId);

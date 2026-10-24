@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -122,13 +121,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserSearchResult> findUsersFriends(String login) throws IOException {
         User user = userRepository.findByLogin(login);
-        List<String> usersFriends = user != null ? user.getFriends() : null;
-
-        if (usersFriends == null) {
-            return null;
-        }
-
-        return toSearchResults(usersFriends, login);
+        return user == null ? List.of() : toSearchResults(user.getFriends(), login);
     }
 
     @Override
@@ -141,13 +134,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserSearchResult> findUsersFriendsInvitations(String login) throws IOException {
         User user = userRepository.findByLogin(login);
-        List<String> inviters = user != null ? user.getFriendInvites() : null;
-
-        if (inviters == null) {
-            return null;
-        }
-
-        return toSearchResults(inviters, login);
+        return user == null ? List.of() : toSearchResults(user.getFriendInvites(), login);
     }
 
     /**
@@ -177,9 +164,6 @@ public class UserServiceImpl implements UserService {
         if (invited == null) {
             return;
         }
-        if (invited.getFriendInvites() == null) {
-            invited.setFriendInvites(new ArrayList<>());
-        }
         if (!invited.getFriendInvites().contains(myId)) {
             invited.getFriendInvites().add(myId);
             userRepository.save(invited);
@@ -190,7 +174,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void removeFromInvitations(String myId, String anotherId) {
         User user = userRepository.findByLogin(myId);
-        if (user == null || user.getFriendInvites() == null) {
+        if (user == null) {
             return;
         }
         user.getFriendInvites().remove(anotherId);
@@ -209,9 +193,6 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             return;
         }
-        if (user.getFriends() == null) {
-            user.setFriends(new ArrayList<>());
-        }
         if (!user.getFriends().contains(friend)) {
             user.getFriends().add(friend);
             userRepository.save(user);
@@ -220,7 +201,7 @@ public class UserServiceImpl implements UserService {
 
     private void removeFriendOneWay(String owner, String friend) {
         User user = userRepository.findByLogin(owner);
-        if (user == null || user.getFriends() == null) {
+        if (user == null) {
             return;
         }
         user.getFriends().remove(friend);

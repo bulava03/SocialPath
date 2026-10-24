@@ -22,10 +22,10 @@ public class FriendsController {
         String authorLogin = SecurityUtils.getCurrentLogin();
         User anotherUser = requireUser(login);
 
-        if (anotherUser.getFriends() != null && anotherUser.getFriends().contains(authorLogin)) {
+        if (anotherUser.getFriends().contains(authorLogin)) {
             return OperationResult.of("ALREADY_FRIENDS");
         }
-        if (anotherUser.getFriendInvites() != null && anotherUser.getFriendInvites().contains(authorLogin)) {
+        if (anotherUser.getFriendInvites().contains(authorLogin)) {
             return OperationResult.of("ALREADY_INVITED");
         }
         userService.inviteUser(authorLogin, login);
@@ -37,11 +37,11 @@ public class FriendsController {
         String authorLogin = SecurityUtils.getCurrentLogin();
         User anotherUser = requireUser(login);
 
-        if (anotherUser.getFriends() != null && anotherUser.getFriends().contains(authorLogin)) {
+        if (anotherUser.getFriends().contains(authorLogin)) {
             userService.removeFromFriends(login, authorLogin);
             return OperationResult.of("REMOVED_FROM_FRIENDS");
         }
-        if (anotherUser.getFriendInvites() != null && anotherUser.getFriendInvites().contains(authorLogin)) {
+        if (anotherUser.getFriendInvites().contains(authorLogin)) {
             userService.removeFromInvitations(login, authorLogin);
             return OperationResult.of("INVITE_CANCELLED");
         }
@@ -63,10 +63,10 @@ public class FriendsController {
         User myUser = userService.findByLogin(authorLogin);
         requireUser(login);
 
-        if (myUser.getFriends() != null && myUser.getFriends().contains(login)) {
+        if (myUser.getFriends().contains(login)) {
             return OperationResult.of("ALREADY_FRIENDS");
         }
-        if (myUser.getFriendInvites() != null && myUser.getFriendInvites().contains(login)) {
+        if (myUser.getFriendInvites().contains(login)) {
             userService.acceptToFriends(authorLogin, login);
             userService.removeFromInvitations(authorLogin, login);
             return OperationResult.of("ACCEPTED");

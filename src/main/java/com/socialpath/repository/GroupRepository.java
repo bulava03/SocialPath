@@ -29,38 +29,6 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
      */
     List<Group> findByMembersContains(String memberLogin);
 
-    default List<String> findMembersById(Long id) {
-        Group group = findById(id).orElse(null);
-        if (group != null) {
-            return group.getMembers();
-        }
-        return null;
-    }
-
-    default List<String> findAdminsById(Long id) {
-        Group group = findById(id).orElse(null);
-        if (group != null) {
-            return group.getAdmins();
-        }
-        return null;
-    }
-
-    default void addAdmin(Long groupId, String newAdminId) {
-        Group group = findById(groupId).orElse(null);
-        if (group != null && !group.getAdmins().contains(newAdminId)) {
-            group.getAdmins().add(newAdminId);
-            save(group);
-        }
-    }
-
-    default void removeFromAdmins(Long groupId, String userId) {
-        Group group = findById(groupId).orElse(null);
-        if (group != null) {
-            group.getAdmins().remove(userId);
-            save(group);
-        }
-    }
-
     @Transactional
     @Modifying
     @Query("update Group g set g.name = :name, g.imageId = :imageId where g.id = :id")
@@ -71,19 +39,38 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     @Query("update Group g set g.imageId = :imageId where g.id = :id")
     void updateImageId(@Param("id") Long id, @Param("imageId") String imageId);
 
-    default void addMember(Long groupId, String memberId) {
-        Group group = findById(groupId).orElse(null);
-        if (group != null && !group.getMembers().contains(memberId)) {
-            group.getMembers().add(memberId);
-            save(group);
-        }
-    }
+    /*
+     * Membership and adminship are changed with one statement on the join
+     * table instead of loading the group, editing its list and saving it
+     * back: no lost update when two people join at once, and the primary key
+     * on (group_id, login) makes adding idempotent.
+     */
 
-    default void removeMember(Long groupId, String memberId) {
-        Group group = findById(groupId).orElse(null);
-        if (group != null) {
-            group.getMembers().remove(memberId);
-            save(group);
-        }
-    }
+    @Transactional
+    @Modifying
+    @Query(value = """
+            INSERT INTO group_members (group_id, member_login) VALUES (:groupId, :login)
+            ON DUPLICATE KEY UPDATE member_login = member_login
+            """, nativeQuery = true)
+    void addMember(@Param("groupId") Long groupId, @Param("login") String login);
+
+    @Transactional
+    @Modifying
+    @Query(value = "DELETE FROM group_members WHERE group_id = :groupId AND member_login = :login",
+            nativeQuery = true)
+    void removeMember(@Param("groupId") Long groupId, @Param("login") String login);
+
+    @Transactional
+    @Modifying
+    @Query(value = """
+            INSERT INTO group_admins (group_id, admin_login) VALUES (:groupId, :login)
+            ON DUPLICATE KEY UPDATE admin_login = admin_login
+            """, nativeQuery = true)
+    void addAdmin(@Param("groupId") Long groupId, @Param("login") String login);
+
+    @Transactional
+    @Modifying
+    @Query(value = "DELETE FROM group_admins WHERE group_id = :groupId AND admin_login = :login",
+            nativeQuery = true)
+    void removeFromAdmins(@Param("groupId") Long groupId, @Param("login") String login);
 }

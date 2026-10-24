@@ -178,7 +178,7 @@ public class UserController {
 
         // Only accept if a real pending invitation exists, so a forged request
         // can't fabricate a friendship out of nothing.
-        if (myUser.getFriendInvites() != null && myUser.getFriendInvites().contains(request.getId())) {
+        if (myUser.getFriendInvites().contains(request.getId())) {
             userService.acceptToFriends(login, request.getId());
             userService.removeFromInvitations(login, request.getId());
         }

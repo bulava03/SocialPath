@@ -14,6 +14,7 @@ import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -101,11 +102,11 @@ public class User {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "friendships", joinColumns = @JoinColumn(name = "user_login"))
     @Column(name = "friend_login", length = 20, nullable = false)
-    private List<String> friends;
+    private List<String> friends = new ArrayList<>();
 
     /** Logins of users who invited this user to be friends. */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "friend_invites", joinColumns = @JoinColumn(name = "user_login"))
     @Column(name = "inviter_login", length = 20, nullable = false)
-    private List<String> friendInvites;
+    private List<String> friendInvites = new ArrayList<>();
 }
