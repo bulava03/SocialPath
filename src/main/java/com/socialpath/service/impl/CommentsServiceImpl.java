@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import com.socialpath.entity.Group;
 import com.socialpath.entity.Publication;
 import com.socialpath.entity.User;
-import com.socialpath.dto.request.DelComment;
 import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
 import com.socialpath.dto.response.PublicationPresentable;
@@ -200,24 +199,6 @@ public class CommentsServiceImpl implements CommentsService {
         return publication;
     }
 
-    @Override
-    @Transactional
-    public void removePublicationUser(DelComment delComment) {
-        deletePublicationTree(delComment.getIdComment());
-    }
-
-    @Override
-    @Transactional
-    public void removePublicationGroup(DelComment delComment) {
-        deletePublicationTree(delComment.getIdComment());
-    }
-
-    @Override
-    @Transactional
-    public void removeComment(DelComment delComment) {
-        deletePublicationTree(delComment.getIdComment());
-    }
-
     private List<String> storeMedia(List<MultipartFile> files) throws IOException {
         List<String> mediaIds = new ArrayList<>();
         if (files == null) {
@@ -240,7 +221,9 @@ public class CommentsServiceImpl implements CommentsService {
      * already-deleted files.
      * @param rootId id of the publication or comment to delete
      */
-    private void deletePublicationTree(Long rootId) {
+    @Override
+    @Transactional
+    public void deletePublication(Long rootId) {
         List<String> fileIds = commentsRepository.findSubtreeMediaFileIds(rootId);
         commentsRepository.deleteById(rootId);
 

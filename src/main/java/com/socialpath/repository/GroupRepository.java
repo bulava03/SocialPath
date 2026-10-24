@@ -61,14 +61,6 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
         }
     }
 
-    default void removeFromGroup(Long groupId, String userId) {
-        Group group = findById(groupId).orElse(null);
-        if (group != null) {
-            group.getMembers().remove(userId);
-            save(group);
-        }
-    }
-
     @Transactional
     @Modifying
     @Query("update Group g set g.name = :name, g.imageId = :imageId where g.id = :id")

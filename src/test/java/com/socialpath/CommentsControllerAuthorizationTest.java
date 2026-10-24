@@ -79,7 +79,7 @@ class CommentsControllerAuthorizationTest {
 
         controller.removeCommentUser(topLevelDelete());
 
-        verify(commentsService).removePublicationUser(any(DelComment.class));
+        verify(commentsService).deletePublication(publicationId);
     }
 
     @Test
@@ -89,7 +89,7 @@ class CommentsControllerAuthorizationTest {
 
         assertThrows(ForbiddenOperationException.class,
                 () -> controller.removeCommentUser(topLevelDelete()));
-        verify(commentsService, never()).removePublicationUser(any());
+        verify(commentsService, never()).deletePublication(any());
     }
 
     @Test
@@ -100,7 +100,7 @@ class CommentsControllerAuthorizationTest {
 
         controller.removeCommentUser(nestedDelete());
 
-        verify(commentsService).removeComment(any(DelComment.class));
+        verify(commentsService).deletePublication(commentId);
     }
 
     @Test
@@ -111,7 +111,7 @@ class CommentsControllerAuthorizationTest {
 
         controller.removeCommentUser(nestedDelete());
 
-        verify(commentsService).removeComment(any(DelComment.class));
+        verify(commentsService).deletePublication(commentId);
     }
 
     @Test
@@ -122,7 +122,7 @@ class CommentsControllerAuthorizationTest {
 
         assertThrows(ForbiddenOperationException.class,
                 () -> controller.removeCommentUser(nestedDelete()));
-        verify(commentsService, never()).removeComment(any());
+        verify(commentsService, never()).deletePublication(any());
     }
 
     @Test
@@ -140,7 +140,7 @@ class CommentsControllerAuthorizationTest {
 
         controller.removeCommentGroup(delComment);
 
-        verify(commentsService).removePublicationGroup(any(DelComment.class));
+        verify(commentsService).deletePublication(publicationId);
     }
 
     @Test
@@ -158,6 +158,6 @@ class CommentsControllerAuthorizationTest {
 
         assertThrows(ForbiddenOperationException.class,
                 () -> controller.removeCommentGroup(delComment));
-        verify(commentsService, never()).removePublicationGroup(any());
+        verify(commentsService, never()).deletePublication(any());
     }
 }

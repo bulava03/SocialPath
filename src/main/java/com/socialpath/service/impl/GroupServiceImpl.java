@@ -9,7 +9,6 @@ import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.GroupService;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,13 +27,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public ValidationResult validateGroup(GroupCreationForm group) {
-        Set<ConstraintViolation<GroupCreationForm>> violations = validator.validate(group);
-
-        if (!violations.isEmpty()) {
-            return ValidationResult.failure(violations.stream()
-                    .map(ConstraintViolation::getMessage).toList());
-        }
-        return ValidationResult.success();
+        return ValidationResult.of(validator.validate(group));
     }
 
     @Override
@@ -86,7 +79,7 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public void removeUserFromGroup(Long groupId, String userId) {
         groupRepository.removeFromAdmins(groupId, userId);
-        groupRepository.removeFromGroup(groupId, userId);
+        groupRepository.removeMember(groupId, userId);
     }
 
     @Override

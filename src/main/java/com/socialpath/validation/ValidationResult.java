@@ -1,7 +1,10 @@
 package com.socialpath.validation;
 
+import jakarta.validation.ConstraintViolation;
+
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class ValidationResult {
     private final boolean success;
@@ -22,6 +25,18 @@ public class ValidationResult {
 
     public static ValidationResult failure(String errorMessage) {
         return new ValidationResult(false, Collections.singletonList(errorMessage));
+    }
+
+    /**
+     * Turns Bean Validation output into a result.
+     * @param violations the violations reported by the validator
+     * @return success when there are none, otherwise a failure with their messages
+     */
+    public static ValidationResult of(Set<? extends ConstraintViolation<?>> violations) {
+        if (violations.isEmpty()) {
+            return success();
+        }
+        return failure(violations.stream().map(ConstraintViolation::getMessage).toList());
     }
 
     public boolean isSuccess() {

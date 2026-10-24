@@ -1,6 +1,5 @@
 package com.socialpath;
 
-import com.socialpath.dto.request.DelComment;
 import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
@@ -45,17 +44,12 @@ class CommentsDeletionCascadeTest {
     }
 
     @Test
-    void removePublicationUser_DeletesRootRowAndMediaOfWholeSubtree() {
+    void deletePublication_DeletesRootRowAndMediaOfWholeSubtree() {
         // publication (photo1) -> comment (photo2) -> reply (photo3)
         when(commentsRepository.findSubtreeMediaFileIds(publicationId))
                 .thenReturn(List.of("photo1", "photo2", "photo3"));
 
-        DelComment delComment = new DelComment();
-        delComment.setIdPublication("publications");
-        delComment.setIdComment(publicationId);
-        delComment.setLogin("alice");
-
-        service.removePublicationUser(delComment);
+        service.deletePublication(publicationId);
 
         // One root delete; the database cascade removes the subtree rows.
         verify(commentsRepository).deleteById(publicationId);
@@ -66,15 +60,11 @@ class CommentsDeletionCascadeTest {
     }
 
     @Test
-    void removeComment_DeletesOnlyItsOwnSubtree() {
+    void deletePublication_OfComment_DeletesOnlyItsOwnSubtree() {
         when(commentsRepository.findSubtreeMediaFileIds(commentId))
                 .thenReturn(List.of("photo2"));
 
-        DelComment delComment = new DelComment();
-        delComment.setIdPublication(publicationId.toString());
-        delComment.setIdComment(commentId);
-
-        service.removeComment(delComment);
+        service.deletePublication(commentId);
 
         verify(commentsRepository).deleteById(commentId);
         verify(commentsRepository, never()).deleteById(publicationId);

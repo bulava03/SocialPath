@@ -1,7 +1,6 @@
 package com.socialpath.service;
 
 import com.socialpath.entity.Publication;
-import com.socialpath.dto.request.DelComment;
 import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
 import com.socialpath.dto.response.PublicationPresentable;
@@ -79,23 +78,10 @@ public interface CommentsService {
     void addNewComment(NewComment newComment) throws IOException;
 
     /**
-     * Deletes a top-level publication from a user's page, together with its
-     * whole comment subtree and all associated media files.
-     * @param delComment identifies the publication and its owner
+     * Deletes a publication or a comment, together with its whole reply
+     * subtree and all associated media files. Permission checks are the
+     * caller's job.
+     * @param id the publication or comment id
      */
-    void removePublicationUser(DelComment delComment);
-
-    /**
-     * Deletes a top-level publication from a group's page, together with its
-     * whole comment subtree and all associated media files.
-     * @param delComment identifies the publication and its group
-     */
-    void removePublicationGroup(DelComment delComment);
-
-    /**
-     * Deletes a comment, together with its whole reply subtree and all
-     * associated media files.
-     * @param delComment identifies the comment and its parent publication
-     */
-    void removeComment(DelComment delComment);
+    void deletePublication(Long id);
 }

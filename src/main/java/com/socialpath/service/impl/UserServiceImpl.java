@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import com.socialpath.entity.User;
 import com.socialpath.dto.response.GroupSearchResult;
 import com.socialpath.dto.response.UserSearchResult;
+import com.socialpath.dto.request.DateOfBirthInput;
 import com.socialpath.dto.request.RegistrationForm;
 import com.socialpath.dto.request.UserUpdate;
 import com.socialpath.repository.GroupRepository;
@@ -13,7 +14,6 @@ import com.socialpath.validation.ValidationResult;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.socialpath.service.CountryService;
 import com.socialpath.service.UserService;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * User accounts and the social graph. Where the MongoDB edition issued
@@ -42,35 +41,31 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ValidationResult validateRegistration(RegistrationForm form) {
-        ValidationResult dateOfBirth = DateOfBirthResolver.resolve(form);
-        if (!dateOfBirth.isSuccess()) {
-            return dateOfBirth;
-        }
-        Set<ConstraintViolation<RegistrationForm>> violations = validator.validate(form);
-
-        if (!violations.isEmpty()) {
-            return ValidationResult.failure(violations.stream()
-                    .map(ConstraintViolation::getMessage).toList());
-        }
-        if (!countryService.isValidCode(form.getCountryCode())) {
-            return ValidationResult.failure("Unknown country.");
-        }
-        return ValidationResult.success();
+        return validateProfile(form, form.getCountryCode());
     }
 
     @Override
     public ValidationResult validateUserUpdate(UserUpdate user) {
-        ValidationResult dateOfBirth = DateOfBirthResolver.resolve(user);
+        return validateProfile(user, user.getCountryCode());
+    }
+
+    /**
+     * Shared checks of the registration and profile forms: the date of birth
+     * is assembled first, so the bean constraints (@Past) see the result.
+     * @param form the submitted form
+     * @param countryCode the selected country code, possibly empty
+     * @return the first failure, or success
+     */
+    private ValidationResult validateProfile(DateOfBirthInput form, String countryCode) {
+        ValidationResult dateOfBirth = DateOfBirthResolver.resolve(form);
         if (!dateOfBirth.isSuccess()) {
             return dateOfBirth;
         }
-        Set<ConstraintViolation<UserUpdate>> violations = validator.validate(user);
-
-        if (!violations.isEmpty()) {
-            return ValidationResult.failure(violations.stream()
-                    .map(ConstraintViolation::getMessage).toList());
+        ValidationResult constraints = ValidationResult.of(validator.validate(form));
+        if (!constraints.isSuccess()) {
+            return constraints;
         }
-        if (!countryService.isValidCode(user.getCountryCode())) {
+        if (!countryService.isValidCode(countryCode)) {
             return ValidationResult.failure("Unknown country.");
         }
         return ValidationResult.success();

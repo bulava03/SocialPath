@@ -91,7 +91,7 @@ public class GroupController {
 
         List<UserSearchResult> list = groupService.findGroupsAdminsPresentable(group.getId());
 
-        model = modelAttributesService.groupsAttributesFullList(model, user, list, request.getId(), group.getOwner());
+        model = modelAttributesService.groupsAttributes(model, user, list, request.getId(), group.getOwner());
         return "group/groupsAdmins";
     }
 

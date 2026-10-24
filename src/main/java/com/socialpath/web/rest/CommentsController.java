@@ -17,8 +17,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/comments")
@@ -36,7 +38,7 @@ public class CommentsController {
     public OperationResult addUserPublication(NewPublication publication) throws IOException {
         User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
 
-        if (hasContent(publication)) {
+        if (hasContent(publication.getText(), publication.getMedia())) {
             publication.setAuthorId(myUser.getLogin());
             commentsService.addNewUserPublication(publication);
             return OperationResult.of("OK");
@@ -49,7 +51,7 @@ public class CommentsController {
     public OperationResult addCommentUser(NewComment newComment) throws IOException {
         User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
 
-        if (commentsService.findById(newComment.getIdPublication()) != null && hasContent(newComment)) {
+        if (commentsService.findById(newComment.getIdPublication()) != null && hasContent(newComment.getText(), newComment.getMedia())) {
             newComment.setAuthorLogin(myUser.getLogin());
             commentsService.addNewComment(newComment);
             return OperationResult.of("OK");
@@ -70,8 +72,7 @@ public class CommentsController {
         if (TOP_LEVEL_PUBLICATION.equals(delComment.getIdPublication())) {
             // A publication on a user page always belongs to the page owner.
             requireAuthor(target, login);
-            delComment.setLogin(target.getAuthorId());
-            commentsService.removePublicationUser(delComment);
+            commentsService.deletePublication(target.getId());
             return OperationResult.of("OK");
         }
 
@@ -84,7 +85,7 @@ public class CommentsController {
         if (!isAuthor(target, login) && !isAuthor(parent, login)) {
             throw new ForbiddenOperationException("Not allowed to delete this comment");
         }
-        commentsService.removeComment(delComment);
+        commentsService.deletePublication(target.getId());
         return OperationResult.of("OK");
     }
 
@@ -93,7 +94,7 @@ public class CommentsController {
         User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
         requireGroup(publication.getGroupId());
 
-        if (hasContent(publication)) {
+        if (hasContent(publication.getText(), publication.getMedia())) {
             publication.setAuthorId(myUser.getLogin());
             commentsService.addNewGroupPublication(publication);
             return OperationResult.of("OK");
@@ -107,7 +108,7 @@ public class CommentsController {
         User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
         requireGroup(newComment.getGroupId());
 
-        if (commentsService.findById(newComment.getIdPublication()) != null && hasContent(newComment)) {
+        if (commentsService.findById(newComment.getIdPublication()) != null && hasContent(newComment.getText(), newComment.getMedia())) {
             newComment.setAuthorLogin(myUser.getLogin());
             commentsService.addNewComment(newComment);
             return OperationResult.of("OK");
@@ -134,15 +135,14 @@ public class CommentsController {
         }
 
         if (TOP_LEVEL_PUBLICATION.equals(delComment.getIdPublication())) {
-            delComment.setLogin(login);
-            commentsService.removePublicationGroup(delComment);
+            commentsService.deletePublication(target.getId());
             return OperationResult.of("OK");
         }
 
         if (commentsService.findById(Long.valueOf(delComment.getIdPublication())) == null) {
             throw new ResourceNotFoundException("Publication not found: " + delComment.getIdPublication());
         }
-        commentsService.removeComment(delComment);
+        commentsService.deletePublication(target.getId());
         return OperationResult.of("OK");
     }
 
@@ -164,13 +164,7 @@ public class CommentsController {
         }
     }
 
-    private boolean hasContent(NewPublication publication) {
-        return (publication.getText() != null && !publication.getText().trim().isEmpty())
-                || (publication.getMedia() != null && !publication.getMedia().isEmpty());
-    }
-
-    private boolean hasContent(NewComment comment) {
-        return (comment.getText() != null && !comment.getText().trim().isEmpty())
-                || (comment.getMedia() != null && !comment.getMedia().isEmpty());
+    private boolean hasContent(String text, List<MultipartFile> media) {
+        return (text != null && !text.isBlank()) || (media != null && !media.isEmpty());
     }
 }

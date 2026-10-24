@@ -2,7 +2,6 @@ package com.socialpath.service;
 
 import com.socialpath.entity.User;
 import com.socialpath.dto.response.PublicationPresentable;
-import com.socialpath.dto.response.UserSearchResult;
 import com.socialpath.dto.request.UserUpdate;
 import org.springframework.ui.Model;
 
@@ -44,25 +43,14 @@ public interface ModelAttributesService {
     Model userInfoModel(Model model, UserUpdate user, String login);
 
     /**
-     * Adds the attributes a group page needs, with admins given as logins.
+     * Adds the attributes the group members and admins pages need.
      * @param model the model to populate
      * @param author the viewer
-     * @param admins the group's admin logins
+     * @param admins the group's admins: logins on the members page, full
+     *               list items on the admins page
      * @param groupId the group id
      * @param owner the group owner's login
      * @return the same model, for chaining
      */
-    Model groupsAttributes(Model model, User author, List<String> admins, String groupId, String owner);
-
-    /**
-     * Adds the attributes a group page needs, with admins given as full
-     * presentable results (for the admins listing).
-     * @param model the model to populate
-     * @param author the viewer
-     * @param admins the group's admins as search results
-     * @param groupId the group id
-     * @param owner the group owner's login
-     * @return the same model, for chaining
-     */
-    Model groupsAttributesFullList(Model model, User author, List<UserSearchResult> admins, String groupId, String owner);
+    Model groupsAttributes(Model model, User author, List<?> admins, String groupId, String owner);
 }

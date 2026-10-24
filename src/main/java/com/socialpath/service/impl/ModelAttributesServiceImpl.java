@@ -36,11 +36,7 @@ public class ModelAttributesServiceImpl implements ModelAttributesService {
     public Model userInfoModel(Model model, User user, String login) {
         UserFormView userFormUpdate = modelMapper.map(user, UserFormView.class);
         fillDateOfBirth(userFormUpdate, user.getDateOfBirth());
-
-        model.addAttribute("user", userFormUpdate);
-        model.addAttribute("author", login);
-        model.addAttribute("countries", countryService.findAll());
-        return model;
+        return userInfoModel(model, userFormUpdate, login);
     }
 
     @Override
@@ -50,8 +46,11 @@ public class ModelAttributesServiceImpl implements ModelAttributesService {
         userFormUpdate.setDay(user.getDay());
         userFormUpdate.setMonth(user.getMonth());
         userFormUpdate.setYear(user.getYear());
+        return userInfoModel(model, userFormUpdate, login);
+    }
 
-        model.addAttribute("user", userFormUpdate);
+    private Model userInfoModel(Model model, UserFormView form, String login) {
+        model.addAttribute("user", form);
         model.addAttribute("author", login);
         model.addAttribute("countries", countryService.findAll());
         return model;
@@ -77,16 +76,7 @@ public class ModelAttributesServiceImpl implements ModelAttributesService {
     }
 
     @Override
-    public Model groupsAttributes(Model model, User author, List<String> admins, String groupId, String owner) {
-        model.addAttribute("author", author);
-        model.addAttribute("groupId", groupId);
-        model.addAttribute("admins", admins);
-        model.addAttribute("owner", owner);
-        return model;
-    }
-
-    @Override
-    public Model groupsAttributesFullList(Model model, User author, List<UserSearchResult> admins, String groupId, String owner) {
+    public Model groupsAttributes(Model model, User author, List<?> admins, String groupId, String owner) {
         model.addAttribute("author", author);
         model.addAttribute("groupId", groupId);
         model.addAttribute("admins", admins);
