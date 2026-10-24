@@ -1,14 +1,12 @@
 package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import com.socialpath.entity.Group;
 import com.socialpath.entity.Publication;
 import com.socialpath.entity.User;
 import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
 import com.socialpath.dto.response.PublicationPresentable;
 import com.socialpath.repository.CommentsRepository;
-import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.FileStorageService;
@@ -35,7 +33,6 @@ import java.util.List;
 public class CommentsServiceImpl implements CommentsService {
 
     private final UserRepository userRepository;
-    private final GroupRepository groupRepository;
     private final CommentsRepository commentsRepository;
     private final FileStorageService fileStorageService;
 
@@ -55,38 +52,13 @@ public class CommentsServiceImpl implements CommentsService {
     }
 
     @Override
-    public List<PublicationPresentable> loadComments(String type, String idInType) throws IOException {
-        if (type.equals("User")) {
-            return getPublications(commentsRepository.findUserPublicationIds(idInType));
-        }
-        Group group = groupRepository.findById(Long.valueOf(idInType)).orElse(null);
-        if (group == null) {
-            return null;
-        }
-        return getPublications(commentsRepository.findGroupPublicationIds(group.getId()));
+    public List<PublicationPresentable> loadUserFeed(String login) {
+        return getPublications(commentsRepository.findUserPublicationIds(login));
     }
 
     @Override
-    public List<Long> getCommentsIdsUser(String login) {
-        User user = userRepository.findByLogin(login);
-        if (user == null) {
-            return new ArrayList<>();
-        }
-        return commentsRepository.findUserPublicationIds(login);
-    }
-
-    @Override
-    public List<Long> getCommentsIdsGroup(Long groupId) {
-        Group group = groupRepository.findById(groupId).orElse(null);
-        if (group == null) {
-            return new ArrayList<>();
-        }
-        return commentsRepository.findGroupPublicationIds(groupId);
-    }
-
-    @Override
-    public List<PublicationPresentable> loadComments(List<Long> commentIds) throws IOException {
-        return getPublications(commentIds);
+    public List<PublicationPresentable> loadGroupFeed(Long groupId) {
+        return getPublications(commentsRepository.findGroupPublicationIds(groupId));
     }
 
     @Override
@@ -107,12 +79,7 @@ public class CommentsServiceImpl implements CommentsService {
         return current;
     }
 
-    @Override
-    public List<PublicationPresentable> getPublications(List<Long> ids) throws IOException {
-        if (ids == null) {
-            return null;
-        }
-
+    private List<PublicationPresentable> getPublications(List<Long> ids) {
         List<PublicationPresentable> publications = new ArrayList<>();
         for (Long element : ids) {
             Publication publication = commentsRepository.findById(element).orElse(null);
@@ -131,7 +98,7 @@ public class CommentsServiceImpl implements CommentsService {
      * @param publication the stored publication
      * @return the presentable form of the publication
      */
-    private PublicationPresentable toPresentable(Publication publication) throws IOException {
+    private PublicationPresentable toPresentable(Publication publication) {
         User author = userRepository.findByLogin(publication.getAuthorId());
 
         List<Publication> children = commentsRepository.findByParentIdOrderByCreatedAtAscIdAsc(publication.getId());

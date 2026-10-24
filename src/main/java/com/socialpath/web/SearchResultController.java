@@ -13,7 +13,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.io.IOException;
 
 @Controller
 @RequestMapping("/searchResult")
@@ -26,7 +25,7 @@ public class SearchResultController {
     private final HandleAvatarService handleAvatarService;
 
     @GetMapping("/getSearchResult")
-    public String getSearchResult(SearchRequest request, Model model) throws IOException {
+    public String getSearchResult(SearchRequest request, Model model) {
         String login = SecurityUtils.getCurrentLogin();
         User user = userService.findByLogin(login);
 
@@ -46,13 +45,13 @@ public class SearchResultController {
     }
 
     @GetMapping("/getGroupPage")
-    public String getGroupPage(FoundedGroup foundedGroup, Model model) throws IOException {
+    public String getGroupPage(FoundedGroup foundedGroup, Model model) {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
         Group group = groupService.getGroup(foundedGroup.getGroupId());
 
         model.addAttribute("group", group);
         model.addAttribute("author", new UserLogin(user.getLogin(), ""));
-        model.addAttribute("publications", commentsService.loadComments("Group", foundedGroup.getGroupId()));
+        model.addAttribute("publications", commentsService.loadGroupFeed(group.getId()));
         model = handleAvatarService.handleAvatar(user, model, false);
         model = handleAvatarService.handleAvatar(group, model);
 

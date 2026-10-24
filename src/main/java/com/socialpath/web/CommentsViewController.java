@@ -14,7 +14,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.io.IOException;
 import java.util.List;
 
 @Controller
@@ -27,10 +26,10 @@ public class CommentsViewController {
     private final ModelAttributesService modelAttributesService;
 
     @GetMapping("/loadCommentsUser")
-    public String loadCommentsUser(String login, Model model) throws IOException {
+    public String loadCommentsUser(String login, Model model) {
         String authorLogin = SecurityUtils.getCurrentLogin();
 
-        List<PublicationPresentable> publications = commentsService.loadComments(commentsService.getCommentsIdsUser(login));
+        List<PublicationPresentable> publications = commentsService.loadUserFeed(login);
 
         model.addAttribute("publications", publications);
         model.addAttribute("author", new UserLogin(authorLogin, ""));
@@ -40,11 +39,11 @@ public class CommentsViewController {
     }
 
     @GetMapping("/loadCommentsGroup")
-    public String loadCommentsGroup(String groupId, Model model) throws IOException {
+    public String loadCommentsGroup(String groupId, Model model) {
         String authorLogin = SecurityUtils.getCurrentLogin();
 
         Group group = groupService.getGroup(groupId);
-        List<PublicationPresentable> publications = commentsService.loadComments(commentsService.getCommentsIdsGroup(group.getId()));
+        List<PublicationPresentable> publications = commentsService.loadGroupFeed(group.getId());
 
         model.addAttribute("publications", publications);
         model.addAttribute("author", new UserLogin(authorLogin, ""));

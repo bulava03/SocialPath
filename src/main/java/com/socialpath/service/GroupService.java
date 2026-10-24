@@ -51,7 +51,7 @@ public interface GroupService {
      * @param id the group id
      * @return the members as search results
      */
-    List<UserSearchResult> findGroupsMembers(Long id) throws IOException;
+    List<UserSearchResult> findGroupsMembers(Long id);
 
     /**
      * Returns the logins of a group's admins.
@@ -65,7 +65,7 @@ public interface GroupService {
      * @param id the group id
      * @return the admins as search results
      */
-    List<UserSearchResult> findGroupsAdminsPresentable(Long id) throws IOException;
+    List<UserSearchResult> findGroupsAdminsPresentable(Long id);
 
     /**
      * Revokes a user's admin rights in a group.

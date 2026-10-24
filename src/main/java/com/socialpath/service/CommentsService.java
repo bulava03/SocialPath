@@ -28,33 +28,18 @@ public interface CommentsService {
     void addNewGroupPublication(NewPublication newPublication) throws IOException;
 
     /**
-     * Loads the presentable feed for a user or group page.
-     * @param type "User" or "Group"
-     * @param idInType the page owner's login or the group id
-     * @return the page's publications, newest handling as stored
-     */
-    List<PublicationPresentable> loadComments(String type, String idInType) throws IOException;
-
-    /**
-     * Loads a set of publications by id into presentable form.
-     * @param commentIds the publication ids to load
+     * Loads the feed of a user page with nested comments, oldest first.
+     * @param login the page owner
      * @return the publications as view models
      */
-    List<PublicationPresentable> loadComments(List<Long> commentIds) throws IOException;
+    List<PublicationPresentable> loadUserFeed(String login);
 
     /**
-     * Returns the ids of a user's top-level publications.
-     * @param login the page owner
-     * @return the publication ids
-     */
-    List<Long> getCommentsIdsUser(String login);
-
-    /**
-     * Returns the ids of a group's top-level publications.
+     * Loads the feed of a group page with nested comments, oldest first.
      * @param groupId the group id
-     * @return the publication ids
+     * @return the publications as view models
      */
-    List<Long> getCommentsIdsGroup(Long groupId);
+    List<PublicationPresentable> loadGroupFeed(Long groupId);
 
     /**
      * Looks up a single publication or comment by id.
@@ -72,13 +57,6 @@ public interface CommentsService {
      */
     Publication findRoot(Publication publication);
 
-    /**
-     * Resolves publication ids into their presentable form, recursively
-     * including nested comments.
-     * @param ids the publication ids
-     * @return the publications as view models, or null if ids is null
-     */
-    List<PublicationPresentable> getPublications(List<Long> ids) throws IOException;
 
     /**
      * Adds a comment under an existing publication.

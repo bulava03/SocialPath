@@ -70,7 +70,7 @@ public class GroupController {
     }
 
     @GetMapping("/getGroupsMembers")
-    public String getGroupsMembers(LeftFrameRequest request, Model model) throws IOException {
+    public String getGroupsMembers(LeftFrameRequest request, Model model) {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
         Group group = groupService.getGroup(request.getId());
 
@@ -83,7 +83,7 @@ public class GroupController {
     }
 
     @GetMapping("/getGroupsAdmins")
-    public String getGroupsAdmins(LeftFrameRequest request, Model model) throws IOException {
+    public String getGroupsAdmins(LeftFrameRequest request, Model model) {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
         Group group = groupService.getGroup(request.getId());
 
@@ -144,7 +144,7 @@ public class GroupController {
     }
 
     @GetMapping("/getGroupUpdatingForm")
-    public String getGroupUpdatingForm(LeftFrameRequest request, Model model) throws IOException {
+    public String getGroupUpdatingForm(LeftFrameRequest request, Model model) {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
         Group groupFounded = groupService.getGroup(request.getId());
 

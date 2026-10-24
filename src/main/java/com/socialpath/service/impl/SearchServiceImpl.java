@@ -11,7 +11,6 @@ import com.socialpath.repository.UserRepository;
 import com.socialpath.service.SearchService;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,7 +21,7 @@ public class SearchServiceImpl implements SearchService {
     private final GroupRepository groupRepository;
 
     @Override
-    public SearchResults searchUsersAndGroups(String searchValuesString, String thisLogin) throws IOException {
+    public SearchResults searchUsersAndGroups(String searchValuesString, String thisLogin) {
         if (searchValuesString == null || searchValuesString.isBlank()) {
             return new SearchResults(List.of(), List.of());
         }

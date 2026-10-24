@@ -62,7 +62,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public List<UserSearchResult> findGroupsMembers(Long id) throws IOException {
+    public List<UserSearchResult> findGroupsMembers(Long id) {
         return toSearchResults(groupMembers(id));
     }
 
@@ -72,7 +72,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public List<UserSearchResult> findGroupsAdminsPresentable(Long id) throws IOException {
+    public List<UserSearchResult> findGroupsAdminsPresentable(Long id) {
         return toSearchResults(groupAdmins(id));
     }
 

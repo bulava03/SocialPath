@@ -18,7 +18,6 @@ import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -119,20 +118,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserSearchResult> findUsersFriends(String login) throws IOException {
+    public List<UserSearchResult> findUsersFriends(String login) {
         User user = userRepository.findByLogin(login);
         return user == null ? List.of() : toSearchResults(user.getFriends(), login);
     }
 
     @Override
-    public List<GroupSearchResult> findUsersGroups(String login) throws IOException {
+    public List<GroupSearchResult> findUsersGroups(String login) {
         return groupRepository.findByMembersContains(login).stream()
                 .map(GroupSearchResult::from)
                 .toList();
     }
 
     @Override
-    public List<UserSearchResult> findUsersFriendsInvitations(String login) throws IOException {
+    public List<UserSearchResult> findUsersFriendsInvitations(String login) {
         User user = userRepository.findByLogin(login);
         return user == null ? List.of() : toSearchResults(user.getFriendInvites(), login);
     }

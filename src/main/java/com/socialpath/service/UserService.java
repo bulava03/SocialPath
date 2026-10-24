@@ -7,7 +7,6 @@ import com.socialpath.dto.request.RegistrationForm;
 import com.socialpath.dto.request.UserUpdate;
 import com.socialpath.validation.ValidationResult;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -67,21 +66,21 @@ public interface UserService {
      * @param login the user whose friends are wanted
      * @return the friends as search results
      */
-    List<UserSearchResult> findUsersFriends(String login) throws IOException;
+    List<UserSearchResult> findUsersFriends(String login);
 
     /**
      * Resolves the groups a user belongs to into presentable form.
      * @param login the user whose groups are wanted
      * @return the groups as search results
      */
-    List<GroupSearchResult> findUsersGroups(String login) throws IOException;
+    List<GroupSearchResult> findUsersGroups(String login);
 
     /**
      * Resolves a user's pending incoming friend invitations.
      * @param login the user whose invitations are wanted
      * @return the inviting users as search results
      */
-    List<UserSearchResult> findUsersFriendsInvitations(String login) throws IOException;
+    List<UserSearchResult> findUsersFriendsInvitations(String login);
 
     /**
      * Establishes a friendship between two users (both directions).

@@ -2,7 +2,6 @@ package com.socialpath;
 
 import com.socialpath.entity.Publication;
 import com.socialpath.repository.CommentsRepository;
-import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.FileStorageService;
 import com.socialpath.service.impl.CommentsServiceImpl;
@@ -26,7 +25,6 @@ class PublicationRootTest {
         commentsRepository = mock(CommentsRepository.class);
         service = new CommentsServiceImpl(
                 mock(UserRepository.class),
-                mock(GroupRepository.class),
                 commentsRepository,
                 mock(FileStorageService.class));
     }

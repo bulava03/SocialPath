@@ -42,10 +42,10 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/authorisation")
-    public String getUserPageFirst(Model model) throws IOException {
+    public String getUserPageFirst(Model model) {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
 
-        model = modelAttributesService.usersAttributes(model, user, true, commentsService.loadComments("User", user.getLogin()));
+        model = modelAttributesService.usersAttributes(model, user, true, commentsService.loadUserFeed(user.getLogin()));
         model = handleAvatarService.handleAvatar(user, model, false);
         model.addAttribute("myUser", user);
 
@@ -53,7 +53,7 @@ public class UserController {
     }
 
     @GetMapping("/anotherUserPage")
-    public String getAnotherUserPage(FoundedUser foundedUser, Model model) throws IOException {
+    public String getAnotherUserPage(FoundedUser foundedUser, Model model) {
         String login = SecurityUtils.getCurrentLogin();
 
         if (foundedUser.getAnotherUserLogin().equals(login)) {
@@ -74,7 +74,7 @@ public class UserController {
         model.addAttribute("author", new UserLogin(login, ""));
         model.addAttribute("isAuthor", user.getLogin().equals(login));
         model.addAttribute("friendship", FriendshipStatus.between(myUser, user));
-        model.addAttribute("publications", commentsService.loadComments("User", foundedUser.getAnotherUserLogin()));
+        model.addAttribute("publications", commentsService.loadUserFeed(user.getLogin()));
         model = handleAvatarService.handleAvatar(myUser, model, false);
         model = handleAvatarService.handleAvatar(user, model, true);
 
@@ -82,7 +82,7 @@ public class UserController {
     }
 
     @GetMapping("/getUserInfo")
-    public String getUserInfo(Model model) throws IOException {
+    public String getUserInfo(Model model) {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
 
         model = modelAttributesService.userInfoModel(model, user, user.getLogin());
@@ -130,7 +130,7 @@ public class UserController {
     }
 
     @GetMapping("/getUsersGroups")
-    public String getUsersGroups(LeftFrameRequest request, Model model) throws IOException {
+    public String getUsersGroups(LeftFrameRequest request, Model model) {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
 
         List<GroupSearchResult> list = userService.findUsersGroups(request.getId());
@@ -144,7 +144,7 @@ public class UserController {
     }
 
     @GetMapping("/getUsersFriends")
-    public String getUsersFriends(LeftFrameRequest request, Model model) throws IOException {
+    public String getUsersFriends(LeftFrameRequest request, Model model) {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
 
         List<UserSearchResult> list = userService.findUsersFriends(request.getId());
@@ -158,7 +158,7 @@ public class UserController {
     }
 
     @GetMapping("/getInvitationsToFriends")
-    public String getInvitationsToFriends(LeftFrameRequest request, Model model) throws IOException {
+    public String getInvitationsToFriends(LeftFrameRequest request, Model model) {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
 
         List<UserSearchResult> list = userService.findUsersFriendsInvitations(request.getId());
@@ -205,7 +205,7 @@ public class UserController {
     }
 
     @GetMapping("/getChangePasswordForm")
-    public String getChangePasswordForm(Model model) throws IOException {
+    public String getChangePasswordForm(Model model) {
         User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
 
         model = handleAvatarService.handleAvatar(myUser, model, false);
@@ -215,7 +215,7 @@ public class UserController {
     }
 
     @PostMapping("/changePassword")
-    public String changePassword(@Valid ChangePasswordForm form, BindingResult bindingResult, Model model) throws IOException {
+    public String changePassword(@Valid ChangePasswordForm form, BindingResult bindingResult, Model model) {
         User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
 
         if (bindingResult.hasErrors()) {
