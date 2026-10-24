@@ -70,10 +70,10 @@ export async function publish(page, text) {
     await expect(post(page, text)).toBeVisible();
 }
 
-/** A post or comment in the feed, found by its text. */
+/** A post or comment in the feed, found by its exact text ("post 2" is not "post 20"). */
 export function post(page, text) {
     return page.locator(".comment").filter({
-        has: page.locator(":scope > .commentText", { hasText: text }),
+        has: page.locator(":scope > .commentText").getByText(text, { exact: true }),
     });
 }
 
@@ -92,4 +92,33 @@ export async function expectAlert(page, action) {
     await action();
     await expect.poll(() => message, { message: "an alert should be shown" }).not.toBeNull();
     return message;
+}
+
+/** The top-level posts of the feed. */
+export const posts = page => page.locator("#publications > .comment");
+
+/** Publishes "post 1" ... "post N" and returns their ids in that order. */
+export async function publishMany(request, count, { groupId, prefix = "post" } = {}) {
+    const ids = [];
+    for (let i = 1; i <= count; i++) {
+        const url = groupId ? "/comments/addGroupPublication" : "/comments/addUserPublication";
+        const text = `${prefix} ${i}`;
+        const multipart = groupId ? { groupId, text } : { text };
+        const response = await request.post(url, { multipart });
+        expect(response.ok()).toBeTruthy();
+        ids.push((await response.json()).id);
+    }
+    return ids;
+}
+
+export async function scrollToEnd(page) {
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+}
+
+/** Scrolls down until the feed holds the expected number of posts. */
+export async function scrollUntil(page, count) {
+    await expect.poll(async () => {
+        await scrollToEnd(page);
+        return posts(page).count();
+    }, { timeout: 15_000 }).toBe(count);
 }

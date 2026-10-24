@@ -26,13 +26,17 @@
 
         <br><br>
 
-        <div id="publications" th:fragment="publications" data-scope="user" th:data-target="${user.login}">
-            <th:block th:if="${publications != null and publications.size() > 0}">
-                <th:block th:each="i : ${#numbers.sequence(publications.size() - 1, 0, -1)}">
-                    <div th:replace="~{renderComment/renderCommentUser :: renderComment(comment=${publications[i]})}"></div>
+        <div id="publications" data-scope="user" th:data-target="${user.login}" th:data-latest="${latestActivity}">
+            <!-- One feed portion, newest first; also returned on its own for the
+                 next portion and for refreshing a single post. The marker at the
+                 end tells comments.js where to continue. -->
+            <th:block th:fragment="posts">
+                <th:block th:each="post : ${publications}">
+                    <div th:replace="~{renderComment/renderCommentUser :: renderComment(comment=${post})}"></div>
                 </th:block>
+                <div th:if="${nextBefore != null}" class="feed-more" th:data-before="${nextBefore}" aria-live="polite"></div>
             </th:block>
-            <p th:unless="${publications != null and publications.size() > 0}">No posts yet.</p>
+            <p class="feed-empty" th:if="${#lists.isEmpty(publications)}">No posts yet.</p>
         </div>
     </div>
 </html>

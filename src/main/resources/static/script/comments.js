@@ -7,6 +7,7 @@
 const SCOPES = {
     user: {
         load: "/comments/view/loadCommentsUser",
+        latest: "/comments/view/latestUser",
         targetParam: "login",
         publish: "/comments/addUserPublication",
         comment: "/comments/addCommentUser",
@@ -15,6 +16,7 @@ const SCOPES = {
     },
     group: {
         load: "/comments/view/loadCommentsGroup",
+        latest: "/comments/view/latestGroup",
         targetParam: "groupId",
         publish: "/comments/addGroupPublication",
         comment: "/comments/addCommentGroup",
@@ -64,63 +66,168 @@ function validateMedia(files) {
 }
 
 /**
- * Posts a form to the server. Resolves to true on success; on failure shows
- * the server's message (or sends the user to the login page on 401).
+ * Posts a form to the server. Resolves to the JSON answer on success; on
+ * failure shows the server's message (or opens the login page on 401) and
+ * resolves to null.
  */
 function send(url, formData) {
     return fetch(url, { method: "POST", body: formData })
         .then(response => {
             if (response.status === 401) {
                 window.location.href = "/";
-                return false;
+                return null;
             }
             if (response.ok) {
-                return true;
+                return response.json();
             }
             if (response.status === 413) {
                 alert("The files are too large to upload.");
-                return false;
+                return null;
             }
             return response.json()
                 .then(err => alert(err.error || "Request failed."))
                 .catch(() => alert("Request failed."))
-                .then(() => false);
+                .then(() => null);
         })
         .catch(error => {
             console.error("Request failed:", error);
             alert("Could not reach the server. Check your connection and try again.");
-            return false;
+            return null;
         });
 }
 
-/** Re-renders the whole publications block with fresh data from the server. */
-function loadComments() {
+/**
+ * Loads a piece of the feed as HTML. Resolves to null when the session has
+ * ended or the page is gone: fetch follows such redirects silently and would
+ * hand back a whole other page, so the browser is reloaded instead.
+ */
+function fetchHtml(url) {
+    return fetch(url).then(response => {
+        if (response.redirected) {
+            window.location.reload();
+            return null;
+        }
+        if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+        }
+        return response.text();
+    });
+}
+
+/** The next feed portion below a post id, or the first portion without one. */
+function feedUrl(before) {
     const { config, target } = currentScope();
     const url = new URL(config.load, window.location.origin);
     url.searchParams.append(config.targetParam, target);
+    if (before) {
+        url.searchParams.append("before", before);
+    }
+    return url;
+}
 
-    fetch(url)
-        .then(response => {
-            // fetch follows redirects silently: an expired session or a deleted
-            // group would hand back a whole other page. Reload instead, so the
-            // browser itself lands where the server sends it.
-            if (response.redirected) {
-                window.location.reload();
-                return null;
-            }
-            if (!response.ok) {
-                alert("Could not load publications. Reload the page.");
-                return null;
-            }
-            return response.text();
-        })
+function threadUrl(id) {
+    const url = new URL("/comments/view/thread", window.location.origin);
+    url.searchParams.append("id", id);
+    return url;
+}
+
+/** The top-level post an element belongs to. */
+function postOf(element) {
+    return element.closest("#publications > .comment");
+}
+
+/** Re-renders one post with its whole comment tree, in place. */
+function refreshPost(post) {
+    fetchHtml(threadUrl(post.id))
         .then(html => {
             if (html) {
-                // The fragment includes the #publications element itself.
-                document.getElementById("publications").outerHTML = html;
+                post.outerHTML = html;
             }
         })
-        .catch(error => console.error("Request failed:", error));
+        .catch(error => {
+            console.error("Request failed:", error);
+            alert("Could not refresh the post. Reload the page.");
+        });
+}
+
+/** Puts a newly published post on top of the feed. */
+function prependPost(id) {
+    fetchHtml(threadUrl(id))
+        .then(html => {
+            if (html) {
+                document.querySelector("#publications > .feed-empty")?.remove();
+                document.getElementById("publications").insertAdjacentHTML("afterbegin", html);
+            }
+        })
+        .catch(error => {
+            console.error("Request failed:", error);
+            alert("The post is published, but could not be shown. Reload the page.");
+        });
+}
+
+function removePost(post) {
+    post.remove();
+    const publications = document.getElementById("publications");
+    if (!publications.querySelector(":scope > .comment, :scope > .feed-more")) {
+        publications.insertAdjacentHTML("beforeend", '<p class="feed-empty">No posts yet.</p>');
+    }
+}
+
+// Infinite scroll. A marker after the last post carries the id to continue
+// from; when it comes within two screens of the viewport the next portion is
+// appended with a new marker. The last portion has no marker, and then the
+// observer is switched off for good.
+let feedObserver = null;
+let feedLoading = false;
+
+function loadMorePosts(marker) {
+    if (feedLoading) {
+        return;
+    }
+    feedLoading = true;
+    feedObserver.unobserve(marker);
+    marker.textContent = "Loading…";
+
+    fetchHtml(feedUrl(marker.dataset.before))
+        .then(html => {
+            if (html === null) {
+                return;
+            }
+            marker.insertAdjacentHTML("beforebegin", html);
+            marker.remove();
+            watchFeedEnd();
+        })
+        .catch(error => {
+            console.error("Request failed:", error);
+            marker.textContent = "Could not load more posts. ";
+            const retry = document.createElement("button");
+            retry.type = "button";
+            retry.textContent = "Retry";
+            retry.addEventListener("click", () => loadMorePosts(marker));
+            marker.appendChild(retry);
+        })
+        .finally(() => {
+            feedLoading = false;
+        });
+}
+
+function watchFeedEnd() {
+    const marker = document.querySelector("#publications > .feed-more");
+    if (!marker) {
+        feedObserver?.disconnect();
+        feedObserver = null;
+        return;
+    }
+    if (!feedObserver) {
+        feedObserver = new IntersectionObserver(entries => {
+            for (const entry of entries) {
+                if (entry.isIntersecting) {
+                    loadMorePosts(entry.target);
+                }
+            }
+        }, { rootMargin: "0px 0px 200% 0px" });
+    }
+    feedObserver.observe(marker);
 }
 
 /**
@@ -166,10 +273,10 @@ function submitPublication() {
         formData.append(config.targetParam, target);
     }
 
-    send(config.publish, formData).then(ok => {
-        if (ok) {
+    send(config.publish, formData).then(result => {
+        if (result) {
             clearPostForm("");
-            loadComments();
+            prependPost(result.id);
         }
     });
 }
@@ -185,10 +292,12 @@ function submitComment(parentId) {
         formData.append(config.targetParam, target);
     }
 
-    // The reply form is re-rendered empty by loadComments().
-    send(config.comment, formData).then(ok => {
-        if (ok) {
-            loadComments();
+    // Only this post is re-rendered (its reply form comes back empty); drafts
+    // in other posts stay as they are.
+    const post = postOf(document.getElementById(parentId));
+    send(config.comment, formData).then(result => {
+        if (result) {
+            refreshPost(post);
         }
     });
 }
@@ -201,9 +310,16 @@ function submitRemoveComment(commentId) {
         formData.append(config.targetParam, target);
     }
 
-    send(config.remove, formData).then(ok => {
-        if (ok) {
-            loadComments();
+    const comment = document.getElementById(commentId);
+    const post = postOf(comment);
+    send(config.remove, formData).then(result => {
+        if (!result) {
+            return;
+        }
+        if (comment === post) {
+            removePost(post);
+        } else {
+            refreshPost(post);
         }
     });
 }
@@ -257,8 +373,126 @@ function renderPreview(input) {
     }
 }
 
-// Delegated on document: #publications is replaced on every reload, and the
-// new-post form lives outside it.
+// New activity by others. The page carries the newest post or comment id by
+// someone else (data-latest); every 30 seconds while the tab is visible, and
+// when it becomes visible again, the server is asked for the current one.
+// At the top of the feed with nothing typed, the first portion is reloaded
+// on the spot; anywhere else a banner offers it instead, so content never
+// shifts under the reader. Reaching the top later applies it as well.
+const ACTIVITY_CHECK_MS = 30_000;
+let pendingLatest = null;
+
+function shownLatest() {
+    return Number(document.getElementById("publications").dataset.latest || 0);
+}
+
+function atFeedTop() {
+    return document.getElementById("publications").getBoundingClientRect().top >= 0;
+}
+
+function hasDrafts() {
+    const fields = document.querySelectorAll("#publication-text, .reply-field");
+    const files = document.querySelectorAll("input[type='file'][id^='publication-media']");
+    return [...fields].some(field => field.value.trim() !== "")
+        || [...files].some(input => input.files.length > 0);
+}
+
+function checkActivity() {
+    if (document.hidden) {
+        return;
+    }
+    const { config, target } = currentScope();
+    const url = new URL(config.latest, window.location.origin);
+    url.searchParams.append(config.targetParam, target);
+
+    fetch(url)
+        .then(response => (response.ok && !response.redirected ? response.json() : null))
+        .then(data => {
+            if (data && data.latest > shownLatest()) {
+                pendingLatest = data.latest;
+                applyActivity();
+            }
+        })
+        .catch(error => console.error("Request failed:", error));
+}
+
+function applyActivity() {
+    if (pendingLatest === null) {
+        return;
+    }
+    if (atFeedTop() && !hasDrafts()) {
+        reloadFeed();
+    } else {
+        showNewsBanner();
+    }
+}
+
+function showNewsBanner() {
+    if (document.querySelector(".feed-news")) {
+        return;
+    }
+    const banner = document.createElement("div");
+    banner.className = "feed-news";
+    banner.setAttribute("role", "status");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = "New posts and comments · Refresh";
+    button.addEventListener("click", () => {
+        reloadFeed();
+        document.getElementById("publications").scrollIntoView();
+    });
+    banner.appendChild(button);
+    document.getElementById("publications").before(banner);
+}
+
+/** Replaces the feed with its first portion, as if the page had just opened. */
+function reloadFeed() {
+    const latest = pendingLatest;
+    fetchHtml(feedUrl(null))
+        .then(html => {
+            if (html === null) {
+                return;
+            }
+            const publications = document.getElementById("publications");
+            publications.innerHTML = html;
+            if (!publications.querySelector(":scope > .comment")) {
+                publications.innerHTML = '<p class="feed-empty">No posts yet.</p>';
+            }
+            if (latest !== null) {
+                publications.dataset.latest = Math.max(latest, shownLatest());
+            }
+            pendingLatest = null;
+            document.querySelector(".feed-news")?.remove();
+            feedObserver?.disconnect();
+            feedObserver = null;
+            watchFeedEnd();
+        })
+        .catch(error => {
+            console.error("Request failed:", error);
+            alert("Could not refresh the feed. Reload the page.");
+        });
+}
+
+let scrollCheckQueued = false;
+window.addEventListener("scroll", () => {
+    if (pendingLatest === null || scrollCheckQueued) {
+        return;
+    }
+    scrollCheckQueued = true;
+    requestAnimationFrame(() => {
+        scrollCheckQueued = false;
+        if (atFeedTop() && !hasDrafts()) {
+            applyActivity();
+        }
+    });
+});
+document.addEventListener("visibilitychange", checkActivity);
+setInterval(checkActivity, ACTIVITY_CHECK_MS);
+
+watchFeedEnd();
+
+// Delegated on document: posts are replaced when they are refreshed, and the
+// new-post form lives outside the feed.
 document.addEventListener("click", event => {
     const target = event.target;
 

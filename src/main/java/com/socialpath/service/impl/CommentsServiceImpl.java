@@ -4,12 +4,14 @@ import lombok.RequiredArgsConstructor;
 import com.socialpath.entity.Publication;
 import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
+import com.socialpath.dto.response.FeedPage;
 import com.socialpath.dto.response.PublicationPresentable;
 import com.socialpath.repository.AuthorView;
 import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.FileStorageService;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -42,28 +44,58 @@ public class CommentsServiceImpl implements CommentsService {
     private final FileStorageService fileStorageService;
 
     @Override
-    public void addNewUserPublication(NewPublication newPublication) throws IOException {
+    public Long addNewUserPublication(NewPublication newPublication) throws IOException {
         Publication publication = newPublication(newPublication.getText(), newPublication.getAuthorId(),
                 newPublication.getMedia());
-        commentsRepository.save(publication);
+        return commentsRepository.save(publication).getId();
     }
 
     @Override
-    public void addNewGroupPublication(NewPublication newPublication) throws IOException {
+    public Long addNewGroupPublication(NewPublication newPublication) throws IOException {
         Publication publication = newPublication(newPublication.getText(), newPublication.getAuthorId(),
                 newPublication.getMedia());
         publication.setGroupId(Long.valueOf(newPublication.getGroupId()));
-        commentsRepository.save(publication);
+        return commentsRepository.save(publication).getId();
     }
 
     @Override
-    public List<PublicationPresentable> loadUserFeed(String login) {
-        return buildFeed(commentsRepository.findUserFeed(login));
+    public FeedPage loadUserFeed(String login, Long before) {
+        return toPage(commentsRepository.findUserFeed(login, before, Limit.of(FEED_PAGE_SIZE + 1)));
     }
 
     @Override
-    public List<PublicationPresentable> loadGroupFeed(Long groupId) {
-        return buildFeed(commentsRepository.findGroupFeed(groupId));
+    public FeedPage loadGroupFeed(Long groupId, Long before) {
+        return toPage(commentsRepository.findGroupFeed(groupId, before, Limit.of(FEED_PAGE_SIZE + 1)));
+    }
+
+    @Override
+    public PublicationPresentable loadThread(Publication post) {
+        return buildFeed(List.of(findRoot(post))).get(0);
+    }
+
+    @Override
+    public long latestUserFeedActivity(String owner, String viewer) {
+        Long latest = commentsRepository.findLatestUserFeedActivity(owner, viewer);
+        return latest == null ? 0 : latest;
+    }
+
+    @Override
+    public long latestGroupFeedActivity(Long groupId, String viewer) {
+        Long latest = commentsRepository.findLatestGroupFeedActivity(groupId, viewer);
+        return latest == null ? 0 : latest;
+    }
+
+    /**
+     * Cuts a portion from posts queried with one extra row: that row only
+     * tells whether anything older exists and is not shown.
+     * @param rows up to FEED_PAGE_SIZE + 1 posts, newest first
+     * @return the portion and where to continue
+     */
+    private FeedPage toPage(List<Publication> rows) {
+        boolean hasMore = rows.size() > FEED_PAGE_SIZE;
+        List<Publication> posts = hasMore ? rows.subList(0, FEED_PAGE_SIZE) : rows;
+        Long nextBefore = hasMore ? posts.get(posts.size() - 1).getId() : null;
+        return new FeedPage(buildFeed(posts), nextBefore);
     }
 
     @Override
@@ -89,7 +121,7 @@ public class CommentsServiceImpl implements CommentsService {
      * trees. The size of the page does not change the number of queries:
      * one for all comments, one for all authors (media come batched with
      * the publications), and the tree is assembled in memory.
-     * @param posts the page's top-level publications, oldest first
+     * @param posts the portion's top-level publications, newest first
      * @return the posts as view models
      */
     private List<PublicationPresentable> buildFeed(List<Publication> posts) {

@@ -39,8 +39,7 @@ public class CommentsController {
         requireContent(publication.getText(), publication.getMedia());
 
         publication.setAuthorId(myUser.getLogin());
-        commentsService.addNewUserPublication(publication);
-        return OperationResult.of("OK");
+        return OperationResult.created(commentsService.addNewUserPublication(publication));
     }
 
     @PostMapping("/addCommentUser")
@@ -81,8 +80,7 @@ public class CommentsController {
         requireContent(publication.getText(), publication.getMedia());
 
         publication.setAuthorId(myUser.getLogin());
-        commentsService.addNewGroupPublication(publication);
-        return OperationResult.of("OK");
+        return OperationResult.created(commentsService.addNewGroupPublication(publication));
     }
 
     @PostMapping("/addCommentGroup")

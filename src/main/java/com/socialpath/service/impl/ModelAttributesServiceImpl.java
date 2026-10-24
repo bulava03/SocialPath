@@ -23,11 +23,12 @@ public class ModelAttributesServiceImpl implements ModelAttributesService {
     private final CountryService countryService;
 
     @Override
-    public Model usersAttributes(Model model, User user, boolean isAuthor, List<PublicationPresentable> comments) {
+    public Model usersAttributes(Model model, User user, boolean isAuthor, FeedPage feed) {
         model.addAttribute("user", user);
         model.addAttribute("author", new UserLogin(user.getLogin(), ""));
         model.addAttribute("isAuthor", isAuthor);
-        model.addAttribute("publications", comments);
+        model.addAttribute("publications", feed.posts());
+        model.addAttribute("nextBefore", feed.nextBefore());
 
         return model;
     }

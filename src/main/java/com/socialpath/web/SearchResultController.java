@@ -48,7 +48,10 @@ public class SearchResultController {
 
         model.addAttribute("group", group);
         model.addAttribute("author", new UserLogin(user.getLogin(), ""));
-        model.addAttribute("publications", commentsService.loadGroupFeed(group.getId()));
+        FeedPage feed = commentsService.loadGroupFeed(group.getId(), null);
+        model.addAttribute("publications", feed.posts());
+        model.addAttribute("nextBefore", feed.nextBefore());
+        model.addAttribute("latestActivity", commentsService.latestGroupFeedActivity(group.getId(), user.getLogin()));
         model = handleAvatarService.handleAvatar(user, model, false);
         model = handleAvatarService.handleAvatar(group, model);
 

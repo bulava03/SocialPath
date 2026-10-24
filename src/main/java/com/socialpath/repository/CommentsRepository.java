@@ -1,6 +1,7 @@
 package com.socialpath.repository;
 
 import com.socialpath.entity.Publication;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,16 +20,21 @@ import java.util.List;
 public interface CommentsRepository extends JpaRepository<Publication, Long> {
 
     /**
-     * Loads the posts of a user page, oldest first.
+     * Loads a portion of a user page's posts, newest first. Continuing from
+     * an id instead of an offset keeps portions stable while new posts come
+     * in: they are newer, so they never shift the older portions.
      * @param login the page owner's login
-     * @return the top-level publications in insertion order
+     * @param before only posts with a smaller id; null for the newest
+     * @param limit how many posts at most
+     * @return the top-level publications, newest first
      */
     @Query("""
             select p from Publication p
             where p.authorId = :login and p.parentId is null and p.groupId is null
-            order by p.createdAt asc, p.id asc
+              and (:before is null or p.id < :before)
+            order by p.id desc
             """)
-    List<Publication> findUserFeed(@Param("login") String login);
+    List<Publication> findUserFeed(@Param("login") String login, @Param("before") Long before, Limit limit);
 
     /**
      * Collects the media file ids of a publication and of every comment in
@@ -51,16 +57,19 @@ public interface CommentsRepository extends JpaRepository<Publication, Long> {
     List<String> findSubtreeMediaFileIds(@Param("rootId") Long rootId);
 
     /**
-     * Loads the posts of a group page, oldest first.
+     * Loads a portion of a group page's posts, newest first.
      * @param groupId the group id
-     * @return the top-level publications in insertion order
+     * @param before only posts with a smaller id; null for the newest
+     * @param limit how many posts at most
+     * @return the top-level publications, newest first
      */
     @Query("""
             select p from Publication p
             where p.groupId = :groupId and p.parentId is null
-            order by p.createdAt asc, p.id asc
+              and (:before is null or p.id < :before)
+            order by p.id desc
             """)
-    List<Publication> findGroupFeed(@Param("groupId") Long groupId);
+    List<Publication> findGroupFeed(@Param("groupId") Long groupId, @Param("before") Long before, Limit limit);
 
     /**
      * Loads every comment under the given posts, at any depth, in one round
@@ -78,4 +87,41 @@ public interface CommentsRepository extends JpaRepository<Publication, Long> {
             SELECT * FROM tree ORDER BY created_at, id
             """, nativeQuery = true)
     List<Publication> findReplies(@Param("rootIds") Collection<Long> rootIds);
+
+    /**
+     * The newest post or comment anywhere in a user page's feed that someone
+     * other than the viewer wrote. Lets an open page notice new activity
+     * without the viewer's own posts and comments counting as news.
+     * @param owner the page owner's login
+     * @param viewer the viewer's login
+     * @return the largest such id, or null when there is none
+     */
+    @Query(value = """
+            WITH RECURSIVE tree AS (
+                SELECT id, author_login FROM publications
+                WHERE author_login = :owner AND parent_id IS NULL AND group_id IS NULL
+                UNION ALL
+                SELECT p.id, p.author_login FROM publications p JOIN tree t ON p.parent_id = t.id
+            )
+            SELECT MAX(id) FROM tree WHERE author_login <> :viewer
+            """, nativeQuery = true)
+    Long findLatestUserFeedActivity(@Param("owner") String owner, @Param("viewer") String viewer);
+
+    /**
+     * The newest post or comment anywhere in a group's feed that someone
+     * other than the viewer wrote.
+     * @param groupId the group id
+     * @param viewer the viewer's login
+     * @return the largest such id, or null when there is none
+     */
+    @Query(value = """
+            WITH RECURSIVE tree AS (
+                SELECT id, author_login FROM publications
+                WHERE group_id = :groupId AND parent_id IS NULL
+                UNION ALL
+                SELECT p.id, p.author_login FROM publications p JOIN tree t ON p.parent_id = t.id
+            )
+            SELECT MAX(id) FROM tree WHERE author_login <> :viewer
+            """, nativeQuery = true)
+    Long findLatestGroupFeedActivity(@Param("groupId") Long groupId, @Param("viewer") String viewer);
 }

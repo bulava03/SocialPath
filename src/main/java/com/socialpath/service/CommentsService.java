@@ -3,6 +3,7 @@ package com.socialpath.service;
 import com.socialpath.entity.Publication;
 import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
+import com.socialpath.dto.response.FeedPage;
 import com.socialpath.dto.response.PublicationPresentable;
 
 import java.io.IOException;
@@ -15,31 +16,62 @@ import java.util.List;
  */
 public interface CommentsService {
 
+    /** How many posts a feed portion holds. */
+    int FEED_PAGE_SIZE = 20;
+
     /**
      * Creates a publication on a user's page.
      * @param newPublication the publication content and target
+     * @return the id of the new publication
      */
-    void addNewUserPublication(NewPublication newPublication) throws IOException;
+    Long addNewUserPublication(NewPublication newPublication) throws IOException;
 
     /**
      * Creates a publication on a group's page.
      * @param newPublication the publication content and target
+     * @return the id of the new publication
      */
-    void addNewGroupPublication(NewPublication newPublication) throws IOException;
+    Long addNewGroupPublication(NewPublication newPublication) throws IOException;
 
     /**
-     * Loads the feed of a user page with nested comments, oldest first.
+     * Loads a portion of a user page's feed with nested comments.
      * @param login the page owner
-     * @return the publications as view models
+     * @param before continue below this post id; null for the newest posts
+     * @return up to {@link #FEED_PAGE_SIZE} posts, newest first
      */
-    List<PublicationPresentable> loadUserFeed(String login);
+    FeedPage loadUserFeed(String login, Long before);
 
     /**
-     * Loads the feed of a group page with nested comments, oldest first.
+     * Loads a portion of a group page's feed with nested comments.
      * @param groupId the group id
-     * @return the publications as view models
+     * @param before continue below this post id; null for the newest posts
+     * @return up to {@link #FEED_PAGE_SIZE} posts, newest first
      */
-    List<PublicationPresentable> loadGroupFeed(Long groupId);
+    FeedPage loadGroupFeed(Long groupId, Long before);
+
+    /**
+     * Loads one post with its whole comment tree, to refresh it in place.
+     * @param post the post itself or any comment under it
+     * @return the top-level post as a view model
+     */
+    PublicationPresentable loadThread(Publication post);
+
+    /**
+     * The newest activity by others in a user page's feed, posts and
+     * comments alike.
+     * @param owner the page owner
+     * @param viewer the signed-in user, whose own activity is not news
+     * @return the largest such publication id, 0 when there is none
+     */
+    long latestUserFeedActivity(String owner, String viewer);
+
+    /**
+     * The newest activity by others in a group's feed.
+     * @param groupId the group id
+     * @param viewer the signed-in user, whose own activity is not news
+     * @return the largest such publication id, 0 when there is none
+     */
+    long latestGroupFeedActivity(Long groupId, String viewer);
 
     /**
      * Looks up a single publication or comment by id.

@@ -109,3 +109,29 @@
 .mediaTable img {
     object-fit: contain;
 }
+
+/* Shown above the feed when others posted or commented while the viewer is
+   scrolled down; sticks to the top so it stays in sight. */
+.feed-news {
+    position: sticky;
+    top: 10px;
+    z-index: 2;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.feed-news button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 20px;
+    background-color: #e37f22;
+    color: #ffffff;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.feed-more {
+    text-align: center;
+    padding: 15px 0;
+}

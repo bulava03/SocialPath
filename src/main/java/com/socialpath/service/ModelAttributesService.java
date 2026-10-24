@@ -1,7 +1,7 @@
 package com.socialpath.service;
 
 import com.socialpath.entity.User;
-import com.socialpath.dto.response.PublicationPresentable;
+import com.socialpath.dto.response.FeedPage;
 import com.socialpath.dto.request.UserUpdate;
 import org.springframework.ui.Model;
 
@@ -18,10 +18,10 @@ public interface ModelAttributesService {
      * @param model the model to populate
      * @param user the page owner
      * @param isAuthor whether the viewer owns this page
-     * @param comments the page's publications
+     * @param feed the first portion of the page's feed
      * @return the same model, for chaining
      */
-    Model usersAttributes(Model model, User user, boolean isAuthor, List<PublicationPresentable> comments);
+    Model usersAttributes(Model model, User user, boolean isAuthor, FeedPage feed);
 
     /**
      * Populates the profile-info form model from a stored user.

@@ -5,6 +5,7 @@ import com.socialpath.dto.request.ChangePasswordForm;
 import com.socialpath.dto.request.FoundedUser;
 import com.socialpath.dto.request.LeftFrameRequest;
 import com.socialpath.dto.request.UserUpdate;
+import com.socialpath.dto.response.FeedPage;
 import com.socialpath.dto.response.FriendshipStatus;
 import com.socialpath.dto.response.GroupSearchResult;
 import com.socialpath.dto.response.UserLogin;
@@ -43,7 +44,8 @@ public class UserController {
 
     @GetMapping("/authorisation")
     public String getUserPageFirst(@CurrentUser User user, Model model) {
-        model = modelAttributesService.usersAttributes(model, user, true, commentsService.loadUserFeed(user.getLogin()));
+        model = modelAttributesService.usersAttributes(model, user, true, commentsService.loadUserFeed(user.getLogin(), null));
+        model.addAttribute("latestActivity", commentsService.latestUserFeedActivity(user.getLogin(), user.getLogin()));
         model = handleAvatarService.handleAvatar(user, model, false);
         model.addAttribute("myUser", user);
 
@@ -71,7 +73,10 @@ public class UserController {
         model.addAttribute("author", new UserLogin(login, ""));
         model.addAttribute("isAuthor", user.getLogin().equals(login));
         model.addAttribute("friendship", FriendshipStatus.between(myUser, user));
-        model.addAttribute("publications", commentsService.loadUserFeed(user.getLogin()));
+        FeedPage feed = commentsService.loadUserFeed(user.getLogin(), null);
+        model.addAttribute("publications", feed.posts());
+        model.addAttribute("nextBefore", feed.nextBefore());
+        model.addAttribute("latestActivity", commentsService.latestUserFeedActivity(user.getLogin(), login));
         model = handleAvatarService.handleAvatar(myUser, model, false);
         model = handleAvatarService.handleAvatar(user, model, true);
 
