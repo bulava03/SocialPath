@@ -8,9 +8,9 @@ test.describe("registration and sign-in", () => {
         await page.goto("/registration");
         await page.locator("#login").fill(login);
         await page.locator("#password").fill(PASSWORD);
-        await page.locator("#name").fill("Olena");
-        await page.locator("#surname").fill("Kovalenko");
-        await page.locator("#phone").fill("+380 50 123 4567");
+        await page.locator("#name").fill("Alex");
+        await page.locator("#surname").fill("Morgan");
+        await page.locator("#phone").fill("555-0100");
         await page.locator("#email").fill(`${login}@example.com`);
         await page.getByRole("button", { name: "Sign up" }).click();
 
@@ -20,7 +20,7 @@ test.describe("registration and sign-in", () => {
         await page.getByRole("button", { name: "Sign in" }).click();
 
         await expect(page).toHaveURL(/\/user\/authorisation/);
-        await expect(page.locator("#left h1")).toHaveText("Olena Kovalenko");
+        await expect(page.locator("#left h1")).toHaveText("Alex Morgan");
     });
 
     test("an invalid form comes back with the error and the entered values", async ({ page }) => {
@@ -29,14 +29,14 @@ test.describe("registration and sign-in", () => {
         await page.goto("/registration");
         await page.locator("#login").fill(login);
         await page.locator("#password").fill("short");
-        await page.locator("#name").fill("Olena");
-        await page.locator("#phone").fill("+380 50 123 4567");
+        await page.locator("#name").fill("Alex");
+        await page.locator("#phone").fill("555-0100");
         await page.locator("#email").fill(`${login}@example.com`);
         await page.getByRole("button", { name: "Sign up" }).click();
 
         await expect(page.locator(".errortext").filter({ hasText: /\S/ })).toContainText("8");
         await expect(page.locator("#login")).toHaveValue(login);
-        await expect(page.locator("#name")).toHaveValue("Olena");
+        await expect(page.locator("#name")).toHaveValue("Alex");
         // The password is never echoed back.
         await expect(page.locator("#password")).toHaveValue("");
     });

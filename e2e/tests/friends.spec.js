@@ -6,55 +6,55 @@ const userPage = login => `/user/anotherUserPage?anotherUserLogin=${login}`;
 test.describe("friends", () => {
     test("a friend request is sent, accepted and the friendship removed", async ({ browser }) => {
         const anna = await newUserSession(browser, { firstName: "Anna" });
-        const boris = await newUserSession(browser, { firstName: "Boris" });
+        const ben = await newUserSession(browser, { firstName: "Ben" });
 
-        // Boris asks; the button turns into "cancel" without a reload.
-        await boris.page.goto(userPage(anna.user.login));
-        await boris.page.locator("#submitInvite").click();
-        await expect(boris.page.locator("#submitRemoveInvite")).toHaveText("Cancel friend request");
+        // Ben asks; the button turns into "cancel" without a reload.
+        await ben.page.goto(userPage(anna.user.login));
+        await ben.page.locator("#submitInvite").click();
+        await expect(ben.page.locator("#submitRemoveInvite")).toHaveText("Cancel friend request");
 
-        // Anna sees the request in her list and on Boris's page.
+        // Anna sees the request in her list and on Ben's page.
         await anna.page.goto(`/user/getInvitationsToFriends?id=${anna.user.login}`);
-        await expect(anna.page.getByText("Boris Example")).toBeVisible();
-        await anna.page.goto(userPage(boris.user.login));
+        await expect(anna.page.getByText("Ben Example")).toBeVisible();
+        await anna.page.goto(userPage(ben.user.login));
         await expect(anna.page.locator("#submitReject")).toBeVisible();
         await anna.page.locator("#submitAccept").click();
         await expect(anna.page.locator("#submitRemove")).toHaveText("Remove from friends");
         await expect(anna.page.locator("#submitReject")).toHaveCount(0);
 
         // Both see each other as friends.
-        await boris.page.goto(`/user/getUsersFriends?id=${boris.user.login}`);
-        await expect(boris.page.getByText("Anna Example")).toBeVisible();
-        await boris.page.goto(userPage(anna.user.login));
-        await expect(boris.page.locator("#submitRemove")).toBeVisible();
+        await ben.page.goto(`/user/getUsersFriends?id=${ben.user.login}`);
+        await expect(ben.page.getByText("Anna Example")).toBeVisible();
+        await ben.page.goto(userPage(anna.user.login));
+        await expect(ben.page.locator("#submitRemove")).toBeVisible();
 
-        await boris.page.locator("#submitRemove").click();
-        await expect(boris.page.locator("#submitInvite")).toHaveText("Add friend");
+        await ben.page.locator("#submitRemove").click();
+        await expect(ben.page.locator("#submitInvite")).toHaveText("Add friend");
         await anna.page.goto(`/user/getUsersFriends?id=${anna.user.login}`);
-        await expect(anna.page.getByText("Boris Example")).toHaveCount(0);
+        await expect(anna.page.getByText("Ben Example")).toHaveCount(0);
 
         await anna.close();
-        await boris.close();
+        await ben.close();
     });
 
     test("a declined request disappears for both sides", async ({ browser }) => {
         const anna = await newUserSession(browser, { firstName: "Anna" });
-        const boris = await newUserSession(browser, { firstName: "Boris" });
+        const ben = await newUserSession(browser, { firstName: "Ben" });
 
-        await boris.page.goto(userPage(anna.user.login));
-        await boris.page.locator("#submitInvite").click();
-        await expect(boris.page.locator("#submitRemoveInvite")).toBeVisible();
+        await ben.page.goto(userPage(anna.user.login));
+        await ben.page.locator("#submitInvite").click();
+        await expect(ben.page.locator("#submitRemoveInvite")).toBeVisible();
 
-        await anna.page.goto(userPage(boris.user.login));
+        await anna.page.goto(userPage(ben.user.login));
         await anna.page.locator("#submitReject").click();
         await expect(anna.page.locator("#submitInvite")).toHaveText("Add friend");
         await expect(anna.page.locator("#submitAccept")).toHaveCount(0);
 
-        await boris.page.reload();
-        await expect(boris.page.locator("#submitInvite")).toHaveText("Add friend");
+        await ben.page.reload();
+        await expect(ben.page.locator("#submitInvite")).toHaveText("Add friend");
 
         await anna.close();
-        await boris.close();
+        await ben.close();
     });
 });
 

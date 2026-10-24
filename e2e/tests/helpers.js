@@ -22,7 +22,7 @@ export async function registerUser(request, { prefix, firstName = "Tester" } = {
             firstName,
             lastName: "Example",
             email: `${login}@example.com`,
-            phoneNumber: "+380 12 345 6789",
+            phoneNumber: "555-0100",
         },
         maxRedirects: 0,
     });

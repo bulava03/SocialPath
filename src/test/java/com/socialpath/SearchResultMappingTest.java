@@ -15,12 +15,12 @@ class SearchResultMappingTest {
     @Test
     void userFrom_CopiesProfileAndCountryName() {
         Country country = new Country();
-        country.setCode("UA");
-        country.setName("Ukraine");
+        country.setCode("ZZ");
+        country.setName("Testland");
         User user = new User();
         user.setLogin("anna");
         user.setFirstName("Anna");
-        user.setCity("Kyiv");
+        user.setCity("Riverside");
         user.setCountry(country);
 
         UserSearchResult result = UserSearchResult.from(user);
@@ -28,8 +28,8 @@ class SearchResultMappingTest {
         assertEquals("anna", result.getLogin());
         assertEquals("anna", result.getAnotherUserLogin());
         assertEquals("Anna", result.getFirstName());
-        assertEquals("Kyiv", result.getCity());
-        assertEquals("Ukraine", result.getCountryName());
+        assertEquals("Riverside", result.getCity());
+        assertEquals("Testland", result.getCountryName());
     }
 
     @Test

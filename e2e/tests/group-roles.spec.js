@@ -13,32 +13,32 @@ async function join(session, groupId) {
 
 test.describe("group roles", () => {
     test("the owner promotes a member to admin and demotes them again", async ({ browser }) => {
-        const owner = await newUserSession(browser, { firstName: "Olha" });
+        const owner = await newUserSession(browser, { firstName: "Olivia" });
         const groupId = await createGroup(owner.page, "Roles club");
-        const member = await newUserSession(browser, { firstName: "Marko" });
+        const member = await newUserSession(browser, { firstName: "Mark" });
         await join(member, groupId);
 
         const { page } = owner;
         await page.goto(`/group/getGroupsMembers?id=${groupId}`);
-        await card(page, "Marko Example").getByRole("button", { name: "Make admin" }).click();
+        await card(page, "Mark Example").getByRole("button", { name: "Make admin" }).click();
 
-        await expect(card(page, "Marko Example").getByRole("button", { name: "Remove from admins" })).toBeVisible();
+        await expect(card(page, "Mark Example").getByRole("button", { name: "Remove from admins" })).toBeVisible();
         await page.goto(`/group/getGroupsAdmins?id=${groupId}`);
-        await expect(card(page, "Marko Example")).toBeVisible();
+        await expect(card(page, "Mark Example")).toBeVisible();
 
-        await card(page, "Marko Example").getByRole("button", { name: "Remove from admins" }).click();
-        await expect(card(page, "Marko Example")).toHaveCount(0);
-        await expect(card(page, "Olha Example")).toBeVisible();
+        await card(page, "Mark Example").getByRole("button", { name: "Remove from admins" }).click();
+        await expect(card(page, "Mark Example")).toHaveCount(0);
+        await expect(card(page, "Olivia Example")).toBeVisible();
 
         await owner.close();
         await member.close();
     });
 
     test("a removed member loses the group, an admin removes plain members only", async ({ browser }) => {
-        const owner = await newUserSession(browser, { firstName: "Olha" });
+        const owner = await newUserSession(browser, { firstName: "Olivia" });
         const groupId = await createGroup(owner.page, "Strict club");
         const admin = await newUserSession(browser, { firstName: "Adam" });
-        const member = await newUserSession(browser, { firstName: "Marko" });
+        const member = await newUserSession(browser, { firstName: "Mark" });
         await join(admin, groupId);
         await join(member, groupId);
         await owner.page.goto(`/group/getGroupsMembers?id=${groupId}`);
@@ -46,9 +46,9 @@ test.describe("group roles", () => {
 
         const { page } = admin;
         await page.goto(`/group/getGroupsMembers?id=${groupId}`);
-        await expect(card(page, "Olha Example").getByRole("button", { name: "Remove from group" })).toHaveCount(0);
-        await card(page, "Marko Example").getByRole("button", { name: "Remove from group" }).click();
-        await expect(card(page, "Marko Example")).toHaveCount(0);
+        await expect(card(page, "Olivia Example").getByRole("button", { name: "Remove from group" })).toHaveCount(0);
+        await card(page, "Mark Example").getByRole("button", { name: "Remove from group" }).click();
+        await expect(card(page, "Mark Example")).toHaveCount(0);
 
         // The removed member is back to a visitor: can join, cannot post.
         await member.page.goto(`/searchResult/getGroupPage?groupId=${groupId}`);
@@ -64,7 +64,7 @@ test.describe("group roles", () => {
         const owner = await newUserSession(browser);
         const groupId = await createGroup(owner.page, "Busy club");
         const joiners = await Promise.all(
-            ["Ira", "Ivan", "Ilya", "Inna", "Ihor"].map(firstName => newUserSession(browser, { firstName })));
+            ["Ivy", "Isaac", "Ian", "Iris", "Isla"].map(firstName => newUserSession(browser, { firstName })));
 
         await Promise.all(joiners.map(session => join(session, groupId)));
         // Joining twice is harmless.
