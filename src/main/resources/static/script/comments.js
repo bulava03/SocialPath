@@ -77,6 +77,10 @@ function send(url, formData) {
             if (response.ok) {
                 return true;
             }
+            if (response.status === 413) {
+                alert("The files are too large to upload.");
+                return false;
+            }
             return response.json()
                 .then(err => alert(err.error || "Request failed."))
                 .catch(() => alert("Request failed."))
@@ -96,9 +100,22 @@ function loadComments() {
     url.searchParams.append(config.targetParam, target);
 
     fetch(url)
-        .then(response => response.text())
+        .then(response => {
+            // fetch follows redirects silently: an expired session or a deleted
+            // group would hand back a whole other page. Reload instead, so the
+            // browser itself lands where the server sends it.
+            if (response.redirected) {
+                window.location.reload();
+                return null;
+            }
+            if (!response.ok) {
+                alert("Could not load publications. Reload the page.");
+                return null;
+            }
+            return response.text();
+        })
         .then(html => {
-            if (html !== "") {
+            if (html) {
                 // The fragment includes the #publications element itself.
                 document.getElementById("publications").outerHTML = html;
             }

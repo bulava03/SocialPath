@@ -1,9 +1,11 @@
 package com.socialpath.exception;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
  * Page-rendering controllers previously re-checked ban/existence in every
@@ -25,12 +27,20 @@ public class MvcExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public String handleNotFound() {
-        return "redirect:/";
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String handleNotFound(Model model) {
+        return errorPage(model, HttpStatus.NOT_FOUND, "This page does not exist or has been deleted.");
     }
 
     @ExceptionHandler(ForbiddenOperationException.class)
-    public String handleForbidden() {
-        return "redirect:/";
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public String handleForbidden(Model model) {
+        return errorPage(model, HttpStatus.FORBIDDEN, "You are not allowed to do this.");
+    }
+
+    private String errorPage(Model model, HttpStatus status, String message) {
+        model.addAttribute("status", status.value());
+        model.addAttribute("message", message);
+        return "error";
     }
 }

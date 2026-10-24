@@ -52,6 +52,7 @@ Configuration is environment-based:
 | `DB_PASSWORD` | `root`           | Database password                         |
 | `MEDIA_DIR`   | `./media`        | Directory for uploaded media (a named Docker volume in compose) |
 | `JWT_SECRET`  | dev-only default | HMAC key for session tokens — set a long random value in any real deployment |
+| `SPRING_PROFILES_ACTIVE` | — | `dev` adds exception messages and stack traces to error responses, for local debugging only |
 
 Run the test suite with `./mvnw verify` (requires a Docker daemon: the
 context test boots the application against a throwaway MySQL via
