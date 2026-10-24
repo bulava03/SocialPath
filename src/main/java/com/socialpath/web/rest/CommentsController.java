@@ -8,10 +8,9 @@ import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
 import com.socialpath.dto.response.OperationResult;
 import com.socialpath.exception.ForbiddenOperationException;
-import com.socialpath.security.SecurityUtils;
+import com.socialpath.security.CurrentUser;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.GroupService;
-import com.socialpath.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,13 +31,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CommentsController {
 
-    private final UserService userService;
     private final GroupService groupService;
     private final CommentsService commentsService;
 
     @PostMapping("/addUserPublication")
-    public OperationResult addUserPublication(NewPublication publication) throws IOException {
-        User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
+    public OperationResult addUserPublication(@CurrentUser User myUser, NewPublication publication) throws IOException {
         requireContent(publication.getText(), publication.getMedia());
 
         publication.setAuthorId(myUser.getLogin());
@@ -47,8 +44,7 @@ public class CommentsController {
     }
 
     @PostMapping("/addCommentUser")
-    public OperationResult addCommentUser(NewComment newComment) throws IOException {
-        User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
+    public OperationResult addCommentUser(@CurrentUser User myUser, NewComment newComment) throws IOException {
         Publication root = commentsService.findRoot(requirePublication(newComment.getIdPublication()));
         // Group threads are commented through the group endpoint, which checks membership.
         if (root.getGroupId() != null) {
@@ -62,8 +58,8 @@ public class CommentsController {
     }
 
     @PostMapping("/removeCommentUser")
-    public OperationResult removeCommentUser(DelComment delComment) {
-        String login = SecurityUtils.getCurrentLogin();
+    public OperationResult removeCommentUser(@CurrentUser User me, DelComment delComment) {
+        String login = me.getLogin();
         Publication target = requirePublication(delComment.getIdComment());
         Publication root = commentsService.findRoot(target);
         if (root.getGroupId() != null) {
@@ -80,8 +76,7 @@ public class CommentsController {
     }
 
     @PostMapping("/addGroupPublication")
-    public OperationResult addGroupPublication(NewPublication publication) throws IOException {
-        User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
+    public OperationResult addGroupPublication(@CurrentUser User myUser, NewPublication publication) throws IOException {
         requireMember(groupService.getGroup(publication.getGroupId()), myUser.getLogin());
         requireContent(publication.getText(), publication.getMedia());
 
@@ -91,8 +86,7 @@ public class CommentsController {
     }
 
     @PostMapping("/addCommentGroup")
-    public OperationResult addCommentGroup(NewComment newComment) throws IOException {
-        User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
+    public OperationResult addCommentGroup(@CurrentUser User myUser, NewComment newComment) throws IOException {
         Group group = groupService.getGroup(newComment.getGroupId());
         requireMember(group, myUser.getLogin());
         requireInGroup(requirePublication(newComment.getIdPublication()), group);
@@ -104,8 +98,8 @@ public class CommentsController {
     }
 
     @PostMapping("/removeCommentGroup")
-    public OperationResult removeCommentGroup(DelComment delComment) {
-        String login = SecurityUtils.getCurrentLogin();
+    public OperationResult removeCommentGroup(@CurrentUser User me, DelComment delComment) {
+        String login = me.getLogin();
         Group group = groupService.getGroup(delComment.getGroupId());
         Publication target = requirePublication(delComment.getIdComment());
         requireInGroup(target, group);

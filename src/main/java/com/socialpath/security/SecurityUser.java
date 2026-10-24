@@ -9,6 +9,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * The authenticated principal. Besides what Spring Security needs it keeps
+ * the {@link User} loaded while authenticating the request, which controllers
+ * receive through {@link CurrentUser}.
+ */
 @Data
 public class SecurityUser implements UserDetails {
 
@@ -16,12 +21,14 @@ public class SecurityUser implements UserDetails {
     private final String password;
     private final List<SimpleGrantedAuthority> authorities;
     private final boolean isActive;
+    private final User user;
 
-    public SecurityUser(String username, String password, List<SimpleGrantedAuthority> authorities, boolean isActive) {
-        this.username = username;
-        this.password = password;
+    public SecurityUser(User user, List<SimpleGrantedAuthority> authorities, boolean isActive) {
+        this.username = user.getLogin();
+        this.password = user.getPassword();
         this.authorities = authorities;
         this.isActive = isActive;
+        this.user = user;
     }
 
     @Override
@@ -62,10 +69,6 @@ public class SecurityUser implements UserDetails {
     public static UserDetails fromUser(User user) {
         boolean isActive = user.getBan() == null
                 || !user.getBan().isAfter(java.time.LocalDateTime.now());
-        return new SecurityUser(
-                user.getLogin(),
-                user.getPassword(),
-                List.of(new SimpleGrantedAuthority("ROLE_USER")),
-                isActive);
+        return new SecurityUser(user, List.of(new SimpleGrantedAuthority("ROLE_USER")), isActive);
     }
 }

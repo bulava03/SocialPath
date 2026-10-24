@@ -11,11 +11,10 @@ import com.socialpath.dto.response.UserSearchResult;
 import com.socialpath.exception.ForbiddenOperationException;
 import com.socialpath.exception.InvalidImageException;
 import com.socialpath.validation.ValidationResult;
-import com.socialpath.security.SecurityUtils;
+import com.socialpath.security.CurrentUser;
 import com.socialpath.service.GroupService;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.ModelAttributesService;
-import com.socialpath.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Controller;
@@ -35,24 +34,20 @@ import java.util.List;
 public class GroupController {
 
     private final GroupService groupService;
-    private final UserService userService;
     private final ModelMapper modelMapper;
     private final ModelAttributesService modelAttributesService;
     private final HandleAvatarService handleAvatarService;
 
     @GetMapping("/getGroupCreationForm")
-    public String getGroupCreationForm(Model model) {
-        User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
-
+    public String getGroupCreationForm(@CurrentUser User myUser, Model model) {
         model.addAttribute("author", new UserLogin(myUser.getLogin(), ""));
         model.addAttribute("group", new GroupCreationForm(myUser.getLogin()));
         return "group/groupCreationForm";
     }
 
     @PostMapping("/createGroup")
-    public String createGroup(GroupCreationForm groupCreationForm, Model model) {
-        String login = SecurityUtils.getCurrentLogin();
-        User myUser = userService.findByLogin(login);
+    public String createGroup(@CurrentUser User myUser, GroupCreationForm groupCreationForm, Model model) {
+        String login = myUser.getLogin();
 
         ValidationResult validation = groupService.validateGroup(groupCreationForm);
         if (!validation.isSuccess()) {
@@ -70,8 +65,7 @@ public class GroupController {
     }
 
     @GetMapping("/getGroupsMembers")
-    public String getGroupsMembers(LeftFrameRequest request, Model model) {
-        User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
+    public String getGroupsMembers(@CurrentUser User user, LeftFrameRequest request, Model model) {
         Group group = groupService.getGroup(request.getId());
 
         List<UserSearchResult> list = groupService.findGroupsMembers(group.getId());
@@ -83,8 +77,7 @@ public class GroupController {
     }
 
     @GetMapping("/getGroupsAdmins")
-    public String getGroupsAdmins(LeftFrameRequest request, Model model) {
-        User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
+    public String getGroupsAdmins(@CurrentUser User user, LeftFrameRequest request, Model model) {
         Group group = groupService.getGroup(request.getId());
 
         List<UserSearchResult> list = groupService.findGroupsAdminsPresentable(group.getId());
@@ -94,8 +87,8 @@ public class GroupController {
     }
 
     @PostMapping("/removeUserFromGroup")
-    public String removeUserFromGroup(GroupUserRequest request) {
-        String login = SecurityUtils.getCurrentLogin();
+    public String removeUserFromGroup(@CurrentUser User me, GroupUserRequest request) {
+        String login = me.getLogin();
         Group group = groupService.getGroup(request.getGroupId());
 
         boolean actorIsOwner = group.isOwner(login);
@@ -115,8 +108,8 @@ public class GroupController {
     }
 
     @PostMapping("/addToAdmins")
-    public String addToAdmins(GroupUserRequest request) {
-        String login = SecurityUtils.getCurrentLogin();
+    public String addToAdmins(@CurrentUser User me, GroupUserRequest request) {
+        String login = me.getLogin();
         Group group = groupService.getGroup(request.getGroupId());
 
         if (!group.isOwner(login)) {
@@ -132,20 +125,19 @@ public class GroupController {
     }
 
     @PostMapping("/removeFromAdmins")
-    public String removeFromAdmins(GroupUserRequest request) {
-        demoteAdmin(request);
+    public String removeFromAdmins(@CurrentUser User me, GroupUserRequest request) {
+        demoteAdmin(me, request);
         return "redirect:/group/getGroupsMembers?id=" + request.getGroupId();
     }
 
     @PostMapping("/removeFromAdminsAdminsList")
-    public String removeFromAdminsAdminsList(GroupUserRequest request) {
-        demoteAdmin(request);
+    public String removeFromAdminsAdminsList(@CurrentUser User me, GroupUserRequest request) {
+        demoteAdmin(me, request);
         return "redirect:/group/getGroupsAdmins?id=" + request.getGroupId();
     }
 
     @GetMapping("/getGroupUpdatingForm")
-    public String getGroupUpdatingForm(LeftFrameRequest request, Model model) {
-        User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
+    public String getGroupUpdatingForm(@CurrentUser User user, LeftFrameRequest request, Model model) {
         Group groupFounded = groupService.getGroup(request.getId());
 
         if (!groupFounded.isOwner(user.getLogin())) {
@@ -156,11 +148,10 @@ public class GroupController {
     }
 
     @PostMapping("/updateGroup")
-    public String updateGroup(Group group, String groupId, MultipartFile file,
+    public String updateGroup(@CurrentUser User user, Group group, String groupId, MultipartFile file,
                               @RequestParam(name = "removeImage", defaultValue = "false") boolean removeImage,
                               Model model)
             throws IOException {
-        User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
         Group groupFounded = groupService.getGroup(groupId);
 
         if (!groupFounded.isOwner(user.getLogin())) {
@@ -189,8 +180,8 @@ public class GroupController {
         return "group/groupUpdatingForm";
     }
 
-    private void demoteAdmin(GroupUserRequest request) {
-        String login = SecurityUtils.getCurrentLogin();
+    private void demoteAdmin(User me, GroupUserRequest request) {
+        String login = me.getLogin();
         Group group = groupService.getGroup(request.getGroupId());
 
         if (!group.isOwner(login)) {

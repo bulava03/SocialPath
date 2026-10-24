@@ -9,13 +9,9 @@ import com.socialpath.dto.request.NewPublication;
 import com.socialpath.exception.ForbiddenOperationException;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.GroupService;
-import com.socialpath.service.UserService;
 import com.socialpath.web.rest.CommentsController;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +19,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -48,8 +43,7 @@ class CommentsControllerAuthorizationTest {
     void setUp() {
         commentsService = mock(CommentsService.class);
         GroupService groupService = mock(GroupService.class);
-        UserService userService = mock(UserService.class);
-        controller = new CommentsController(userService, groupService, commentsService);
+        controller = new CommentsController(groupService, commentsService);
 
         store(publication(publicationId, "alice", null, null));
         store(publication(commentId, "bob", publicationId, null));
@@ -64,22 +58,12 @@ class CommentsControllerAuthorizationTest {
         group.setAdmins(List.of("owner", "admin"));
         group.setMembers(List.of("owner", "admin", "bob"));
         when(groupService.getGroup(groupId.toString())).thenReturn(group);
-
-        when(userService.findByLogin(anyString())).thenAnswer(inv -> {
-            User user = new User();
-            user.setLogin(inv.getArgument(0));
-            return user;
-        });
     }
 
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
-
-    private void loginAs(String login) {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(login, null, List.of()));
+    private User user(String login) {
+        User user = new User();
+        user.setLogin(login);
+        return user;
     }
 
     private Publication publication(Long id, String author, Long parentId, Long inGroup) {
@@ -137,137 +121,107 @@ class CommentsControllerAuthorizationTest {
 
     @Test
     void removeCommentUser_AuthorDeletesOwnPublication_Succeeds() {
-        loginAs("alice");
-
-        controller.removeCommentUser(delete(publicationId));
+        controller.removeCommentUser(user("alice"), delete(publicationId));
 
         verify(commentsService).deletePublication(publicationId);
     }
 
     @Test
     void removeCommentUser_StrangerCannotDeletePublication() {
-        loginAs("mallory");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.removeCommentUser(delete(publicationId)));
+                () -> controller.removeCommentUser(user("mallory"), delete(publicationId)));
         verify(commentsService, never()).deletePublication(any());
     }
 
     @Test
     void removeCommentUser_CommentAuthorDeletesOwnComment_Succeeds() {
-        loginAs("bob");
-
-        controller.removeCommentUser(delete(commentId));
+        controller.removeCommentUser(user("bob"), delete(commentId));
 
         verify(commentsService).deletePublication(commentId);
     }
 
     @Test
     void removeCommentUser_PageOwnerDeletesForeignComment_Succeeds() {
-        loginAs("alice");
-
-        controller.removeCommentUser(delete(commentId));
+        controller.removeCommentUser(user("alice"), delete(commentId));
 
         verify(commentsService).deletePublication(commentId);
     }
 
     @Test
     void removeCommentUser_StrangerCannotDeleteForeignComment() {
-        loginAs("mallory");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.removeCommentUser(delete(commentId)));
+                () -> controller.removeCommentUser(user("mallory"), delete(commentId)));
         verify(commentsService, never()).deletePublication(any());
     }
 
     @Test
     void removeCommentUser_CannotReachGroupPublications() {
-        loginAs("mallory");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.removeCommentUser(delete(groupPublicationId)));
+                () -> controller.removeCommentUser(user("mallory"), delete(groupPublicationId)));
         verify(commentsService, never()).deletePublication(any());
     }
 
     @Test
     void removeCommentGroup_AdminDeletesForeignPublication_Succeeds() {
-        loginAs("admin");
-
-        controller.removeCommentGroup(groupDelete(groupPublicationId));
+        controller.removeCommentGroup(user("admin"), groupDelete(groupPublicationId));
 
         verify(commentsService).deletePublication(groupPublicationId);
     }
 
     @Test
     void removeCommentGroup_StrangerCannotDeleteForeignPublication() {
-        loginAs("mallory");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.removeCommentGroup(groupDelete(groupPublicationId)));
+                () -> controller.removeCommentGroup(user("mallory"), groupDelete(groupPublicationId)));
         verify(commentsService, never()).deletePublication(any());
     }
 
     @Test
     void removeCommentGroup_OwnerCannotDeleteOutsideTheirGroup() {
-        loginAs("owner");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.removeCommentGroup(groupDelete(otherGroupPublicationId)));
+                () -> controller.removeCommentGroup(user("owner"), groupDelete(otherGroupPublicationId)));
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.removeCommentGroup(groupDelete(commentId)));
+                () -> controller.removeCommentGroup(user("owner"), groupDelete(commentId)));
         verify(commentsService, never()).deletePublication(any());
     }
 
     @Test
     void addGroupPublication_Member_Succeeds() throws Exception {
-        loginAs("bob");
-
-        controller.addGroupPublication(groupPublication());
+        controller.addGroupPublication(user("bob"), groupPublication());
 
         verify(commentsService).addNewGroupPublication(any());
     }
 
     @Test
     void addGroupPublication_NonMemberIsForbidden() throws Exception {
-        loginAs("mallory");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.addGroupPublication(groupPublication()));
+                () -> controller.addGroupPublication(user("mallory"), groupPublication()));
         verify(commentsService, never()).addNewGroupPublication(any());
     }
 
     @Test
     void addCommentGroup_NonMemberIsForbidden() throws Exception {
-        loginAs("mallory");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.addCommentGroup(groupComment(groupPublicationId)));
+                () -> controller.addCommentGroup(user("mallory"), groupComment(groupPublicationId)));
         verify(commentsService, never()).addNewComment(any());
     }
 
     @Test
     void addCommentGroup_PublicationOfAnotherGroupIsForbidden() throws Exception {
-        loginAs("bob");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.addCommentGroup(groupComment(otherGroupPublicationId)));
+                () -> controller.addCommentGroup(user("bob"), groupComment(otherGroupPublicationId)));
         verify(commentsService, never()).addNewComment(any());
     }
 
     @Test
     void addCommentUser_OnGroupPublicationIsForbidden() throws Exception {
-        loginAs("mallory");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.addCommentUser(comment(groupPublicationId)));
+                () -> controller.addCommentUser(user("mallory"), comment(groupPublicationId)));
         verify(commentsService, never()).addNewComment(any());
     }
 
     @Test
     void addCommentUser_OnUserPagePublication_Succeeds() throws Exception {
-        loginAs("mallory");
-
-        controller.addCommentUser(comment(commentId));
+        controller.addCommentUser(user("mallory"), comment(commentId));
 
         verify(commentsService).addNewComment(any());
     }

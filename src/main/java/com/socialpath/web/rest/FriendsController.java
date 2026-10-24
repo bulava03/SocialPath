@@ -3,7 +3,7 @@ package com.socialpath.web.rest;
 import com.socialpath.entity.User;
 import com.socialpath.dto.response.OperationResult;
 import com.socialpath.exception.ResourceNotFoundException;
-import com.socialpath.security.SecurityUtils;
+import com.socialpath.security.CurrentUser;
 import com.socialpath.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,8 +18,8 @@ public class FriendsController {
     private final UserService userService;
 
     @PostMapping("/inviteToFriends")
-    public OperationResult inviteToFriends(String login) {
-        String authorLogin = SecurityUtils.getCurrentLogin();
+    public OperationResult inviteToFriends(@CurrentUser User me, String login) {
+        String authorLogin = me.getLogin();
         User anotherUser = requireUser(login);
 
         if (anotherUser.getFriends().contains(authorLogin)) {
@@ -33,8 +33,8 @@ public class FriendsController {
     }
 
     @PostMapping("/removeInviteToFriends")
-    public OperationResult removeInviteToFriends(String login) {
-        String authorLogin = SecurityUtils.getCurrentLogin();
+    public OperationResult removeInviteToFriends(@CurrentUser User me, String login) {
+        String authorLogin = me.getLogin();
         User anotherUser = requireUser(login);
 
         if (anotherUser.getFriends().contains(authorLogin)) {
@@ -49,8 +49,8 @@ public class FriendsController {
     }
 
     @PostMapping("/rejectInvitationToFriends")
-    public OperationResult rejectInvitationToFriends(String login) {
-        String authorLogin = SecurityUtils.getCurrentLogin();
+    public OperationResult rejectInvitationToFriends(@CurrentUser User me, String login) {
+        String authorLogin = me.getLogin();
         requireUser(login);
 
         userService.removeFromInvitations(authorLogin, login);
@@ -58,9 +58,8 @@ public class FriendsController {
     }
 
     @PostMapping("/acceptToFriends")
-    public OperationResult acceptToFriends(String login) {
-        String authorLogin = SecurityUtils.getCurrentLogin();
-        User myUser = userService.findByLogin(authorLogin);
+    public OperationResult acceptToFriends(@CurrentUser User myUser, String login) {
+        String authorLogin = myUser.getLogin();
         requireUser(login);
 
         if (myUser.getFriends().contains(login)) {
@@ -75,8 +74,8 @@ public class FriendsController {
     }
 
     @PostMapping("/removeFromFriends")
-    public OperationResult removeFromFriends(String login) {
-        String authorLogin = SecurityUtils.getCurrentLogin();
+    public OperationResult removeFromFriends(@CurrentUser User me, String login) {
+        String authorLogin = me.getLogin();
         requireUser(login);
 
         userService.removeFromFriends(login, authorLogin);

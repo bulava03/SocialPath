@@ -4,7 +4,8 @@ import com.socialpath.entity.Group;
 import lombok.RequiredArgsConstructor;
 import com.socialpath.dto.request.*;
 import com.socialpath.dto.response.*;
-import com.socialpath.security.SecurityUtils;
+import com.socialpath.entity.User;
+import com.socialpath.security.CurrentUser;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.GroupService;
 import com.socialpath.service.ModelAttributesService;
@@ -26,8 +27,8 @@ public class CommentsViewController {
     private final ModelAttributesService modelAttributesService;
 
     @GetMapping("/loadCommentsUser")
-    public String loadCommentsUser(String login, Model model) {
-        String authorLogin = SecurityUtils.getCurrentLogin();
+    public String loadCommentsUser(@CurrentUser User me, String login, Model model) {
+        String authorLogin = me.getLogin();
 
         List<PublicationPresentable> publications = commentsService.loadUserFeed(login);
 
@@ -39,8 +40,8 @@ public class CommentsViewController {
     }
 
     @GetMapping("/loadCommentsGroup")
-    public String loadCommentsGroup(String groupId, Model model) {
-        String authorLogin = SecurityUtils.getCurrentLogin();
+    public String loadCommentsGroup(@CurrentUser User me, String groupId, Model model) {
+        String authorLogin = me.getLogin();
 
         Group group = groupService.getGroup(groupId);
         List<PublicationPresentable> publications = commentsService.loadGroupFeed(group.getId());

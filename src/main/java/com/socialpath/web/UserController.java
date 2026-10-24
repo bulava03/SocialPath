@@ -11,7 +11,7 @@ import com.socialpath.dto.response.UserLogin;
 import com.socialpath.dto.response.UserSearchResult;
 import com.socialpath.exception.InvalidImageException;
 import com.socialpath.validation.ValidationResult;
-import com.socialpath.security.SecurityUtils;
+import com.socialpath.security.CurrentUser;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.ModelAttributesService;
@@ -42,9 +42,7 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/authorisation")
-    public String getUserPageFirst(Model model) {
-        User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
-
+    public String getUserPageFirst(@CurrentUser User user, Model model) {
         model = modelAttributesService.usersAttributes(model, user, true, commentsService.loadUserFeed(user.getLogin()));
         model = handleAvatarService.handleAvatar(user, model, false);
         model.addAttribute("myUser", user);
@@ -53,14 +51,13 @@ public class UserController {
     }
 
     @GetMapping("/anotherUserPage")
-    public String getAnotherUserPage(FoundedUser foundedUser, Model model) {
-        String login = SecurityUtils.getCurrentLogin();
+    public String getAnotherUserPage(@CurrentUser User myUser, FoundedUser foundedUser, Model model) {
+        String login = myUser.getLogin();
 
         if (foundedUser.getAnotherUserLogin().equals(login)) {
             return "redirect:/user/authorisation";
         }
 
-        User myUser = userService.findByLogin(login);
         User user = userService.findByLogin(foundedUser.getAnotherUserLogin());
 
         if (user == null) {
@@ -82,9 +79,7 @@ public class UserController {
     }
 
     @GetMapping("/getUserInfo")
-    public String getUserInfo(Model model) {
-        User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
-
+    public String getUserInfo(@CurrentUser User user, Model model) {
         model = modelAttributesService.userInfoModel(model, user, user.getLogin());
         model = handleAvatarService.handleAvatar(user, model, false);
 
@@ -92,9 +87,7 @@ public class UserController {
     }
 
     @PostMapping("/changeUserInfo")
-    public String changeUserInfo(UserUpdate user, MultipartFile file, Model model) throws IOException {
-        User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
-
+    public String changeUserInfo(@CurrentUser User myUser, UserUpdate user, MultipartFile file, Model model) throws IOException {
         ValidationResult validation = userService.validateUserUpdate(user);
         if (!validation.isSuccess()) {
             return showUserInfoWithError(model, user, myUser, validation.getMessage());
@@ -130,9 +123,7 @@ public class UserController {
     }
 
     @GetMapping("/getUsersGroups")
-    public String getUsersGroups(LeftFrameRequest request, Model model) {
-        User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
-
+    public String getUsersGroups(@CurrentUser User user, LeftFrameRequest request, Model model) {
         List<GroupSearchResult> list = userService.findUsersGroups(request.getId());
 
         model.addAttribute("author", user);
@@ -144,9 +135,7 @@ public class UserController {
     }
 
     @GetMapping("/getUsersFriends")
-    public String getUsersFriends(LeftFrameRequest request, Model model) {
-        User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
-
+    public String getUsersFriends(@CurrentUser User user, LeftFrameRequest request, Model model) {
         List<UserSearchResult> list = userService.findUsersFriends(request.getId());
 
         model.addAttribute("author", user);
@@ -158,9 +147,7 @@ public class UserController {
     }
 
     @GetMapping("/getInvitationsToFriends")
-    public String getInvitationsToFriends(LeftFrameRequest request, Model model) {
-        User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
-
+    public String getInvitationsToFriends(@CurrentUser User user, LeftFrameRequest request, Model model) {
         List<UserSearchResult> list = userService.findUsersFriendsInvitations(request.getId());
 
         model.addAttribute("author", user);
@@ -172,9 +159,8 @@ public class UserController {
     }
 
     @PostMapping("/acceptToFriendsMyPage")
-    public String acceptToFriendsMyPage(LeftFrameRequest request) {
-        String login = SecurityUtils.getCurrentLogin();
-        User myUser = userService.findByLogin(login);
+    public String acceptToFriendsMyPage(@CurrentUser User myUser, LeftFrameRequest request) {
+        String login = myUser.getLogin();
 
         // Only accept if a real pending invitation exists, so a forged request
         // can't fabricate a friendship out of nothing.
@@ -187,8 +173,8 @@ public class UserController {
     }
 
     @PostMapping("/rejectInvitationToFriendsMyPage")
-    public String rejectInvitationToFriendsMyPage(LeftFrameRequest request) {
-        String login = SecurityUtils.getCurrentLogin();
+    public String rejectInvitationToFriendsMyPage(@CurrentUser User me, LeftFrameRequest request) {
+        String login = me.getLogin();
 
         userService.removeFromInvitations(login, request.getId());
 
@@ -196,8 +182,8 @@ public class UserController {
     }
 
     @PostMapping("/removeFromFriendsMyPage")
-    public String removeFromFriendsMyPage(LeftFrameRequest request) {
-        String login = SecurityUtils.getCurrentLogin();
+    public String removeFromFriendsMyPage(@CurrentUser User me, LeftFrameRequest request) {
+        String login = me.getLogin();
 
         userService.removeFromFriends(login, request.getId());
 
@@ -205,9 +191,7 @@ public class UserController {
     }
 
     @GetMapping("/getChangePasswordForm")
-    public String getChangePasswordForm(Model model) {
-        User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
-
+    public String getChangePasswordForm(@CurrentUser User myUser, Model model) {
         model = handleAvatarService.handleAvatar(myUser, model, false);
         model.addAttribute("errorText", "");
 
@@ -215,9 +199,7 @@ public class UserController {
     }
 
     @PostMapping("/changePassword")
-    public String changePassword(@Valid ChangePasswordForm form, BindingResult bindingResult, Model model) {
-        User myUser = userService.findByLogin(SecurityUtils.getCurrentLogin());
-
+    public String changePassword(@CurrentUser User myUser, @Valid ChangePasswordForm form, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
             model = handleAvatarService.handleAvatar(myUser, model, false);
             model.addAttribute("errorText", bindingResult.getAllErrors().get(0).getDefaultMessage());

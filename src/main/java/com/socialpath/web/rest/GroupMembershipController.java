@@ -3,7 +3,8 @@ package com.socialpath.web.rest;
 import com.socialpath.entity.Group;
 import com.socialpath.dto.response.OperationResult;
 import com.socialpath.exception.ForbiddenOperationException;
-import com.socialpath.security.SecurityUtils;
+import com.socialpath.entity.User;
+import com.socialpath.security.CurrentUser;
 import com.socialpath.service.GroupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,8 +24,8 @@ public class GroupMembershipController {
     private final GroupService groupService;
 
     @PostMapping("/joinGroup")
-    public OperationResult joinGroup(String groupId) {
-        String authorLogin = SecurityUtils.getCurrentLogin();
+    public OperationResult joinGroup(@CurrentUser User me, String groupId) {
+        String authorLogin = me.getLogin();
         Group group = groupService.getGroup(groupId);
 
         if (group.isMember(authorLogin)) {
@@ -37,8 +38,8 @@ public class GroupMembershipController {
     }
 
     @PostMapping("/leaveGroup")
-    public OperationResult leaveGroup(String groupId) {
-        String authorLogin = SecurityUtils.getCurrentLogin();
+    public OperationResult leaveGroup(@CurrentUser User me, String groupId) {
+        String authorLogin = me.getLogin();
         Group group = groupService.getGroup(groupId);
 
         if (!group.isMember(authorLogin)) {

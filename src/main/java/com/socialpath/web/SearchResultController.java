@@ -5,7 +5,7 @@ import com.socialpath.entity.Group;
 import com.socialpath.entity.User;
 import com.socialpath.dto.request.*;
 import com.socialpath.dto.response.*;
-import com.socialpath.security.SecurityUtils;
+import com.socialpath.security.CurrentUser;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.*;
 import org.springframework.stereotype.Controller;
@@ -18,16 +18,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/searchResult")
 @RequiredArgsConstructor
 public class SearchResultController {
-    private final UserService userService;
     private final GroupService groupService;
     private final CommentsService commentsService;
     private final SearchService searchService;
     private final HandleAvatarService handleAvatarService;
 
     @GetMapping("/getSearchResult")
-    public String getSearchResult(SearchRequest request, Model model) {
-        String login = SecurityUtils.getCurrentLogin();
-        User user = userService.findByLogin(login);
+    public String getSearchResult(@CurrentUser User user, SearchRequest request, Model model) {
+        String login = user.getLogin();
 
         SearchResults searchResult = searchService.searchUsersAndGroups(request.getSearchText(), login);
 
@@ -45,8 +43,7 @@ public class SearchResultController {
     }
 
     @GetMapping("/getGroupPage")
-    public String getGroupPage(FoundedGroup foundedGroup, Model model) {
-        User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
+    public String getGroupPage(@CurrentUser User user, FoundedGroup foundedGroup, Model model) {
         Group group = groupService.getGroup(foundedGroup.getGroupId());
 
         model.addAttribute("group", group);

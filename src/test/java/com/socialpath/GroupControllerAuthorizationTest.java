@@ -1,20 +1,17 @@
 package com.socialpath;
 
 import com.socialpath.entity.Group;
+import com.socialpath.entity.User;
 import com.socialpath.dto.request.GroupUserRequest;
 import com.socialpath.exception.ForbiddenOperationException;
 import com.socialpath.exception.ResourceNotFoundException;
 import com.socialpath.service.GroupService;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.ModelAttributesService;
-import com.socialpath.service.UserService;
 import com.socialpath.web.GroupController;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +36,6 @@ class GroupControllerAuthorizationTest {
         groupService = mock(GroupService.class);
         controller = new GroupController(
                 groupService,
-                mock(UserService.class),
                 mock(ModelMapper.class),
                 mock(ModelAttributesService.class),
                 mock(HandleAvatarService.class));
@@ -52,14 +48,10 @@ class GroupControllerAuthorizationTest {
         when(groupService.getGroup(groupId.toString())).thenReturn(group);
     }
 
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
-
-    private void loginAs(String login) {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(login, null, List.of()));
+    private User user(String login) {
+        User user = new User();
+        user.setLogin(login);
+        return user;
     }
 
     private GroupUserRequest request(String targetUser) {
@@ -71,88 +63,69 @@ class GroupControllerAuthorizationTest {
 
     @Test
     void removeUserFromGroup_OwnerRemovesMember_Succeeds() {
-        loginAs("owner");
-
-        controller.removeUserFromGroup(request("member"));
+        controller.removeUserFromGroup(user("owner"), request("member"));
 
         verify(groupService).removeUserFromGroup(groupId, "member");
     }
 
     @Test
     void removeUserFromGroup_AdminRemovesPlainMember_Succeeds() {
-        loginAs("admin");
-
-        controller.removeUserFromGroup(request("member"));
+        controller.removeUserFromGroup(user("admin"), request("member"));
 
         verify(groupService).removeUserFromGroup(groupId, "member");
     }
 
     @Test
     void removeUserFromGroup_MemberCannotRemoveAnyone() {
-        loginAs("member");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.removeUserFromGroup(request("member2")));
+                () -> controller.removeUserFromGroup(user("member"), request("member2")));
         verify(groupService, never()).removeUserFromGroup(any(), any());
     }
 
     @Test
     void removeUserFromGroup_AdminCannotRemoveAnotherAdmin() {
-        loginAs("admin");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.removeUserFromGroup(request("owner")));
+                () -> controller.removeUserFromGroup(user("admin"), request("owner")));
         verify(groupService, never()).removeUserFromGroup(any(), any());
     }
 
     @Test
     void removeUserFromGroup_NobodyCanRemoveOwner() {
-        loginAs("owner");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.removeUserFromGroup(request("owner")));
+                () -> controller.removeUserFromGroup(user("owner"), request("owner")));
         verify(groupService, never()).removeUserFromGroup(any(), any());
     }
 
     @Test
     void addToAdmins_NonOwnerForbidden() {
-        loginAs("admin");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.addToAdmins(request("member")));
+                () -> controller.addToAdmins(user("admin"), request("member")));
         verify(groupService, never()).addToAdmins(any(), any());
     }
 
     @Test
     void addToAdmins_OwnerSucceeds() {
-        loginAs("owner");
-
-        controller.addToAdmins(request("member"));
+        controller.addToAdmins(user("owner"), request("member"));
 
         verify(groupService).addToAdmins(groupId, "member");
     }
 
     @Test
     void addToAdmins_NonMemberCannotBecomeAdmin() {
-        loginAs("owner");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.addToAdmins(request("stranger")));
+                () -> controller.addToAdmins(user("owner"), request("stranger")));
         verify(groupService, never()).addToAdmins(any(), any());
     }
 
     @Test
     void removeFromAdmins_OwnerCannotBeDemoted() {
-        loginAs("owner");
-
         assertThrows(ForbiddenOperationException.class,
-                () -> controller.removeFromAdmins(request("owner")));
+                () -> controller.removeFromAdmins(user("owner"), request("owner")));
         verify(groupService, never()).removeFromAdmins(any(), any());
     }
 
     @Test
     void removeUserFromGroup_UnknownGroup_NotFound() {
-        loginAs("owner");
         Long missing = 999L;
         when(groupService.getGroup(missing.toString())).thenThrow(new ResourceNotFoundException("Group not found"));
 
@@ -160,6 +133,6 @@ class GroupControllerAuthorizationTest {
         request.setGroupId(missing.toString());
 
         assertThrows(ResourceNotFoundException.class,
-                () -> controller.removeUserFromGroup(request));
+                () -> controller.removeUserFromGroup(user("owner"), request));
     }
 }
