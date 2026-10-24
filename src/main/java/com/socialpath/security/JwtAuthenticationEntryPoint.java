@@ -18,7 +18,7 @@ import java.io.IOException;
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     private static final String[] REST_PREFIXES = {
-        "/friends", "/comments", "/groupMembership", "/auth"
+        "/friends", "/comments", "/groupMembership"
     };
 
     /**

@@ -37,9 +37,12 @@ export async function registerUser(request, { prefix, firstName = "Tester" } = {
  */
 export async function signIn(page, login) {
     const response = await page.request.post("/auth/login", {
-        multipart: { login, password: PASSWORD },
+        form: { login, password: PASSWORD },
+        maxRedirects: 0,
     });
-    expect(response.ok(), "login should succeed").toBeTruthy();
+    // A failed login re-renders the form with 200; only success redirects.
+    expect(response.status(), "login should succeed").toBe(302);
+    expect(response.headers()["location"]).toContain("/user/authorisation");
 }
 
 /** Opens a separate browser session (own cookies) signed in as a new user. */

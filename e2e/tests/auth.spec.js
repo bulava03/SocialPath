@@ -55,7 +55,7 @@ test.describe("registration and sign-in", () => {
         await expect(page.getByText("This login is already taken.")).toBeVisible();
     });
 
-    test("a wrong password shows an error and keeps the user on the login page", async ({ page }) => {
+    test("a wrong password shows an error and keeps the typed login", async ({ page }) => {
         const { login } = await registerUser(page.request);
 
         await page.goto("/");
@@ -64,7 +64,24 @@ test.describe("registration and sign-in", () => {
         await page.getByRole("button", { name: "Sign in" }).click();
 
         await expect(page.locator("#errortext")).toHaveText("Incorrect login or password");
-        await expect(page).toHaveURL("/");
+        await expect(page.locator("#login")).toHaveValue(login);
+        await expect(page.locator("#password")).toHaveValue("");
+
+        // A second, correct attempt from the re-rendered form works.
+        await page.locator("#password").fill(PASSWORD);
+        await page.getByRole("button", { name: "Sign in" }).click();
+        await expect(page).toHaveURL(/\/user\/authorisation/);
+    });
+
+    test("pressing Enter in the password field signs in", async ({ page }) => {
+        const { login } = await registerUser(page.request);
+
+        await page.goto("/");
+        await page.locator("#login").fill(login);
+        await page.locator("#password").fill(PASSWORD);
+        await page.locator("#password").press("Enter");
+
+        await expect(page).toHaveURL(/\/user\/authorisation/);
     });
 
     test("logging out ends the session", async ({ page }) => {

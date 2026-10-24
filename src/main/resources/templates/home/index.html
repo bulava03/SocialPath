@@ -15,13 +15,15 @@
         <h1>SocialPath</h1>
     </div>
     <div class="authform">
-        <form id="authForm" action="/user/authorisation" method="get">
+        <form id="authForm" action="/auth/login" method="post">
             <div class="authinput">
                 <h2 class="name">Login</h2>
-                <input class="field" id="login" type="text" autocomplete="username">
+                <input class="field" id="login" name="login" type="text" th:value="${login}"
+                       autocomplete="username" required>
                 <h2 class="name">Password</h2>
-                <input class="field" id="password" type="password" autocomplete="current-password">
-                <input class="button" type="button" value="Sign in" onclick="authorize()">
+                <input class="field" id="password" name="password" type="password"
+                       autocomplete="current-password" required>
+                <input class="button" type="submit" value="Sign in">
             </div>
         </form>
         <a class="button" href="/registration">Sign up</a>
@@ -33,6 +35,5 @@
     <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
 </footer>
 
-<script src="/script/authorization/authorization.js"></script>
 </body>
 </html>

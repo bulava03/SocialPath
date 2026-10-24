@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
  * Maps domain exceptions from REST endpoints (/friends, /comments,
- * /groupMembership, /auth) to HTTP statuses with a JSON error body.
+ * /groupMembership) to HTTP statuses with a JSON error body.
  *
  * Highest precedence so that for a request handled by a @RestController this
  * advice is consulted before the page-rendering MvcExceptionHandler.
