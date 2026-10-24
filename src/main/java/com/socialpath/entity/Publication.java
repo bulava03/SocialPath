@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import lombok.Data;
+import org.hibernate.annotations.BatchSize;
 import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -60,8 +61,12 @@ public class Publication {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    /** Stored media file ids, in upload order. */
+    /**
+     * Stored media file ids, in upload order. Batch fetching loads the media
+     * of a whole feed page in one query instead of one query per post.
+     */
     @ElementCollection(fetch = FetchType.EAGER)
+    @BatchSize(size = 100)
     @CollectionTable(name = "publication_media", joinColumns = @JoinColumn(name = "publication_id"))
     @OrderColumn(name = "media_order")
     @Column(name = "file_id", length = 64, nullable = false)

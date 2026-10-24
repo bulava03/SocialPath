@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -25,6 +26,17 @@ public interface UserRepository extends JpaRepository<User, String> {
     }
 
     List<User> findByLoginIn(List<String> logins);
+
+    /**
+     * Loads only what a feed shows about authors, for many logins at once.
+     * @param logins the authors' logins
+     * @return one view per existing login
+     */
+    @Query("""
+            select u.login as login, u.firstName as firstName, u.lastName as lastName, u.imageId as imageId
+            from User u where u.login in :logins
+            """)
+    List<AuthorView> findAuthors(@Param("logins") Collection<String> logins);
 
     List<User> findByImageIdIsNotNull();
 

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -18,23 +19,16 @@ import java.util.List;
 public interface CommentsRepository extends JpaRepository<Publication, Long> {
 
     /**
-     * Loads the direct children (comments) of a publication, oldest first.
-     * @param parentId id of the parent publication or comment
-     * @return the child publications in insertion order
-     */
-    List<Publication> findByParentIdOrderByCreatedAtAscIdAsc(Long parentId);
-
-    /**
-     * Finds the ids of a user's own page publications, oldest first.
+     * Loads the posts of a user page, oldest first.
      * @param login the page owner's login
-     * @return publication ids in insertion order
+     * @return the top-level publications in insertion order
      */
     @Query("""
-            select p.id from Publication p
+            select p from Publication p
             where p.authorId = :login and p.parentId is null and p.groupId is null
             order by p.createdAt asc, p.id asc
             """)
-    List<Long> findUserPublicationIds(@Param("login") String login);
+    List<Publication> findUserFeed(@Param("login") String login);
 
     /**
      * Collects the media file ids of a publication and of every comment in
@@ -57,14 +51,31 @@ public interface CommentsRepository extends JpaRepository<Publication, Long> {
     List<String> findSubtreeMediaFileIds(@Param("rootId") Long rootId);
 
     /**
-     * Finds the ids of a group's publications, oldest first.
+     * Loads the posts of a group page, oldest first.
      * @param groupId the group id
-     * @return publication ids in insertion order
+     * @return the top-level publications in insertion order
      */
     @Query("""
-            select p.id from Publication p
+            select p from Publication p
             where p.groupId = :groupId and p.parentId is null
             order by p.createdAt asc, p.id asc
             """)
-    List<Long> findGroupPublicationIds(@Param("groupId") Long groupId);
+    List<Publication> findGroupFeed(@Param("groupId") Long groupId);
+
+    /**
+     * Loads every comment under the given posts, at any depth, in one round
+     * trip (recursive CTE, MySQL 8). The caller builds the tree from
+     * parent_id; rows come oldest first, so siblings keep insertion order.
+     * @param rootIds ids of the top-level publications; must not be empty
+     * @return all comments and replies below them
+     */
+    @Query(value = """
+            WITH RECURSIVE tree AS (
+                SELECT * FROM publications WHERE parent_id IN (:rootIds)
+                UNION ALL
+                SELECT p.* FROM publications p JOIN tree t ON p.parent_id = t.id
+            )
+            SELECT * FROM tree ORDER BY created_at, id
+            """, nativeQuery = true)
+    List<Publication> findReplies(@Param("rootIds") Collection<Long> rootIds);
 }

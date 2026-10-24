@@ -2,10 +2,10 @@ package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import com.socialpath.entity.Publication;
-import com.socialpath.entity.User;
 import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
 import com.socialpath.dto.response.PublicationPresentable;
+import com.socialpath.repository.AuthorView;
 import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.CommentsService;
@@ -20,6 +20,11 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Publications and comments over one self-referencing table. Where the
@@ -53,12 +58,12 @@ public class CommentsServiceImpl implements CommentsService {
 
     @Override
     public List<PublicationPresentable> loadUserFeed(String login) {
-        return getPublications(commentsRepository.findUserPublicationIds(login));
+        return buildFeed(commentsRepository.findUserFeed(login));
     }
 
     @Override
     public List<PublicationPresentable> loadGroupFeed(Long groupId) {
-        return getPublications(commentsRepository.findGroupPublicationIds(groupId));
+        return buildFeed(commentsRepository.findGroupFeed(groupId));
     }
 
     @Override
@@ -79,61 +84,67 @@ public class CommentsServiceImpl implements CommentsService {
         return current;
     }
 
-    private List<PublicationPresentable> getPublications(List<Long> ids) {
-        List<PublicationPresentable> publications = new ArrayList<>();
-        for (Long element : ids) {
-            Publication publication = commentsRepository.findById(element).orElse(null);
-            if (publication == null) {
-                continue;
-            }
-            publications.add(toPresentable(publication));
+    /**
+     * Turns the posts of a page into view models with their whole comment
+     * trees. The size of the page does not change the number of queries:
+     * one for all comments, one for all authors (media come batched with
+     * the publications), and the tree is assembled in memory.
+     * @param posts the page's top-level publications, oldest first
+     * @return the posts as view models
+     */
+    private List<PublicationPresentable> buildFeed(List<Publication> posts) {
+        if (posts.isEmpty()) {
+            return List.of();
         }
-        return publications;
+        List<Publication> replies = commentsRepository.findReplies(posts.stream().map(Publication::getId).toList());
+
+        Map<Long, List<Publication>> repliesByParent = replies.stream()
+                .collect(Collectors.groupingBy(Publication::getParentId));
+        Set<String> authorLogins = Stream.concat(posts.stream(), replies.stream())
+                .map(Publication::getAuthorId)
+                .collect(Collectors.toSet());
+        Map<String, AuthorView> authors = userRepository.findAuthors(authorLogins).stream()
+                .collect(Collectors.toMap(AuthorView::getLogin, Function.identity()));
+
+        return posts.stream()
+                .map(post -> toPresentable(post, repliesByParent, authors))
+                .toList();
     }
 
     /**
-     * Builds the view model for one publication, including its author info,
-     * media ids (served via /images/{id}) and nested comments, loaded by
-     * parent_id in insertion order.
+     * Builds the view model for one publication and, recursively, its replies.
      * @param publication the stored publication
+     * @param repliesByParent all replies of the feed, grouped by parent id
+     * @param authors the feed's authors by login
      * @return the presentable form of the publication
      */
-    private PublicationPresentable toPresentable(Publication publication) {
-        User author = userRepository.findByLogin(publication.getAuthorId());
-
-        List<Publication> children = commentsRepository.findByParentIdOrderByCreatedAtAscIdAsc(publication.getId());
-        List<PublicationPresentable> publicationComments = new ArrayList<>();
-        for (Publication child : children) {
-            publicationComments.add(toPresentable(child));
-        }
-
-        List<String> media = publication.getMedia() != null
-                ? publication.getMedia()
-                : new ArrayList<>();
+    private PublicationPresentable toPresentable(Publication publication,
+                                                 Map<Long, List<Publication>> repliesByParent,
+                                                 Map<String, AuthorView> authors) {
+        List<PublicationPresentable> replies = repliesByParent
+                .getOrDefault(publication.getId(), List.of()).stream()
+                .map(reply -> toPresentable(reply, repliesByParent, authors))
+                .toList();
+        List<String> media = publication.getMedia() != null ? publication.getMedia() : List.of();
+        AuthorView author = authors.get(publication.getAuthorId());
 
         return new PublicationPresentable(
                 publication.getId(),
-                author != null ? author.getLogin() : publication.getAuthorId(),
-                resolveFullName(author, publication.getAuthorId()),
-                resolveAuthorImageId(author),
+                publication.getAuthorId(),
+                fullName(author, publication.getAuthorId()),
+                author != null && author.getImageId() != null && !author.getImageId().isEmpty()
+                        ? author.getImageId() : null,
                 publication.getText(),
                 publication.getCreatedAt(),
                 media,
                 containsVideo(media),
-                publicationComments
+                replies
         );
     }
 
-    private String resolveAuthorImageId(User author) {
-        if (author == null || author.getImageId() == null || author.getImageId().isEmpty()) {
-            return null;
-        }
-        return author.getImageId();
-    }
-
-    private String resolveFullName(User author, String fallbackLogin) {
+    private String fullName(AuthorView author, String login) {
         if (author == null) {
-            return fallbackLogin;
+            return login;
         }
         if (author.getFirstName() != null && author.getLastName() != null) {
             return author.getFirstName() + " " + author.getLastName();
