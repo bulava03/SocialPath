@@ -25,3 +25,49 @@ jobs:
 
       - name: Build and test
         run: ./mvnw --batch-mode verify
+
+  # Browser tests against the full stack (app + MySQL) as docker compose
+  # runs it: templates, scripts and the cookie login are covered only here.
+  e2e:
+    runs-on: ubuntu-latest
+    needs: build
+    defaults:
+      run:
+        working-directory: e2e
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start the application
+        working-directory: .
+        run: docker compose up --build --detach
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Install Playwright
+        run: npm ci && npx playwright install --with-deps chromium
+
+      - name: Wait for the application
+        run: timeout 180 bash -c 'until curl -sf http://localhost:8080/ > /dev/null; do sleep 3; done'
+
+      - name: Run browser tests
+        run: npx playwright test
+
+      - name: Upload the test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 7
+
+      - name: Show application logs
+        if: failure()
+        working-directory: .
+        run: docker compose logs app

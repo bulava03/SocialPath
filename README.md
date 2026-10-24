@@ -58,6 +58,21 @@ Run the test suite with `./mvnw verify` (requires a Docker daemon: the
 context test boots the application against a throwaway MySQL via
 Testcontainers, exercising the Flyway migration end to end).
 
+Browser tests (Playwright, in `e2e/`) drive the running app the way a user
+does: sign-up and login, profile editing, the feed, groups, friends and
+search, including the permission rules seen from the UI. With the app up
+via `docker compose up`:
+
+```bash
+cd e2e
+npm ci
+npx playwright install chromium
+npx playwright test
+```
+
+`BASE_URL` points them at another instance (default `http://localhost:8080`).
+CI runs both suites on every push.
+
 ## Architecture
 
 Classic layered Spring MVC. Thymeleaf renders full pages; interactive parts

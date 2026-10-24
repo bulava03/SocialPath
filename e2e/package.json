@@ -1,0 +1,13 @@
+{
+  "name": "socialpath-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Browser tests for SocialPath, run against the app started with docker compose.",
+  "scripts": {
+    "test": "playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
+}
