@@ -1,14 +1,12 @@
-function getFormData() {
-    return {
-        login: document.getElementById("userLogin").value
-    };
-}
+// Friend request buttons on another user's page. Needs postAction.js.
 
-function swapButton(id, newId, onclick, text) {
-    const button = document.getElementById(id);
-    button.id = newId;
-    button.setAttribute("onclick", onclick);
-    button.textContent = text;
+function friendAction(url, handleResponse) {
+    const login = document.getElementById("userLogin").value;
+    postAction(url, { login }).then(data => {
+        if (data !== null) {
+            handleResponse(data);
+        }
+    });
 }
 
 function handleInviteResponse(data) {
@@ -32,11 +30,7 @@ function handleRemoveInviteResponse(data) {
 function handleRejectResponse(data) {
     if (data.result === "INVITE_REJECTED") {
         swapButton("submitReject", "submitInvite", "inviteToFriends()", "Add friend");
-
-        const acceptButton = document.getElementById("submitAccept");
-        if (acceptButton) {
-            acceptButton.remove();
-        }
+        document.getElementById("submitAccept")?.remove();
     }
 }
 
@@ -45,11 +39,7 @@ function handleAcceptResponse(data) {
         alert("This user is already your friend. Reload the page.");
     } else if (data.result === "ACCEPTED") {
         swapButton("submitAccept", "submitRemove", "removeFromFriends()", "Remove from friends");
-
-        const rejectButton = document.getElementById("submitReject");
-        if (rejectButton) {
-            rejectButton.remove();
-        }
+        document.getElementById("submitReject")?.remove();
     } else {
         alert("The friend request no longer exists. Reload the page.");
     }
@@ -61,52 +51,22 @@ function handleRemoveResponse(data) {
     }
 }
 
-function sendPostRequest(url, data, handleResponseFunction) {
-    const formData = new FormData();
-    formData.append("login", data.login);
-
-    fetch(url, {
-        method: "POST",
-        body: formData
-    })
-    .then(response => {
-        if (response.status === 401) {
-            window.location.href = "/";
-            return null;
-        }
-        if (!response.ok) {
-            return response.json()
-                .then(err => { alert(err.error || "Request failed."); return null; })
-                .catch(() => { alert("Request failed."); return null; });
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data !== null) {
-            handleResponseFunction(data);
-        }
-    })
-    .catch(error => {
-        console.log("Connection error:", error);
-    });
-}
-
 function inviteToFriends() {
-    sendPostRequest("/friends/inviteToFriends", getFormData(), handleInviteResponse);
+    friendAction("/friends/inviteToFriends", handleInviteResponse);
 }
 
 function removeInviteToFriends() {
-    sendPostRequest("/friends/removeInviteToFriends", getFormData(), handleRemoveInviteResponse);
+    friendAction("/friends/removeInviteToFriends", handleRemoveInviteResponse);
 }
 
 function rejectInvitationToFriends() {
-    sendPostRequest("/friends/rejectInvitationToFriends", getFormData(), handleRejectResponse);
+    friendAction("/friends/rejectInvitationToFriends", handleRejectResponse);
 }
 
 function acceptToFriends() {
-    sendPostRequest("/friends/acceptToFriends", getFormData(), handleAcceptResponse);
+    friendAction("/friends/acceptToFriends", handleAcceptResponse);
 }
 
 function removeFromFriends() {
-    sendPostRequest("/friends/removeFromFriends", getFormData(), handleRemoveResponse);
+    friendAction("/friends/removeFromFriends", handleRemoveResponse);
 }
