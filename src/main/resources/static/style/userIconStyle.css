@@ -1,22 +1,30 @@
-#usericon {
-    cursor: pointer;
+/* The button opening the menu is what sits in the corner; the avatar only
+   fills it. Positioning the avatar instead would leave the button without a
+   box of its own, and keyboard focus would land on an invisible point. */
+.usericon-button {
     position: absolute;
     top: 15px;
     right: 25px;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    border-radius: 40px;
+    cursor: pointer;
+}
+
+.usericon-button:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+}
+
+#usericon {
+    display: block;
     height: 40px;
     width: 40px;
     padding: 5px;
     border-radius: 40px;
     object-fit: cover;
-}
-
-/* The avatar is wrapped in a button only to open the menu; the button itself
-   must stay invisible so the absolutely positioned avatar looks as before. */
-.usericon-button {
-    background: none;
-    border: none;
-    padding: 0;
-    margin: 0;
 }
 
 /* Highlight the avatar while the menu is open. */

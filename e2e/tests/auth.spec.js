@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { PASSWORD, registerUser, uniqueLogin } from "./helpers.js";
+import { PASSWORD, registerUser, signIn, uniqueLogin } from "./helpers.js";
 
 test.describe("registration and sign-in", () => {
     test("a new user signs up through the form and lands on their page after signing in", async ({ page }) => {
@@ -75,13 +75,28 @@ test.describe("registration and sign-in", () => {
         await page.getByRole("button", { name: "Sign in" }).click();
         await expect(page).toHaveURL(/\/user\/authorisation/);
 
-        // The avatar is what users click; the button around it has no box of its own.
-        await page.locator("#usericon").click();
+        await page.getByRole("button", { name: "User menu" }).click();
         await page.getByRole("button", { name: "Log out" }).click();
         await expect(page).toHaveURL("/");
 
         await page.goto("/user/authorisation");
         await expect(page).toHaveURL("/");
+    });
+
+    test("the user menu opens from the keyboard", async ({ page }) => {
+        const { login } = await registerUser(page.request);
+        await signIn(page, login);
+        await page.goto("/user/authorisation");
+
+        const menuButton = page.getByRole("button", { name: "User menu" });
+        // The focus outline is drawn around the button: it needs a real box.
+        await expect(menuButton).toBeVisible();
+        await menuButton.focus();
+        await page.keyboard.press("Enter");
+        await expect(page.getByRole("link", { name: "Personal information" })).toBeVisible();
+
+        await page.keyboard.press("Escape");
+        await expect(page.getByRole("link", { name: "Personal information" })).toBeHidden();
     });
 
     test("pages behind the login redirect anonymous visitors to the login page", async ({ page }) => {
