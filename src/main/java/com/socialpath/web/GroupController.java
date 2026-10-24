@@ -122,6 +122,9 @@ public class GroupController {
         if (!group.isOwner(login)) {
             throw new ForbiddenOperationException("Only the group owner can appoint admins");
         }
+        if (!group.isMember(request.getUserId())) {
+            throw new ForbiddenOperationException("Only group members can become admins");
+        }
 
         groupService.addToAdmins(group.getId(), request.getUserId());
 

@@ -133,6 +133,15 @@ class GroupControllerAuthorizationTest {
     }
 
     @Test
+    void addToAdmins_NonMemberCannotBecomeAdmin() {
+        loginAs("owner");
+
+        assertThrows(ForbiddenOperationException.class,
+                () -> controller.addToAdmins(request("stranger")));
+        verify(groupService, never()).addToAdmins(any(), any());
+    }
+
+    @Test
     void removeFromAdmins_OwnerCannotBeDemoted() {
         loginAs("owner");
 
