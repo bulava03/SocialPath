@@ -178,8 +178,7 @@ public class GroupController {
     }
 
     private String showGroupUpdatingForm(Group groupFounded, User user, Model model) {
-        GroupSearchResult group = modelMapper.map(groupFounded, GroupSearchResult.class);
-        group.setId(groupFounded.getId().toString());
+        GroupSearchResult group = GroupSearchResult.from(groupFounded);
         group = handleAvatarService.resolveDisplayAvatar(groupFounded, group);
 
         model.addAttribute("group", group);

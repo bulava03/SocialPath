@@ -1,7 +1,6 @@
 package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import com.socialpath.entity.Group;
 import com.socialpath.entity.User;
 import com.socialpath.dto.response.GroupSearchResult;
 import com.socialpath.dto.response.UserSearchResult;
@@ -16,7 +15,6 @@ import com.socialpath.service.CountryService;
 import com.socialpath.service.UserService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +36,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
-    private final ModelMapper modelMapper;
     private final Validator validator;
     private final PasswordEncoder passwordEncoder;
     private final CountryService countryService;
@@ -136,32 +133,14 @@ public class UserServiceImpl implements UserService {
             return null;
         }
 
-        List<User> usersFriendsObj = userRepository.findByLoginIn(usersFriends);
-
-        List<UserSearchResult> usersFriendsPresentable = new ArrayList<>();
-        for (User friend : usersFriendsObj) {
-            if (!friend.getLogin().equals(login)) {
-                UserSearchResult toAdd = modelMapper.map(friend, UserSearchResult.class);
-                toAdd.setAnotherUserLogin(friend.getLogin());
-                usersFriendsPresentable.add(toAdd);
-            }
-        }
-
-        return usersFriendsPresentable;
+        return toSearchResults(usersFriends, login);
     }
 
     @Override
     public List<GroupSearchResult> findUsersGroups(String login) throws IOException {
-        List<Group> usersGroups = groupRepository.findByMembersContains(login);
-
-        List<GroupSearchResult> usersGroupsPresentable = new ArrayList<>();
-        for (Group group : usersGroups) {
-            GroupSearchResult groupSearchResult = modelMapper.map(group, GroupSearchResult.class);
-            groupSearchResult.setId(group.getId().toString());
-            usersGroupsPresentable.add(groupSearchResult);
-        }
-
-        return usersGroupsPresentable;
+        return groupRepository.findByMembersContains(login).stream()
+                .map(GroupSearchResult::from)
+                .toList();
     }
 
     @Override
@@ -173,18 +152,20 @@ public class UserServiceImpl implements UserService {
             return null;
         }
 
-        List<User> invitersObj = userRepository.findByLoginIn(inviters);
+        return toSearchResults(inviters, login);
+    }
 
-        List<UserSearchResult> invitersPresentable = new ArrayList<>();
-        for (User inviter : invitersObj) {
-            if (!inviter.getLogin().equals(login)) {
-                UserSearchResult toAdd = modelMapper.map(inviter, UserSearchResult.class);
-                toAdd.setAnotherUserLogin(inviter.getLogin());
-                invitersPresentable.add(toAdd);
-            }
-        }
-
-        return invitersPresentable;
+    /**
+     * Loads the given users for a list view, leaving out the viewer.
+     * @param logins logins to load
+     * @param viewerLogin the current user's login
+     * @return the users as list items
+     */
+    private List<UserSearchResult> toSearchResults(List<String> logins, String viewerLogin) {
+        return userRepository.findByLoginIn(logins).stream()
+                .filter(user -> !user.getLogin().equals(viewerLogin))
+                .map(UserSearchResult::from)
+                .toList();
     }
 
     @Override

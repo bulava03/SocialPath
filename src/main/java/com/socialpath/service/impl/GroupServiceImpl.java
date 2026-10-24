@@ -2,7 +2,6 @@ package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import com.socialpath.entity.Group;
-import com.socialpath.entity.User;
 import com.socialpath.dto.request.GroupCreationForm;
 import com.socialpath.dto.response.UserSearchResult;
 import com.socialpath.validation.ValidationResult;
@@ -12,7 +11,6 @@ import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.GroupService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,7 +24,6 @@ public class GroupServiceImpl implements GroupService {
     private final HandleAvatarService handleAvatarService;
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
-    private final ModelMapper modelMapper;
     private final Validator validator;
 
     @Override
@@ -57,15 +54,7 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public List<UserSearchResult> findGroupsMembers(Long id) throws IOException {
-        List<String> groupsMembers = groupRepository.findMembersById(id);
-        List<User> membersObj = userRepository.findByLoginIn(groupsMembers);
-        List<UserSearchResult> groupsMembersPresentable = new ArrayList<>();
-        for (User user : membersObj) {
-            UserSearchResult toAdd = modelMapper.map(user, UserSearchResult.class);
-            toAdd.setAnotherUserLogin(user.getLogin());
-            groupsMembersPresentable.add(toAdd);
-        }
-        return groupsMembersPresentable;
+        return toSearchResults(groupRepository.findMembersById(id));
     }
 
     @Override
@@ -75,15 +64,13 @@ public class GroupServiceImpl implements GroupService {
 
     @Override
     public List<UserSearchResult> findGroupsAdminsPresentable(Long id) throws IOException {
-        List<String> groupsAdmins = groupRepository.findAdminsById(id);
-        List<User> adminsObj = userRepository.findByLoginIn(groupsAdmins);
-        List<UserSearchResult> groupsAdminsPresentable = new ArrayList<>();
-        for (User user : adminsObj) {
-            UserSearchResult toAdd = modelMapper.map(user, UserSearchResult.class);
-            toAdd.setAnotherUserLogin(user.getLogin());
-            groupsAdminsPresentable.add(toAdd);
-        }
-        return groupsAdminsPresentable;
+        return toSearchResults(groupRepository.findAdminsById(id));
+    }
+
+    private List<UserSearchResult> toSearchResults(List<String> logins) {
+        return userRepository.findByLoginIn(logins).stream()
+                .map(UserSearchResult::from)
+                .toList();
     }
 
     @Override

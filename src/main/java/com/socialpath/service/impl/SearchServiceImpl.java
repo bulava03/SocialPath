@@ -9,7 +9,6 @@ import com.socialpath.dto.response.UserSearchResult;
 import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.SearchService;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -21,7 +20,6 @@ import java.util.stream.Collectors;
 public class SearchServiceImpl implements SearchService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
-    private final ModelMapper modelMapper;
 
     @Override
     public SearchResults searchUsersAndGroups(String searchValuesString, String thisLogin) throws IOException {
@@ -42,32 +40,19 @@ public class SearchServiceImpl implements SearchService {
         usersList.forEach(user -> uniqueUsersMap.putIfAbsent(user.getLogin(), user));
         usersList = new ArrayList<>(uniqueUsersMap.values());
 
-        List<UserSearchResult> users = new ArrayList<>();
-
-        for (User element : usersList) {
-            if (!element.getLogin().equals(thisLogin)) {
-                UserSearchResult userSearchResult = modelMapper.map(element, UserSearchResult.class);
-                userSearchResult.setAnotherUserLogin(element.getLogin());
-
-
-                users.add(userSearchResult);
-            }
-        }
-
-        List<GroupSearchResult> groups = new ArrayList<>();
+        List<UserSearchResult> users = usersList.stream()
+                .filter(user -> !user.getLogin().equals(thisLogin))
+                .map(UserSearchResult::from)
+                .toList();
 
         Map<Long, Group> uniqueGroupsMap = new LinkedHashMap<>();
         searchValues.stream()
                 .flatMap(str -> groupRepository.findByNameContaining(str).stream())
                 .forEach(group -> uniqueGroupsMap.putIfAbsent(group.getId(), group));
 
-        for (Group group : uniqueGroupsMap.values()) {
-            GroupSearchResult groupSearchResult = modelMapper.map(group, GroupSearchResult.class);
-            groupSearchResult.setId(group.getId().toString());
-
-
-            groups.add(groupSearchResult);
-        }
+        List<GroupSearchResult> groups = uniqueGroupsMap.values().stream()
+                .map(GroupSearchResult::from)
+                .toList();
 
         return new SearchResults(users, groups);
     }
