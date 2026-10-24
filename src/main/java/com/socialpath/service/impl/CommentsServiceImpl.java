@@ -95,6 +95,19 @@ public class CommentsServiceImpl implements CommentsService {
     }
 
     @Override
+    public Publication findRoot(Publication publication) {
+        Publication current = publication;
+        while (current.getParentId() != null) {
+            Publication parent = findById(current.getParentId());
+            if (parent == null) {
+                break;
+            }
+            current = parent;
+        }
+        return current;
+    }
+
+    @Override
     public List<PublicationPresentable> getPublications(List<Long> ids) throws IOException {
         if (ids == null) {
             return null;

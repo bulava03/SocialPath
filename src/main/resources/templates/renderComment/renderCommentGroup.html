@@ -104,8 +104,8 @@
       </div>
     </div>
 
-    <button class="reply-btn" th:if="${group.members.contains(author.login)}" th:attr="onclick='makeVisible(\'' + ${comment.id} + '\')'">Reply</button>
-    <button class="delete-btn" th:if="${comment.authorLogin == author.login || group.admins.contains(author.login)}" th:attr="onclick='submitRemoveComment(\'' + ${comment.id} + '\')'">Delete</button>
+    <button class="reply-btn" th:if="${group.isMember(author.login)}" th:attr="onclick='makeVisible(\'' + ${comment.id} + '\')'">Reply</button>
+    <button class="delete-btn" th:if="${comment.authorLogin == author.login || group.isModerator(author.login)}" th:attr="onclick='submitRemoveComment(\'' + ${comment.id} + '\')'">Delete</button>
 
     <div class="reply-section" th:classappend="${comment.id}" style="display: none;">
       <textarea type="text" th:id="'publication-text-' + ${comment.id}" class="reply-field" th:classappend="${comment.id}" placeholder="Write your comment here..."></textarea>

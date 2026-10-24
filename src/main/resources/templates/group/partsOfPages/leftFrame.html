@@ -7,7 +7,7 @@
 
     <h1 style="text-align: center;" th:text="${group.name}"></h1>
 
-    <a class="leftFrameButton" th:if="${group.owner == author.login}" th:href="@{/group/getGroupUpdatingForm(id=${group.id})}">Manage group</a>
+    <a class="leftFrameButton" th:if="${group.isOwner(author.login)}" th:href="@{/group/getGroupUpdatingForm(id=${group.id})}">Manage group</a>
 
     <a class="leftFrameButton" th:href="@{/group/getGroupsMembers(id=${group.id})}">Members</a>
 
@@ -18,8 +18,8 @@
     </form>
 
     <button id="joinButton" class="leftFrameButton"
-            th:if="${not group.members.contains(author.login)}" onclick="joinGroup()">Join group</button>
+            th:if="${not group.isMember(author.login)}" onclick="joinGroup()">Join group</button>
     <button id="leaveButton" class="leftFrameButton"
-            th:if="${group.members.contains(author.login) && group.owner != author.login}" onclick="leaveGroup()">Leave group</button>
+            th:if="${group.isMember(author.login) && not group.isOwner(author.login)}" onclick="leaveGroup()">Leave group</button>
   </div>
 </html>

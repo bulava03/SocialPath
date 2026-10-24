@@ -6,6 +6,5 @@ import lombok.Data;
 public class DelComment {
     private String groupId;
     private String authorLogin;
-    private String idPublication;
     private Long idComment;
 }

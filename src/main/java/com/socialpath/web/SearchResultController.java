@@ -23,7 +23,6 @@ public class SearchResultController {
     private final GroupService groupService;
     private final CommentsService commentsService;
     private final SearchService searchService;
-    private final ModelAttributesService modelAttributesService;
     private final HandleAvatarService handleAvatarService;
 
     @GetMapping("/getSearchResult")
@@ -49,13 +48,7 @@ public class SearchResultController {
     @GetMapping("/getGroupPage")
     public String getGroupPage(FoundedGroup foundedGroup, Model model) throws IOException {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
-
-        if (groupService.findGroupById(Long.valueOf(foundedGroup.getGroupId())) == null) {
-            model = modelAttributesService.usersAttributes(model, user, true, commentsService.loadComments("User", user.getLogin()));
-            return "user/userPage";
-        }
-
-        Group group = groupService.findGroupById(Long.valueOf(foundedGroup.getGroupId()));
+        Group group = groupService.getGroup(foundedGroup.getGroupId());
 
         model.addAttribute("group", group);
         model.addAttribute("author", new UserLogin(user.getLogin(), ""));

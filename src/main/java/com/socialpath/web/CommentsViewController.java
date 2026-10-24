@@ -1,5 +1,6 @@
 package com.socialpath.web;
 
+import com.socialpath.entity.Group;
 import lombok.RequiredArgsConstructor;
 import com.socialpath.dto.request.*;
 import com.socialpath.dto.response.*;
@@ -42,11 +43,12 @@ public class CommentsViewController {
     public String loadCommentsGroup(String groupId, Model model) throws IOException {
         String authorLogin = SecurityUtils.getCurrentLogin();
 
-        List<PublicationPresentable> publications = commentsService.loadComments(commentsService.getCommentsIdsGroup(Long.valueOf(groupId)));
+        Group group = groupService.getGroup(groupId);
+        List<PublicationPresentable> publications = commentsService.loadComments(commentsService.getCommentsIdsGroup(group.getId()));
 
         model.addAttribute("publications", publications);
         model.addAttribute("author", new UserLogin(authorLogin, ""));
-        model.addAttribute("group", groupService.findGroupById(Long.valueOf(groupId)));
+        model.addAttribute("group", group);
 
         return "group/partsOfPages/rightFrame :: publications";
     }

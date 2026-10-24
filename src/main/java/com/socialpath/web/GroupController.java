@@ -10,10 +10,8 @@ import com.socialpath.dto.response.UserLogin;
 import com.socialpath.dto.response.UserSearchResult;
 import com.socialpath.exception.ForbiddenOperationException;
 import com.socialpath.exception.InvalidImageException;
-import com.socialpath.exception.ResourceNotFoundException;
 import com.socialpath.validation.ValidationResult;
 import com.socialpath.security.SecurityUtils;
-import com.socialpath.service.CommentsService;
 import com.socialpath.service.GroupService;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.ModelAttributesService;
@@ -74,7 +72,7 @@ public class GroupController {
     @GetMapping("/getGroupsMembers")
     public String getGroupsMembers(LeftFrameRequest request, Model model) throws IOException {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
-        Group group = requireGroup(request.getId());
+        Group group = groupService.getGroup(request.getId());
 
         List<UserSearchResult> list = groupService.findGroupsMembers(group.getId());
         List<String> admins = groupService.findGroupsAdmins(group.getId());
@@ -87,7 +85,7 @@ public class GroupController {
     @GetMapping("/getGroupsAdmins")
     public String getGroupsAdmins(LeftFrameRequest request, Model model) throws IOException {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
-        Group group = requireGroup(request.getId());
+        Group group = groupService.getGroup(request.getId());
 
         List<UserSearchResult> list = groupService.findGroupsAdminsPresentable(group.getId());
 
@@ -98,14 +96,14 @@ public class GroupController {
     @PostMapping("/removeUserFromGroup")
     public String removeUserFromGroup(GroupUserRequest request) {
         String login = SecurityUtils.getCurrentLogin();
-        Group group = requireGroup(request.getGroupId());
+        Group group = groupService.getGroup(request.getGroupId());
 
-        boolean actorIsOwner = isOwner(group, login);
-        boolean actorIsAdmin = isAdmin(group, login);
-        boolean targetIsAdmin = isAdmin(group, request.getUserId()) || isOwner(group, request.getUserId());
+        boolean actorIsOwner = group.isOwner(login);
+        boolean actorIsAdmin = group.isAdmin(login);
+        boolean targetIsAdmin = group.isAdmin(request.getUserId()) || group.isOwner(request.getUserId());
 
         // The owner can remove anyone but themselves; admins can remove plain members.
-        if (isOwner(group, request.getUserId())
+        if (group.isOwner(request.getUserId())
                 || (!actorIsOwner && !actorIsAdmin)
                 || (!actorIsOwner && targetIsAdmin)) {
             throw new ForbiddenOperationException("Not allowed to remove this member");
@@ -119,9 +117,9 @@ public class GroupController {
     @PostMapping("/addToAdmins")
     public String addToAdmins(GroupUserRequest request) {
         String login = SecurityUtils.getCurrentLogin();
-        Group group = requireGroup(request.getGroupId());
+        Group group = groupService.getGroup(request.getGroupId());
 
-        if (!isOwner(group, login)) {
+        if (!group.isOwner(login)) {
             throw new ForbiddenOperationException("Only the group owner can appoint admins");
         }
 
@@ -145,9 +143,9 @@ public class GroupController {
     @GetMapping("/getGroupUpdatingForm")
     public String getGroupUpdatingForm(LeftFrameRequest request, Model model) throws IOException {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
-        Group groupFounded = requireGroup(request.getId());
+        Group groupFounded = groupService.getGroup(request.getId());
 
-        if (!isOwner(groupFounded, user.getLogin())) {
+        if (!groupFounded.isOwner(user.getLogin())) {
             throw new ForbiddenOperationException("Only the group owner can edit the group");
         }
 
@@ -160,9 +158,9 @@ public class GroupController {
                               Model model)
             throws IOException {
         User user = userService.findByLogin(SecurityUtils.getCurrentLogin());
-        Group groupFounded = requireGroup(groupId);
+        Group groupFounded = groupService.getGroup(groupId);
 
-        if (!isOwner(groupFounded, user.getLogin())) {
+        if (!groupFounded.isOwner(user.getLogin())) {
             throw new ForbiddenOperationException("Only the group owner can edit the group");
         }
 
@@ -190,31 +188,15 @@ public class GroupController {
 
     private void demoteAdmin(GroupUserRequest request) {
         String login = SecurityUtils.getCurrentLogin();
-        Group group = requireGroup(request.getGroupId());
+        Group group = groupService.getGroup(request.getGroupId());
 
-        if (!isOwner(group, login)) {
+        if (!group.isOwner(login)) {
             throw new ForbiddenOperationException("Only the group owner can demote admins");
         }
-        if (isOwner(group, request.getUserId())) {
+        if (group.isOwner(request.getUserId())) {
             throw new ForbiddenOperationException("The group owner cannot be demoted");
         }
 
         groupService.removeFromAdmins(group.getId(), request.getUserId());
-    }
-
-    private Group requireGroup(String groupId) {
-        Group group = groupService.findGroupById(Long.valueOf(groupId));
-        if (group == null) {
-            throw new ResourceNotFoundException("Group not found: " + groupId);
-        }
-        return group;
-    }
-
-    private boolean isOwner(Group group, String login) {
-        return group.getOwner() != null && group.getOwner().equals(login);
-    }
-
-    private boolean isAdmin(Group group, String login) {
-        return group.getAdmins() != null && group.getAdmins().contains(login);
     }
 }

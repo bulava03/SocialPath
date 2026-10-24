@@ -178,12 +178,7 @@ function submitComment(parentId) {
 
 function submitRemoveComment(commentId) {
     const { config, target } = currentScope();
-    // A top-level post sits directly in #publications, so its parent id is
-    // "publications", which the server reads as "this is a post, not a reply".
-    const parent = document.getElementById(commentId).parentNode;
-
     const formData = new FormData();
-    formData.append("idPublication", parent.id);
     formData.append("idComment", commentId);
     if (config.sendsTarget) {
         formData.append(config.targetParam, target);

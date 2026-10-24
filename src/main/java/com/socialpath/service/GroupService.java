@@ -38,6 +38,15 @@ public interface GroupService {
     Group findGroupById(Long id);
 
     /**
+     * Looks up a group that has to exist, e.g. one named in a request.
+     * @param id the group id as sent by the client
+     * @return the group
+     * @throws com.socialpath.exception.ResourceNotFoundException when the id
+     *         is malformed or there is no such group
+     */
+    Group getGroup(String id);
+
+    /**
      * Resolves a group's members into their presentable form.
      * @param id the group id
      * @return the members as search results

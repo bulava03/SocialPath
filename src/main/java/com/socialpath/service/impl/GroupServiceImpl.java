@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import com.socialpath.entity.Group;
 import com.socialpath.dto.request.GroupCreationForm;
 import com.socialpath.dto.response.UserSearchResult;
+import com.socialpath.exception.ResourceNotFoundException;
 import com.socialpath.validation.ValidationResult;
 import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
@@ -43,6 +44,20 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public Group findGroupById(Long id) {
         return groupRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public Group getGroup(String id) {
+        Group group = null;
+        try {
+            group = findGroupById(Long.valueOf(id));
+        } catch (NumberFormatException e) {
+            // Falls through to "not found": a malformed id names no group.
+        }
+        if (group == null) {
+            throw new ResourceNotFoundException("Group not found: " + id);
+        }
+        return group;
     }
 
     @Override

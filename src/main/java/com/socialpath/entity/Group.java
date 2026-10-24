@@ -48,4 +48,25 @@ public class Group {
     @CollectionTable(name = "group_admins", joinColumns = @JoinColumn(name = "group_id"))
     @Column(name = "admin_login", length = 20, nullable = false)
     private List<String> admins;
+
+    public boolean isOwner(String login) {
+        return owner != null && owner.equals(login);
+    }
+
+    public boolean isAdmin(String login) {
+        return admins != null && admins.contains(login);
+    }
+
+    public boolean isMember(String login) {
+        return members != null && members.contains(login);
+    }
+
+    /**
+     * Owner or admin: may moderate the group's publications.
+     * @param login the user's login
+     * @return true for the owner and for admins
+     */
+    public boolean isModerator(String login) {
+        return isOwner(login) || isAdmin(login);
+    }
 }

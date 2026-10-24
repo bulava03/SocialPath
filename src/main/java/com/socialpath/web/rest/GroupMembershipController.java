@@ -2,7 +2,7 @@ package com.socialpath.web.rest;
 
 import com.socialpath.entity.Group;
 import com.socialpath.dto.response.OperationResult;
-import com.socialpath.exception.ResourceNotFoundException;
+import com.socialpath.exception.ForbiddenOperationException;
 import com.socialpath.security.SecurityUtils;
 import com.socialpath.service.GroupService;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +25,9 @@ public class GroupMembershipController {
     @PostMapping("/joinGroup")
     public OperationResult joinGroup(String groupId) {
         String authorLogin = SecurityUtils.getCurrentLogin();
-        Group group = requireGroup(groupId);
+        Group group = groupService.getGroup(groupId);
 
-        if (group.getMembers() != null && group.getMembers().contains(authorLogin)) {
+        if (group.isMember(authorLogin)) {
             return OperationResult.of("ALREADY_MEMBER");
         }
 
@@ -39,22 +39,18 @@ public class GroupMembershipController {
     @PostMapping("/leaveGroup")
     public OperationResult leaveGroup(String groupId) {
         String authorLogin = SecurityUtils.getCurrentLogin();
-        Group group = requireGroup(groupId);
+        Group group = groupService.getGroup(groupId);
 
-        if (group.getMembers() != null && !group.getMembers().contains(authorLogin)) {
+        if (!group.isMember(authorLogin)) {
             return OperationResult.of("NOT_A_MEMBER");
+        }
+        // The owner is the group's permanent member and admin.
+        if (group.isOwner(authorLogin)) {
+            throw new ForbiddenOperationException("The group owner cannot leave the group");
         }
 
         groupService.removeMember(groupId, authorLogin);
 
         return OperationResult.of("LEFT");
-    }
-
-    private Group requireGroup(String groupId) {
-        Group group = groupService.findGroupById(Long.valueOf(groupId));
-        if (group == null) {
-            throw new ResourceNotFoundException("Group not found: " + groupId);
-        }
-        return group;
     }
 }

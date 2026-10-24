@@ -49,7 +49,7 @@ class GroupControllerAuthorizationTest {
         group.setOwner("owner");
         group.setAdmins(new ArrayList<>(List.of("owner", "admin")));
         group.setMembers(new ArrayList<>(List.of("owner", "admin", "member", "member2")));
-        when(groupService.findGroupById(groupId)).thenReturn(group);
+        when(groupService.getGroup(groupId.toString())).thenReturn(group);
     }
 
     @AfterEach
@@ -145,7 +145,7 @@ class GroupControllerAuthorizationTest {
     void removeUserFromGroup_UnknownGroup_NotFound() {
         loginAs("owner");
         Long missing = 999L;
-        when(groupService.findGroupById(missing)).thenReturn(null);
+        when(groupService.getGroup(missing.toString())).thenThrow(new ResourceNotFoundException("Group not found"));
 
         GroupUserRequest request = request("member");
         request.setGroupId(missing.toString());

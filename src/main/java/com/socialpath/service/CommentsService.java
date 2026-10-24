@@ -64,6 +64,15 @@ public interface CommentsService {
     Publication findById(Long id);
 
     /**
+     * Walks up from a comment to the top-level publication it belongs to.
+     * The root tells where the thread lives: a group (groupId set) or a user
+     * page (owned by the root's author).
+     * @param publication a publication or a comment at any depth
+     * @return the top-level publication; the argument itself when it has no parent
+     */
+    Publication findRoot(Publication publication);
+
+    /**
      * Resolves publication ids into their presentable form, recursively
      * including nested comments.
      * @param ids the publication ids
