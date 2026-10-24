@@ -2,6 +2,7 @@ package com.socialpath.config;
 
 import com.socialpath.security.JwtAuthenticationEntryPoint;
 import com.socialpath.security.JwtTokenFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,6 +23,21 @@ public class SecurityConfig {
                           JwtAuthenticationEntryPoint authenticationEntryPoint) {
         this.jwtTokenFilter = jwtTokenFilter;
         this.authenticationEntryPoint = authenticationEntryPoint;
+    }
+
+    /**
+     * Keeps the JWT filter out of the plain servlet filter chain. Spring Boot
+     * registers every Filter bean there automatically, so without this the
+     * filter would run twice per request - once there and once inside the
+     * security chain below - and load the user from the database twice.
+     * @param filter the JWT filter bean
+     * @return a disabled registration for it
+     */
+    @Bean
+    public FilterRegistrationBean<JwtTokenFilter> jwtTokenFilterRegistration(JwtTokenFilter filter) {
+        FilterRegistrationBean<JwtTokenFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
