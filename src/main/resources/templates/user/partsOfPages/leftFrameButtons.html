@@ -12,20 +12,20 @@
         <form>
             <input id="userLogin" th:value="${user.login}" type="hidden" />
         </form>
-        <div th:if="${InRequests == 0}">
+        <div th:if="${friendship.name() == 'NONE'}">
             <button id="submitInvite" class="leftFrameButton" onclick="inviteToFriends()">Add friend</button>
         </div>
 
-        <div th:if="${InRequests == 1}">
+        <div th:if="${friendship.name() == 'REQUEST_SENT'}">
             <button id="submitRemoveInvite" class="leftFrameButton" onclick="removeInviteToFriends()">Cancel friend request</button>
         </div>
 
-        <div th:if="${InRequests == 2}">
+        <div th:if="${friendship.name() == 'REQUEST_RECEIVED'}">
             <button id="submitAccept" class="leftFrameButton" onclick="acceptToFriends()">Accept friend request</button>
             <button id="submitReject" class="leftFrameButton" onclick="rejectInvitationToFriends()">Decline friend request</button>
         </div>
 
-        <div th:if="${InRequests == 3}">
+        <div th:if="${friendship.name() == 'FRIENDS'}">
             <button id="submitRemove" class="leftFrameButton" onclick="removeFromFriends()">Remove from friends</button>
         </div>
     </div>
