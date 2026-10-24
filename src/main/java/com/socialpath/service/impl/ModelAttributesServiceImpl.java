@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import com.socialpath.entity.User;
 import com.socialpath.dto.request.*;
 import com.socialpath.dto.response.*;
-import com.socialpath.helper.ConvertHelper;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.CountryService;
 import com.socialpath.service.ModelAttributesService;
@@ -47,7 +46,10 @@ public class ModelAttributesServiceImpl implements ModelAttributesService {
     @Override
     public Model userInfoModel(Model model, UserUpdate user, String login) {
         UserFormView userFormUpdate = modelMapper.map(user, UserFormView.class);
-        fillDateOfBirth(userFormUpdate, user.getDateOfBirth());
+        // Echo the raw fields back, so an invalid date is shown as typed.
+        userFormUpdate.setDay(user.getDay());
+        userFormUpdate.setMonth(user.getMonth());
+        userFormUpdate.setYear(user.getYear());
 
         model.addAttribute("user", userFormUpdate);
         model.addAttribute("author", login);
@@ -57,21 +59,21 @@ public class ModelAttributesServiceImpl implements ModelAttributesService {
 
     /**
      * Splits an optional date of birth into the day/month/year fields the
-     * forms bind to. An absent date renders as empty placeholders
-     * (year == -1 is the "not set" convention the templates use).
+     * forms bind to. An absent date leaves them null, which the templates
+     * render as empty placeholders.
      * @param form the form view being populated
      * @param dateOfBirth the stored date, possibly null
      */
     private void fillDateOfBirth(UserFormView form, LocalDateTime dateOfBirth) {
         if (dateOfBirth == null) {
-            form.setDay(0);
+            form.setDay(null);
             form.setMonth(null);
-            form.setYear(-1);
+            form.setYear(null);
             return;
         }
-        form.setDay(dateOfBirth.getDayOfMonth());
-        form.setMonth(ConvertHelper.monthToString(dateOfBirth.getMonthValue()));
-        form.setYear(dateOfBirth.getYear());
+        form.setDay(String.valueOf(dateOfBirth.getDayOfMonth()));
+        form.setMonth(String.valueOf(dateOfBirth.getMonthValue()));
+        form.setYear(String.valueOf(dateOfBirth.getYear()));
     }
 
     @Override

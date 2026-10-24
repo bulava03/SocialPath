@@ -2,12 +2,11 @@ package com.socialpath.dto.request;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
 @Data
-public class UserUpdate {
+public class UserUpdate implements DateOfBirthInput {
     private String login;
 
     private String imageId;
@@ -33,8 +32,12 @@ public class UserUpdate {
     @Size(max = 20, message = "{user.phone.size}")
     private String phoneNumber;
 
+    /** Raw date-of-birth fields as typed; assembled by DateOfBirthResolver. */
+    private String day;
+    private String month;
+    private String year;
+
     @Past(message = "{user.dateOfBirth.past}")
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime dateOfBirth;
 
     private String countryCode;

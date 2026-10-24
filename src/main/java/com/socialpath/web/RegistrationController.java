@@ -4,7 +4,6 @@ import com.socialpath.entity.Country;
 import com.socialpath.entity.User;
 import com.socialpath.dto.request.RegistrationForm;
 import com.socialpath.dto.response.UserFormView;
-import com.socialpath.helper.ConvertHelper;
 import com.socialpath.validation.ValidationResult;
 import com.socialpath.service.CountryService;
 import com.socialpath.service.UserService;
@@ -40,9 +39,7 @@ public class RegistrationController {
 
     @GetMapping()
     public String getRegistrationPage(Model model) {
-        UserFormView user = new UserFormView();
-        user.setYear(-1);
-        model.addAttribute("User", user);
+        model.addAttribute("User", new UserFormView());
         return "registration/registration";
     }
 
@@ -61,9 +58,6 @@ public class RegistrationController {
             return "registration/registration";
         }
 
-        if (form.getDateOfBirth() != null) {
-            form.setDateOfBirth(form.getDateOfBirth().toLocalDate().atStartOfDay());
-        }
         User user = modelMapper.map(form, User.class);
         user.setCountry(countryService.resolve(form.getCountryCode()));
         userService.addUser(user);
@@ -73,13 +67,10 @@ public class RegistrationController {
 
     private UserFormView toFormView(RegistrationForm form) {
         UserFormView userForm = modelMapper.map(form, UserFormView.class);
-        if (form.getDateOfBirth() != null) {
-            userForm.setDay(form.getDateOfBirth().getDayOfMonth());
-            userForm.setMonth(ConvertHelper.monthToString(form.getDateOfBirth().getMonthValue()));
-            userForm.setYear(form.getDateOfBirth().getYear());
-        } else {
-            userForm.setYear(-1);
-        }
+        // Echo the raw fields back, so an invalid date is shown as typed.
+        userForm.setDay(form.getDay());
+        userForm.setMonth(form.getMonth());
+        userForm.setYear(form.getYear());
         return userForm;
     }
 }

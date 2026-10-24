@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -20,7 +19,7 @@ import java.time.LocalDateTime;
  * and the ModelMapper conversion work without configuration.
  */
 @Data
-public class RegistrationForm {
+public class RegistrationForm implements DateOfBirthInput {
     @NotBlank(message = "{user.login.required}")
     @Size(max = 20, message = "{user.login.size}")
     private String login;
@@ -47,8 +46,12 @@ public class RegistrationForm {
     @Size(max = 20, message = "{user.phone.size}")
     private String phoneNumber;
 
+    /** Raw date-of-birth fields as typed; assembled by DateOfBirthResolver. */
+    private String day;
+    private String month;
+    private String year;
+
     @Past(message = "{user.dateOfBirth.past}")
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime dateOfBirth;
 
     private String countryCode;

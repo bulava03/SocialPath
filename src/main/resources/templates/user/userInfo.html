@@ -42,30 +42,29 @@
         <input class="field" id="email" th:value="${user.email}" type="text" name="email">
         <h2 class="name">Date of birth</h2>
         <div class="dob-row">
-        <input class="field" id="dob-day" th:value="${user.year != -1 ? user.day : ''}"
+        <input class="field" id="dob-day" th:value="${user.day}"
                type="text" name="day" placeholder="Day" inputmode="numeric">
         <select id="dob-month" name="month">
           <option value="" disabled hidden th:selected="${user.month == null}">Month</option>
-          <option value="1" th:selected="${user.month == 'January'}">January</option>
-          <option value="2" th:selected="${user.month == 'February'}">February</option>
-          <option value="3" th:selected="${user.month == 'March'}">March</option>
-          <option value="4" th:selected="${user.month == 'April'}">April</option>
-          <option value="5" th:selected="${user.month == 'May'}">May</option>
-          <option value="6" th:selected="${user.month == 'June'}">June</option>
-          <option value="7" th:selected="${user.month == 'July'}">July</option>
-          <option value="8" th:selected="${user.month == 'August'}">August</option>
-          <option value="9" th:selected="${user.month == 'September'}">September</option>
-          <option value="10" th:selected="${user.month == 'October'}">October</option>
-          <option value="11" th:selected="${user.month == 'November'}">November</option>
-          <option value="12" th:selected="${user.month == 'December'}">December</option>
+          <option value="1" th:selected="${user.month == '1'}">January</option>
+          <option value="2" th:selected="${user.month == '2'}">February</option>
+          <option value="3" th:selected="${user.month == '3'}">March</option>
+          <option value="4" th:selected="${user.month == '4'}">April</option>
+          <option value="5" th:selected="${user.month == '5'}">May</option>
+          <option value="6" th:selected="${user.month == '6'}">June</option>
+          <option value="7" th:selected="${user.month == '7'}">July</option>
+          <option value="8" th:selected="${user.month == '8'}">August</option>
+          <option value="9" th:selected="${user.month == '9'}">September</option>
+          <option value="10" th:selected="${user.month == '10'}">October</option>
+          <option value="11" th:selected="${user.month == '11'}">November</option>
+          <option value="12" th:selected="${user.month == '12'}">December</option>
         </select>
         <select id="dob-year" name="year">
-          <option value="" disabled hidden th:selected="${user.year == -1}">Year</option>
+          <option value="" disabled hidden th:selected="${user.year == null}">Year</option>
           <option th:each="y : ${#numbers.sequence(#dates.year(#dates.createNow()), 1900, -1)}"
-                  th:value="${y}" th:text="${y}" th:selected="${y == user.year}"></option>
+                  th:value="${y}" th:text="${y}" th:selected="${#strings.toString(y) == user.year}"></option>
         </select>
         </div>
-        <input type="hidden" id="dateOfBirth" name="dateOfBirth" value="">
         <h2 class="name">Country</h2>
         <select id="country" name="countryCode">
           <option value="" th:selected="${#strings.isEmpty(user.countryCode)}">Country</option>
@@ -81,13 +80,12 @@
         <h2 class="name">Workplace</h2>
         <input class="field" id="workplace" th:value="${user.workplace}" type="text" name="workplace">
 
-        <input onclick="registerUser()" class="button" type="submit" value="Save" />
+        <input class="button" type="submit" value="Save" />
       </div>
     </form>
     <div id="backform">
       <a class="button" id="buttonback" href="/user/authorisation">To my page</a>
     </div>
-    <p class="errortext" id="errortext"></p>
   </div>
 </div>
 
@@ -95,7 +93,6 @@
   <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
 </footer>
 
-<script src="/script/dateValidation.js"></script>
 <script src="/script/avatarPreview.js"></script>
 </body>
 </html>

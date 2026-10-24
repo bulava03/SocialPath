@@ -9,6 +9,7 @@ import com.socialpath.dto.request.RegistrationForm;
 import com.socialpath.dto.request.UserUpdate;
 import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
+import com.socialpath.validation.DateOfBirthResolver;
 import com.socialpath.validation.ValidationResult;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.socialpath.service.CountryService;
@@ -44,6 +45,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ValidationResult validateRegistration(RegistrationForm form) {
+        ValidationResult dateOfBirth = DateOfBirthResolver.resolve(form);
+        if (!dateOfBirth.isSuccess()) {
+            return dateOfBirth;
+        }
         Set<ConstraintViolation<RegistrationForm>> violations = validator.validate(form);
 
         if (!violations.isEmpty()) {
@@ -58,6 +63,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ValidationResult validateUserUpdate(UserUpdate user) {
+        ValidationResult dateOfBirth = DateOfBirthResolver.resolve(user);
+        if (!dateOfBirth.isSuccess()) {
+            return dateOfBirth;
+        }
         Set<ConstraintViolation<UserUpdate>> violations = validator.validate(user);
 
         if (!violations.isEmpty()) {

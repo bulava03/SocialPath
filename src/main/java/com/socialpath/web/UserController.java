@@ -100,9 +100,6 @@ public class UserController {
             return showUserInfoWithError(model, user, myUser, validation.getMessage());
         }
 
-        if (user.getDateOfBirth() != null) {
-            user.setDateOfBirth(user.getDateOfBirth().toLocalDate().atStartOfDay());
-        }
         try {
             user = handleAvatarService.updateAvatar(user, myUser, file);
         } catch (InvalidImageException e) {
