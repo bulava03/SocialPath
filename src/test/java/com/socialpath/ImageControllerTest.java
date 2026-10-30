@@ -6,11 +6,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -73,5 +75,28 @@ class ImageControllerTest {
         ResponseEntity<Resource> response = controller.getImage(videoId, null);
 
         assertEquals(MediaType.parseMediaType("video/mp4"), response.getHeaders().getContentType());
+    }
+
+    @Test
+    void storedHtml_IsOfferedAsADownload_NeverRenderedAsAPage() throws Exception {
+        // Files saved before uploads were checked may have any extension.
+        String htmlId = "0f8fad5b-d9cb-469f-a165-70867728950e.html";
+        when(fileStorageService.getFileById(htmlId)).thenReturn(named(htmlId));
+
+        ResponseEntity<Resource> response = controller.getImage(htmlId, null);
+
+        assertEquals(MediaType.APPLICATION_OCTET_STREAM, response.getHeaders().getContentType());
+        assertEquals("attachment", response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION));
+        assertEquals("sandbox", response.getHeaders().getFirst("Content-Security-Policy"));
+    }
+
+    @Test
+    void pictures_AreShownInline_InASandbox() throws Exception {
+        when(fileStorageService.getFileById(ID)).thenReturn(named(ID));
+
+        ResponseEntity<Resource> response = controller.getImage(ID, null);
+
+        assertNull(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION));
+        assertEquals("sandbox", response.getHeaders().getFirst("Content-Security-Policy"));
     }
 }

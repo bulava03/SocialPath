@@ -5,6 +5,7 @@ import com.socialpath.service.HandleAvatarService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -14,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
-import java.net.URLConnection;
 import java.time.Duration;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Streams user-uploaded media (avatars, publication photos and videos) from
@@ -27,6 +28,16 @@ import java.util.Locale;
 @RequestMapping("/images")
 @RequiredArgsConstructor
 public class ImageController {
+
+    /** Avatars (always JPEG now, older ones PNG/BMP) and publication media. */
+    private static final Map<String, MediaType> DISPLAYABLE = Map.of(
+            "jpg", MediaType.IMAGE_JPEG,
+            "jpeg", MediaType.IMAGE_JPEG,
+            "png", MediaType.IMAGE_PNG,
+            "gif", MediaType.IMAGE_GIF,
+            "bmp", MediaType.parseMediaType("image/bmp"),
+            "webp", MediaType.parseMediaType("image/webp"),
+            "mp4", MediaType.parseMediaType("video/mp4"));
 
     private final FileStorageService fileStorageService;
 
@@ -53,26 +64,31 @@ public class ImageController {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok()
-                .contentType(resolveContentType(resource.getFilename()))
+        MediaType type = displayableType(resource.getFilename());
+        ResponseEntity.BodyBuilder response = ResponseEntity.ok()
+                .contentType(type == null ? MediaType.APPLICATION_OCTET_STREAM : type)
                 .cacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePrivate())
-                .body(resource);
+                // Even opened directly, a stored file can never run script on this site.
+                .header("Content-Security-Policy", "sandbox");
+        if (type == null) {
+            // Not a picture or video we know: offer it as a download, never render it.
+            response.header(HttpHeaders.CONTENT_DISPOSITION, "attachment");
+        }
+        return response.body(resource);
     }
 
-    private MediaType resolveContentType(String filename) {
+    /**
+     * The content type for files the site shows inline. Only known picture and
+     * video types qualify: guessing from any extension would serve an uploaded
+     * .html or .svg as a page of this site.
+     * @param filename the stored file name
+     * @return the type, or null for anything else
+     */
+    private static MediaType displayableType(String filename) {
         if (filename == null) {
-            return MediaType.APPLICATION_OCTET_STREAM;
+            return null;
         }
-        // URLConnection does not know every type we care about (mp4/webp on
-        // some JDKs), so cover those explicitly before falling back.
-        String lower = filename.toLowerCase(Locale.ROOT);
-        if (lower.endsWith(".mp4")) {
-            return MediaType.parseMediaType("video/mp4");
-        }
-        if (lower.endsWith(".webp")) {
-            return MediaType.parseMediaType("image/webp");
-        }
-        String guessed = URLConnection.guessContentTypeFromName(filename);
-        return guessed != null ? MediaType.parseMediaType(guessed) : MediaType.APPLICATION_OCTET_STREAM;
+        int dot = filename.lastIndexOf('.');
+        return dot < 0 ? null : DISPLAYABLE.get(filename.substring(dot + 1).toLowerCase(Locale.ROOT));
     }
 }

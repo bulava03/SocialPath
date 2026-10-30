@@ -1,5 +1,6 @@
 package com.socialpath.service.impl;
 
+import com.socialpath.media.PublicationMediaType;
 import com.socialpath.service.FileStorageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -8,11 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -42,9 +43,14 @@ public class FileStorageServiceImpl implements FileStorageService {
     }
 
     @Override
-    public String storeFile(MultipartFile file) throws IOException {
-        String fileId = UUID.randomUUID() + extensionOf(file.getOriginalFilename());
-        Files.copy(file.getInputStream(), root.resolve(fileId), StandardCopyOption.REPLACE_EXISTING);
+    public String storeFile(MultipartFile file, String extension) throws IOException {
+        if (extension == null || !EXTENSION.matcher(extension).matches()) {
+            throw new IllegalArgumentException("Invalid extension: " + extension);
+        }
+        String fileId = UUID.randomUUID() + "." + extension;
+        try (InputStream in = file.getInputStream()) {
+            Files.copy(in, root.resolve(fileId), StandardCopyOption.REPLACE_EXISTING);
+        }
         return fileId;
     }
 
@@ -70,7 +76,7 @@ public class FileStorageServiceImpl implements FileStorageService {
     public boolean isVideo(String fileId) {
         Path path = resolveSafely(fileId);
         return path != null && Files.isRegularFile(path)
-                && fileId.toLowerCase(Locale.ROOT).endsWith(".mp4");
+                && PublicationMediaType.ofFileId(fileId).map(PublicationMediaType::isVideo).orElse(false);
     }
 
     @Override
@@ -101,26 +107,5 @@ public class FileStorageServiceImpl implements FileStorageService {
             return null;
         }
         return path;
-    }
-
-    /**
-     * Extracts a safe, lowercase extension (with a leading dot) from the
-     * uploaded file name, or an empty string when there is none usable.
-     * @param originalFilename the client-supplied file name
-     * @return ".ext" or ""
-     */
-    private String extensionOf(String originalFilename) {
-        if (originalFilename == null) {
-            return "";
-        }
-        int dot = originalFilename.lastIndexOf('.');
-        if (dot < 0 || dot == originalFilename.length() - 1) {
-            return "";
-        }
-        String extension = originalFilename.substring(dot + 1).toLowerCase(Locale.ROOT);
-        if (!EXTENSION.matcher(extension).matches()) {
-            return "";
-        }
-        return "." + extension;
     }
 }

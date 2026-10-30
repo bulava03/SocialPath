@@ -92,23 +92,23 @@ class FileStorageServiceTest {
     }
 
     @Test
-    void storeFile_UploadNameNeverBecomesAPath() throws IOException {
+    void storeFile_UploadNameIsIgnored() throws IOException {
         MockMultipartFile upload = new MockMultipartFile(
-                "media", "../../planted.JPG", "image/jpeg", new byte[]{1, 2, 3});
+                "media", "../../planted.html", "text/html", new byte[]{1, 2, 3});
 
-        String id = storage.storeFile(upload);
+        String id = storage.storeFile(upload, "jpg");
 
-        // A fresh server-generated name inside the media directory; only the extension is kept.
+        // A fresh server-generated name with the extension the server chose.
         assertTrue(id.matches("[a-f0-9-]{36}\\.jpg"), id);
         assertTrue(Files.exists(mediaDir.resolve(id)));
-        assertFalse(Files.exists(sandbox.resolve("planted.JPG")));
+        assertFalse(Files.exists(sandbox.resolve("planted.html")));
     }
 
-    @Test
-    void storeFile_SuspiciousExtensionIsDropped() throws IOException {
-        MockMultipartFile upload = new MockMultipartFile(
-                "media", "x.p/../hp", "image/jpeg", new byte[]{1});
+    @ParameterizedTest
+    @ValueSource(strings = {"../x", "j/pg", "", "HTML!"})
+    void storeFile_MalformedExtension_IsRefused(String extension) {
+        MockMultipartFile upload = new MockMultipartFile("media", "a.jpg", "image/jpeg", new byte[]{1});
 
-        assertTrue(storage.storeFile(upload).matches("[a-f0-9-]{36}"));
+        assertThrows(IllegalArgumentException.class, () -> storage.storeFile(upload, extension));
     }
 }

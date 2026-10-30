@@ -60,6 +60,24 @@ test.describe("upload limits", () => {
         await close();
     });
 
+    test("a page disguised as a photo is refused by the server", async ({ browser }) => {
+        // The feed's script checks files too, but a forged request skips it.
+        const { page, close } = await newUserSession(browser);
+
+        const response = await page.request.post("/comments/addUserPublication", {
+            multipart: {
+                text: "Look at this",
+                media: { name: "photo.jpg", mimeType: "image/jpeg", buffer: Buffer.from("<script>alert(1)</script>") },
+            },
+        });
+
+        expect(response.status()).toBe(400);
+        expect(await response.json()).toEqual({ error: "Only photos and mp4 videos are allowed." });
+        await page.goto("/user/authorisation");
+        await expect(page.getByText("No posts yet.")).toBeVisible();
+        await close();
+    });
+
     test("an oversized post upload gets a JSON error the feed can show", async ({ browser }) => {
         // The feed form refuses such a file before sending it, so go to the endpoint directly.
         const { page, close } = await newUserSession(browser);

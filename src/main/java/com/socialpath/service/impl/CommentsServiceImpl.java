@@ -6,6 +6,8 @@ import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
 import com.socialpath.dto.response.FeedPage;
 import com.socialpath.dto.response.PublicationPresentable;
+import com.socialpath.media.PublicationMediaRules;
+import com.socialpath.media.PublicationMediaType;
 import com.socialpath.repository.AuthorView;
 import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.UserRepository;
@@ -222,13 +224,17 @@ public class CommentsServiceImpl implements CommentsService {
         return publication;
     }
 
+    /**
+     * Checks all uploads against the media rules first and stores them only
+     * when every one passes, so a rejected upload leaves nothing on disk.
+     * @param files the uploads, possibly null
+     * @return the stored file ids, in upload order
+     */
     private List<String> storeMedia(List<MultipartFile> files) throws IOException {
+        List<PublicationMediaType> types = PublicationMediaRules.check(files);
         List<String> mediaIds = new ArrayList<>();
-        if (files == null) {
-            return mediaIds;
-        }
-        for (MultipartFile file : files) {
-            mediaIds.add(fileStorageService.storeFile(file));
+        for (int i = 0; i < types.size(); i++) {
+            mediaIds.add(fileStorageService.storeFile(files.get(i), types.get(i).extension()));
         }
         return mediaIds;
     }
