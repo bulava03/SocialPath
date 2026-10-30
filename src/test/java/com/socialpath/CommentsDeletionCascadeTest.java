@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -21,6 +20,8 @@ import static org.mockito.Mockito.when;
  * file ids of the whole subtree (recursive CTE) and removing those files.
  * Without an active transaction (as in these unit tests) the files are
  * removed immediately; inside a transaction the cleanup runs after commit.
+ * The SQL side (the CTE and the cascade) is tested against MySQL in
+ * CommentsRepositoryTest.
  */
 class CommentsDeletionCascadeTest {
 
@@ -29,7 +30,6 @@ class CommentsDeletionCascadeTest {
     private CommentsServiceImpl service;
 
     private final Long publicationId = 1L;
-    private final Long commentId = 2L;
 
     @BeforeEach
     void setUp() {
@@ -55,17 +55,5 @@ class CommentsDeletionCascadeTest {
         verify(fileStorageService).deleteFileById("photo1");
         verify(fileStorageService).deleteFileById("photo2");
         verify(fileStorageService).deleteFileById("photo3");
-    }
-
-    @Test
-    void deletePublication_OfComment_DeletesOnlyItsOwnSubtree() {
-        when(commentsRepository.findSubtreeMediaFileIds(commentId))
-                .thenReturn(List.of("photo2"));
-
-        service.deletePublication(commentId);
-
-        verify(commentsRepository).deleteById(commentId);
-        verify(commentsRepository, never()).deleteById(publicationId);
-        verify(fileStorageService).deleteFileById("photo2");
     }
 }
