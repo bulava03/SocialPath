@@ -18,6 +18,10 @@
 
 	<properties>
 		<java.version>21</java.version>
+		<!-- Newer than the 1.19 that Spring Boot 3.3 manages: 1.19 speaks a Docker
+		     API version Docker Engine 29 no longer accepts, so the Testcontainers
+		     test could not start locally. -->
+		<testcontainers.version>1.21.4</testcontainers.version>
 		<javacpp.version>1.5.14</javacpp.version>
 		<ffmpeg.version>8.1.2-${javacpp.version}</ffmpeg.version>
 		<!-- Overridden by the natives-* profiles; on an unlisted platform the
