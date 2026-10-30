@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -31,6 +32,7 @@ public class VideoServiceImpl implements VideoService {
     private static final Set<String> WEBM_VIDEO_CODECS = Set.of("vp8", "vp9", "av1");
     private static final Set<String> WEBM_AUDIO_CODECS = Set.of("opus", "vorbis");
     private static final int MAX_ERROR_LENGTH = 255;
+    private static final String ABANDONED = "The conversion was interrupted.";
 
     private final FileStorageService fileStorageService;
     private final VideoProbe videoProbe;
@@ -98,12 +100,24 @@ public class VideoServiceImpl implements VideoService {
     @Override
     @Transactional
     public Optional<VideoJob> claimNext() {
-        return videoJobRepository.lockNextPending().map(job -> {
+        LocalDateTime now = LocalDateTime.now();
+        return videoJobRepository.lockNextPending(now.minus(RETRY_DELAY)).map(job -> {
             job.setStatus(VideoJob.Status.PROCESSING);
             job.setAttempts(job.getAttempts() + 1);
-            job.setUpdatedAt(LocalDateTime.now());
+            job.setUpdatedAt(now);
             return videoJobRepository.save(job);
         });
+    }
+
+    @Override
+    @Transactional
+    public List<String> releaseAbandoned(Duration after) {
+        LocalDateTime now = LocalDateTime.now();
+        return videoJobRepository.findByStatusAndUpdatedAtBefore(VideoJob.Status.PROCESSING, now.minus(after))
+                .stream()
+                .filter(job -> recordFailure(job, ABANDONED, now))
+                .map(VideoJob::getSourceFileId)
+                .toList();
     }
 
     @Override
@@ -119,12 +133,25 @@ public class VideoServiceImpl implements VideoService {
 
     @Override
     @Transactional
-    public void fail(VideoJob job, String error) {
-        videoJobRepository.findById(job.getId()).ifPresent(stored -> {
-            stored.setStatus(VideoJob.Status.FAILED);
-            stored.setError(error == null || error.length() <= MAX_ERROR_LENGTH
-                    ? error : error.substring(0, MAX_ERROR_LENGTH));
-            stored.setUpdatedAt(LocalDateTime.now());
-        });
+    public boolean fail(VideoJob job, String error) {
+        return videoJobRepository.findById(job.getId())
+                .map(stored -> recordFailure(stored, error, LocalDateTime.now()))
+                .orElse(false);
+    }
+
+    /**
+     * Queues the job again, or gives it up when it is out of attempts.
+     * @param job the job, managed by the current transaction
+     * @param error what went wrong
+     * @param now the current time
+     * @return true when the job was given up
+     */
+    private static boolean recordFailure(VideoJob job, String error, LocalDateTime now) {
+        boolean givenUp = job.getAttempts() >= MAX_ATTEMPTS;
+        job.setStatus(givenUp ? VideoJob.Status.FAILED : VideoJob.Status.PENDING);
+        job.setError(error == null || error.length() <= MAX_ERROR_LENGTH
+                ? error : error.substring(0, MAX_ERROR_LENGTH));
+        job.setUpdatedAt(now);
+        return givenUp;
     }
 }

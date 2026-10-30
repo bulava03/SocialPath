@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -133,6 +135,64 @@ class VideoServiceTest {
 
         assertEquals(List.of("upload.mov"), uploads);
         verify(videoJobRepository).deleteAll(List.of(job));
+    }
+
+    @Test
+    void fail_BeforeTheLastAttempt_QueuesTheJobAgain() {
+        VideoJob job = storedJob(VideoService.MAX_ATTEMPTS - 1);
+
+        assertFalse(service.fail(job, "ffmpeg crashed"));
+
+        assertEquals(VideoJob.Status.PENDING, job.getStatus());
+        assertEquals("ffmpeg crashed", job.getError());
+    }
+
+    @Test
+    void fail_OnTheLastAttempt_GivesUp() {
+        VideoJob job = storedJob(VideoService.MAX_ATTEMPTS);
+
+        assertTrue(service.fail(job, "x".repeat(300)));
+
+        assertEquals(VideoJob.Status.FAILED, job.getStatus());
+        assertEquals(255, job.getError().length());
+    }
+
+    @Test
+    void fail_JobGoneMeanwhile_NothingToGiveUp() {
+        VideoJob job = new VideoJob("result.mp4", "upload.mov", LocalDateTime.now());
+        job.setId(9L);
+
+        assertFalse(service.fail(job, "ffmpeg crashed"));
+    }
+
+    @Test
+    void releaseAbandoned_RequeuesThemOrGivesUpThoseOutOfAttempts() {
+        VideoJob retried = storedJob(1);
+        VideoJob exhausted = storedJob(VideoService.MAX_ATTEMPTS);
+        exhausted.setSourceFileId("exhausted.mov");
+        LocalDateTime before = LocalDateTime.now();
+        when(videoJobRepository.findByStatusAndUpdatedAtBefore(eq(VideoJob.Status.PROCESSING), any()))
+                .thenReturn(List.of(retried, exhausted));
+
+        List<String> givenUp = service.releaseAbandoned(Duration.ofMinutes(15));
+
+        ArgumentCaptor<LocalDateTime> cutoff = ArgumentCaptor.forClass(LocalDateTime.class);
+        verify(videoJobRepository).findByStatusAndUpdatedAtBefore(eq(VideoJob.Status.PROCESSING), cutoff.capture());
+        assertFalse(cutoff.getValue().isAfter(LocalDateTime.now().minusMinutes(15)));
+        assertFalse(cutoff.getValue().isBefore(before.minusMinutes(15)));
+        assertEquals(List.of("exhausted.mov"), givenUp);
+        assertEquals(VideoJob.Status.PENDING, retried.getStatus());
+        assertEquals(VideoJob.Status.FAILED, exhausted.getStatus());
+    }
+
+    /** A job being converted, on its given attempt, that the repository finds by id. */
+    private VideoJob storedJob(int attempts) {
+        VideoJob job = new VideoJob("result.mp4", "upload.mov", LocalDateTime.now());
+        job.setId((long) attempts);
+        job.setStatus(VideoJob.Status.PROCESSING);
+        job.setAttempts(attempts);
+        when(videoJobRepository.findById(job.getId())).thenReturn(Optional.of(job));
+        return job;
     }
 
     @Test

@@ -24,6 +24,12 @@ public interface VideoService {
     /** Error for a video over MAX_DURATION. */
     String TOO_LONG = "A video must not be longer than 10 minutes.";
 
+    /** How many times a video is tried before it is given up. */
+    int MAX_ATTEMPTS = 3;
+
+    /** How long a failed video waits before it is tried again. */
+    Duration RETRY_DELAY = Duration.ofMinutes(1);
+
     /**
      * What the feed shows for a video; waiting and converting look the same to the reader.
      * @param jobStatus the conversion status, null for a video that was never queued
@@ -68,10 +74,21 @@ public interface VideoService {
 
     /**
      * Takes the oldest waiting job for conversion. Safe with several workers
-     * at once: each gets a different job.
+     * at once: each gets a different job. A job that failed before is taken
+     * only after RETRY_DELAY.
      * @return the job, now PROCESSING, or empty when nothing is waiting
      */
     Optional<VideoJob> claimNext();
+
+    /**
+     * Returns to the queue the jobs a worker took but never finished: the
+     * application stopped or crashed in the middle of a conversion. A job
+     * out of attempts is given up instead.
+     * @param after how long a job may stay PROCESSING; longer than any
+     *        conversion can take, so jobs still being converted are left alone
+     * @return the uploads of the jobs given up, for the caller to delete
+     */
+    List<String> releaseAbandoned(Duration after);
 
     /**
      * Marks a job done.
@@ -82,9 +99,11 @@ public interface VideoService {
     boolean complete(VideoJob job);
 
     /**
-     * Marks a job failed.
+     * Records a failed attempt. The job goes back to the queue, or is marked
+     * FAILED once it has had MAX_ATTEMPTS.
      * @param job the job
      * @param error what went wrong, for the log and the database
+     * @return true when the job was given up and its upload can be deleted
      */
-    void fail(VideoJob job, String error);
+    boolean fail(VideoJob job, String error);
 }
