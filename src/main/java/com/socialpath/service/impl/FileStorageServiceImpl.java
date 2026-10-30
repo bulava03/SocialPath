@@ -64,6 +64,29 @@ public class FileStorageServiceImpl implements FileStorageService {
     }
 
     @Override
+    public Path pathOf(String fileId) {
+        Path path = resolveSafely(fileId);
+        if (path == null) {
+            throw new IllegalArgumentException("Invalid file id: " + fileId);
+        }
+        return path;
+    }
+
+    @Override
+    public void moveIn(Path file, String fileId) throws IOException {
+        Path target = pathOf(fileId);
+        // Copy next to the target first: a move across file systems is not atomic.
+        Path staging = Files.createTempFile(root, ".incoming-", ".tmp");
+        try {
+            Files.copy(file, staging, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(staging, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            Files.deleteIfExists(file);
+        } finally {
+            Files.deleteIfExists(staging);
+        }
+    }
+
+    @Override
     public Resource getFileById(String fileId) {
         Path path = resolveSafely(fileId);
         if (path == null || !Files.isRegularFile(path)) {

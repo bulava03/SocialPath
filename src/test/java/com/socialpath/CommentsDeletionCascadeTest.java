@@ -3,6 +3,7 @@ package com.socialpath;
 import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.FileStorageService;
+import com.socialpath.service.VideoService;
 import com.socialpath.service.impl.CommentsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,7 +39,8 @@ class CommentsDeletionCascadeTest {
         service = new CommentsServiceImpl(
                 mock(UserRepository.class),
                 commentsRepository,
-                fileStorageService);
+                fileStorageService,
+                mock(VideoService.class));
     }
 
     @Test

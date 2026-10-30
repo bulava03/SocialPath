@@ -1,7 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
 import { fileURLToPath } from "node:url";
-import { createGroup, newUserSession, post, publish } from "./helpers.js";
+import { createGroup, expectAlert, newUserSession, post, publish } from "./helpers.js";
 
 // Must match UploadLimitExceptionHandler.MESSAGE.
 const TOO_LARGE = "The file is too large. The limit is 100 MB per file.";
@@ -24,7 +24,7 @@ test.describe("upload limits", () => {
         await page.goto("/user/authorisation");
 
         await expect(page.locator("#new-publication .media-limits"))
-            .toHaveText("Up to 5 photos (10 MB each) or one mp4 or WebM video (up to 100 MB).");
+            .toHaveText("Up to 5 photos (10 MB each) or one video (up to 100 MB and 10 minutes).");
 
         await publish(page, "A post to reply to");
         const first = post(page, "A post to reply to");
@@ -80,6 +80,43 @@ test.describe("upload limits", () => {
         await close();
     });
 
+    test("a phone video (MOV) is converted in the background and then played", async ({ browser }) => {
+        const { page, close } = await newUserSession(browser);
+        await page.goto("/user/authorisation");
+
+        await page.locator("#publication-text").fill("Post with a MOV clip");
+        await page.locator("#publication-media")
+            .setInputFiles(fileURLToPath(new URL("../fixtures/clip.mov", import.meta.url)));
+        await page.locator("#new-publication-form").getByRole("button", { name: "Publish" }).click();
+
+        // Published at once; the player replaces the placeholder when the conversion is done,
+        // without reloading the page.
+        const media = post(page, "Post with a MOV clip").locator(".commentMedia");
+        await expect(media.locator(".video-processing, video")).toBeVisible();
+        const video = media.locator("video");
+        await expect(video).toBeVisible({ timeout: 30_000 });
+        await expect(video).toHaveAttribute("src", /\.mp4$/);
+        const response = await page.request.get(await video.getAttribute("src"));
+        expect(response.headers()["content-type"]).toBe("video/mp4");
+        await expect.poll(() => video.evaluate(element => element.readyState)).toBeGreaterThan(0);
+        await close();
+    });
+
+    test("a video over ten minutes is refused", async ({ browser }) => {
+        const { page, close } = await newUserSession(browser);
+        await page.goto("/user/authorisation");
+
+        await page.locator("#publication-text").fill("A very long clip");
+        await page.locator("#publication-media")
+            .setInputFiles(fileURLToPath(new URL("../fixtures/long-clip.mov", import.meta.url)));
+        const message = await expectAlert(page, () =>
+            page.locator("#new-publication-form").getByRole("button", { name: "Publish" }).click());
+
+        expect(message).toBe("A video must not be longer than 10 minutes.");
+        await expect(page.getByText("No posts yet.")).toBeVisible();
+        await close();
+    });
+
     test("a page disguised as a photo is refused by the server", async ({ browser }) => {
         // The feed's script checks files too, but a forged request skips it.
         const { page, close } = await newUserSession(browser);
@@ -92,7 +129,7 @@ test.describe("upload limits", () => {
         });
 
         expect(response.status()).toBe(400);
-        expect(await response.json()).toEqual({ error: "Only photos and mp4 or WebM videos are allowed." });
+        expect(await response.json()).toEqual({ error: "Only photos and videos are allowed." });
         await page.goto("/user/authorisation");
         await expect(page.getByText("No posts yet.")).toBeVisible();
         await close();

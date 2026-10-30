@@ -31,7 +31,7 @@ public final class PublicationMediaRules {
     /** Error for a video over the limit. */
     public static final String VIDEO_TOO_LARGE = "A video must not exceed 100 MB.";
     /** Error for a file of any other kind. */
-    public static final String NOT_ALLOWED = "Only photos and mp4 or WebM videos are allowed.";
+    public static final String NOT_ALLOWED = "Only photos and videos are allowed.";
 
     private PublicationMediaRules() {
     }

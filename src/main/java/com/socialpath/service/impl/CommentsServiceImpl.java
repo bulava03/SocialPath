@@ -6,6 +6,7 @@ import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
 import com.socialpath.dto.response.FeedPage;
 import com.socialpath.dto.response.PublicationPresentable;
+import com.socialpath.entity.VideoJob;
 import com.socialpath.media.PublicationMediaRules;
 import com.socialpath.media.PublicationMediaType;
 import com.socialpath.repository.AuthorView;
@@ -13,6 +14,7 @@ import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.FileStorageService;
+import com.socialpath.service.VideoService;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +46,7 @@ public class CommentsServiceImpl implements CommentsService {
     private final UserRepository userRepository;
     private final CommentsRepository commentsRepository;
     private final FileStorageService fileStorageService;
+    private final VideoService videoService;
 
     @Override
     public Long addNewUserPublication(NewPublication newPublication) throws IOException {
@@ -122,7 +125,8 @@ public class CommentsServiceImpl implements CommentsService {
      * Turns the posts of a page into view models with their whole comment
      * trees. The size of the page does not change the number of queries:
      * one for all comments, one for all authors (media come batched with
-     * the publications), and the tree is assembled in memory.
+     * the publications), one for the conversion status of any videos, and
+     * the tree is assembled in memory.
      * @param posts the portion's top-level publications, newest first
      * @return the posts as view models
      */
@@ -139,28 +143,43 @@ public class CommentsServiceImpl implements CommentsService {
                 .collect(Collectors.toSet());
         Map<String, AuthorView> authors = userRepository.findAuthors(authorLogins).stream()
                 .collect(Collectors.toMap(AuthorView::getLogin, Function.identity()));
+        Set<String> videoIds = Stream.concat(posts.stream(), replies.stream())
+                .flatMap(publication -> mediaOf(publication).stream())
+                .filter(CommentsServiceImpl::isVideo)
+                .collect(Collectors.toSet());
+        Map<String, VideoJob.Status> videoStatuses = videoService.statusOf(videoIds);
 
+        FeedParts parts = new FeedParts(repliesByParent, authors, videoStatuses);
         return posts.stream()
-                .map(post -> toPresentable(post, repliesByParent, authors))
+                .map(post -> toPresentable(post, parts))
                 .toList();
+    }
+
+    /**
+     * What a feed's view models are assembled from.
+     * @param repliesByParent all replies of the feed, grouped by parent id
+     * @param authors the feed's authors by login
+     * @param videoStatuses conversion status of the feed's queued videos
+     */
+    private record FeedParts(Map<Long, List<Publication>> repliesByParent,
+                             Map<String, AuthorView> authors,
+                             Map<String, VideoJob.Status> videoStatuses) {
     }
 
     /**
      * Builds the view model for one publication and, recursively, its replies.
      * @param publication the stored publication
-     * @param repliesByParent all replies of the feed, grouped by parent id
-     * @param authors the feed's authors by login
+     * @param parts the feed's replies, authors and video statuses
      * @return the presentable form of the publication
      */
-    private PublicationPresentable toPresentable(Publication publication,
-                                                 Map<Long, List<Publication>> repliesByParent,
-                                                 Map<String, AuthorView> authors) {
-        List<PublicationPresentable> replies = repliesByParent
+    private PublicationPresentable toPresentable(Publication publication, FeedParts parts) {
+        List<PublicationPresentable> replies = parts.repliesByParent()
                 .getOrDefault(publication.getId(), List.of()).stream()
-                .map(reply -> toPresentable(reply, repliesByParent, authors))
+                .map(reply -> toPresentable(reply, parts))
                 .toList();
-        List<String> media = publication.getMedia() != null ? publication.getMedia() : List.of();
-        AuthorView author = authors.get(publication.getAuthorId());
+        List<String> media = mediaOf(publication);
+        AuthorView author = parts.authors().get(publication.getAuthorId());
+        boolean video = media.stream().anyMatch(CommentsServiceImpl::isVideo);
 
         return new PublicationPresentable(
                 publication.getId(),
@@ -171,9 +190,23 @@ public class CommentsServiceImpl implements CommentsService {
                 publication.getText(),
                 publication.getCreatedAt(),
                 media,
-                containsVideo(media),
+                video,
+                video ? VideoService.displayStatus(parts.videoStatuses().get(media.get(0))) : null,
                 replies
         );
+    }
+
+    private static List<String> mediaOf(Publication publication) {
+        return publication.getMedia() != null ? publication.getMedia() : List.of();
+    }
+
+    /**
+     * Videos are told by the extension the server gave them; no file system access needed.
+     * @param fileId a stored media file id
+     * @return true for a video
+     */
+    private static boolean isVideo(String fileId) {
+        return PublicationMediaType.ofFileId(fileId).map(PublicationMediaType::isVideo).orElse(false);
     }
 
     private String fullName(AuthorView author, String login) {
@@ -184,15 +217,6 @@ public class CommentsServiceImpl implements CommentsService {
             return author.getFirstName() + " " + author.getLastName();
         }
         return author.getLogin();
-    }
-
-    private boolean containsVideo(List<String> media) {
-        for (String elem : media) {
-            if (fileStorageService.isVideo(elem)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -227,14 +251,24 @@ public class CommentsServiceImpl implements CommentsService {
     /**
      * Checks all uploads against the media rules first and stores them only
      * when every one passes, so a rejected upload leaves nothing on disk.
+     * A video (always alone) goes through the video service, which may queue
+     * it for conversion.
      * @param files the uploads, possibly null
      * @return the stored file ids, in upload order
      */
     private List<String> storeMedia(List<MultipartFile> files) throws IOException {
         List<PublicationMediaType> types = PublicationMediaRules.check(files);
         List<String> mediaIds = new ArrayList<>();
-        for (int i = 0; i < types.size(); i++) {
-            mediaIds.add(fileStorageService.storeFile(files.get(i), types.get(i).extension()));
+        try {
+            for (int i = 0; i < types.size(); i++) {
+                PublicationMediaType type = types.get(i);
+                mediaIds.add(type.isVideo()
+                        ? videoService.accept(files.get(i), type)
+                        : fileStorageService.storeFile(files.get(i), type.extension()));
+            }
+        } catch (IOException | RuntimeException e) {
+            mediaIds.forEach(fileStorageService::deleteFileById);
+            throw e;
         }
         return mediaIds;
     }
@@ -247,13 +281,15 @@ public class CommentsServiceImpl implements CommentsService {
      * files on disk. Their ids are collected up front for the whole subtree
      * with one recursive CTE, and the files are removed only after the
      * transaction commits: a rollback must never leave rows pointing at
-     * already-deleted files.
+     * already-deleted files. Videos still waiting to be converted leave the
+     * queue, and their uploads are deleted with the rest.
      * @param rootId id of the publication or comment to delete
      */
     @Override
     @Transactional
     public void deletePublication(Long rootId) {
-        List<String> fileIds = commentsRepository.findSubtreeMediaFileIds(rootId);
+        List<String> mediaIds = commentsRepository.findSubtreeMediaFileIds(rootId);
+        List<String> fileIds = Stream.concat(mediaIds.stream(), videoService.discard(mediaIds).stream()).toList();
         commentsRepository.deleteById(rootId);
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {

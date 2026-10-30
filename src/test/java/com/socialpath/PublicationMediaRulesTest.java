@@ -59,13 +59,26 @@ class PublicationMediaRulesTest {
     }
 
     @Test
-    void detect_PlainMatroskaIsNotWebm() {
-        // Same container, but browsers only promise to play the WebM flavour.
+    void detect_PlainMatroskaIsMkvNotWebm() {
+        // Same container, but browsers only promise to play the WebM flavour; MKV gets converted.
         byte[] matroska = Arrays.copyOf(WEBM, WEBM.length + 4);
         byte[] docType = {(byte) 0x88, 'm', 'a', 't', 'r', 'o', 's', 'k', 'a'};
         System.arraycopy(docType, 0, matroska, WEBM.length - 5, docType.length);
 
-        assertTrue(PublicationMediaType.detect(matroska).isEmpty());
+        assertEquals(PublicationMediaType.MKV, PublicationMediaType.detect(matroska).orElseThrow());
+    }
+
+    @Test
+    void detect_RecognizesVideoFormatsThatNeedConverting() {
+        assertEquals(PublicationMediaType.MOV, PublicationMediaType.detect(ascii("\0\0\0\u0014ftypqt  \0\0\0\0")).orElseThrow());
+        assertEquals(PublicationMediaType.MOV, PublicationMediaType.detect(ascii("\0\0\0\u0008wide\0\0\0\0")).orElseThrow());
+        assertEquals(PublicationMediaType.THREE_GP,
+                PublicationMediaType.detect(ascii("\0\0\0\u0014ftyp3gp5\0\0\0\0")).orElseThrow());
+        assertEquals(PublicationMediaType.AVI, PublicationMediaType.detect(ascii("RIFF\0\0\0\0AVI LIST")).orElseThrow());
+        byte[] asf = {0x30, 0x26, (byte) 0xB2, 0x75, (byte) 0x8E, 0x66, (byte) 0xCF, 0x11,
+            (byte) 0xA6, (byte) 0xD9, 0x00, (byte) 0xAA, 0x00, 0x62, (byte) 0xCE, 0x6C};
+        assertEquals(PublicationMediaType.WMV, PublicationMediaType.detect(asf).orElseThrow());
+        assertTrue(PublicationMediaType.MOV.isVideo() && !PublicationMediaType.MOV.isBrowserFormat());
     }
 
     @Test

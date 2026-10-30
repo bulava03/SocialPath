@@ -54,7 +54,7 @@ test.describe("user page feed", () => {
                 buffer: Buffer.from("not a picture"),
             }));
 
-        expect(message).toBe("Only photos and mp4 or WebM videos are allowed.");
+        expect(message).toBe("Only photos and videos are allowed.");
         await expect(page.locator("#publication-media")).toHaveValue("");
         await expect(page.locator("#publication-media-preview > *")).toHaveCount(0);
         await close();

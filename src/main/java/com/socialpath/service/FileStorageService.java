@@ -4,6 +4,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * Stores and retrieves user-uploaded media on the local file system (a Docker
@@ -31,6 +32,23 @@ public interface FileStorageService {
      * @param content the file content
      */
     void storeFile(String fileId, byte[] content) throws IOException;
+
+    /**
+     * The location of a stored file, for tools that work on files (ffmpeg).
+     * @param fileId a valid file id
+     * @return its path inside the media directory, whether or not it exists yet
+     * @throws IllegalArgumentException for a malformed id
+     */
+    Path pathOf(String fileId);
+
+    /**
+     * Moves a finished file into storage under the given id. The file
+     * appears under that id complete or not at all, so it is never served
+     * half written.
+     * @param file a file outside the media directory, such as a temporary one
+     * @param fileId the id to store it under
+     */
+    void moveIn(Path file, String fileId) throws IOException;
 
     /**
      * Retrieves a stored file by id for streaming.

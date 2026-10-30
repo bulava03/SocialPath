@@ -31,3 +31,13 @@ open("broken-photo.heic", "wb").write(data[: len(data) // 2])
 ```
 ffmpeg -f lavfi -i "testsrc=size=64x48:rate=10:duration=1" -c:v libvpx -b:v 50k -an clip.webm
 ```
+
+- `clip.mov` — one second of the test pattern, 160x120, MPEG-4 video in a
+  QuickTime file: a format browsers do not play, so the app converts it.
+- `long-clip.mov` — eleven minutes of a still grey 16x16 picture at one frame
+  per second: over the ten-minute limit, yet tiny.
+
+```
+ffmpeg -f lavfi -i "testsrc=size=160x120:rate=10:duration=1" -c:v mpeg4 -q:v 10 clip.mov
+ffmpeg -f lavfi -i "color=c=gray:size=16x16:rate=1:duration=660" -c:v mpeg4 -q:v 31 long-clip.mov
+```

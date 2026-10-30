@@ -5,6 +5,7 @@ import com.socialpath.media.PublicationMediaRules;
 import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.FileStorageService;
+import com.socialpath.service.VideoService;
 import com.socialpath.service.impl.CommentsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,8 @@ class PublicationUploadTest {
     void setUp() {
         commentsRepository = mock(CommentsRepository.class);
         fileStorageService = mock(FileStorageService.class);
-        service = new CommentsServiceImpl(mock(UserRepository.class), commentsRepository, fileStorageService);
+        service = new CommentsServiceImpl(mock(UserRepository.class), commentsRepository, fileStorageService,
+                mock(VideoService.class));
     }
 
     private static NewComment comment(MultipartFile... media) {

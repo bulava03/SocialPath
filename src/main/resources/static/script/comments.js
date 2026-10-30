@@ -38,8 +38,16 @@ function currentScope() {
     };
 }
 
+// Video files browsers often report without a type (Windows does for .mkv).
+const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|avi|mkv|wmv|3gp)$/i;
+
+function isVideoFile(file) {
+    return file.type.startsWith("video/") || (file.type === "" && VIDEO_EXTENSIONS.test(file.name));
+}
+
 /**
- * Checks the selected files against the upload rules.
+ * Checks the selected files against the upload rules. The server checks the
+ * same rules (and the video length, which needs the whole file) again.
  * @returns {string|null} an error message, or null when the files are fine
  */
 function validateMedia(files) {
@@ -47,7 +55,7 @@ function validateMedia(files) {
         return "Up to 5 photos or 1 video.";
     }
     for (const file of files) {
-        if (file.type === "video/mp4" || file.type === "video/webm") {
+        if (isVideoFile(file)) {
             if (files.length > 1) {
                 return "You can attach only a single video without photos.";
             }
@@ -59,7 +67,7 @@ function validateMedia(files) {
                 return "A photo must not exceed 10 MB.";
             }
         } else {
-            return "Only photos and mp4 or WebM videos are allowed.";
+            return "Only photos and videos are allowed.";
         }
     }
     return null;
@@ -367,11 +375,55 @@ function renderPreview(input) {
             element = document.createElement("video");
             element.controls = true;
             element.classList.add("preview-video");
+            // A format the browser cannot play (a .mov from a phone, an .avi)
+            // is still fine: the server converts it after publishing.
+            element.addEventListener("error", () => {
+                const note = document.createElement("p");
+                note.classList.add("preview-note");
+                note.textContent = "No preview for this video; it will be converted after publishing.";
+                element.replaceWith(note);
+            });
         }
         element.src = url;
         preview.appendChild(element);
     }
 }
+
+// Videos still being converted show a placeholder. While there are any, the
+// server is asked every few seconds; a post whose video is done (or failed)
+// is re-rendered in place, unless a reply is being written under it.
+const VIDEO_CHECK_MS = 5_000;
+
+function hasDraftIn(post) {
+    return [...post.querySelectorAll(".reply-field")].some(field => field.value.trim() !== "")
+        || [...post.querySelectorAll("input[type='file']")].some(input => input.files.length > 0);
+}
+
+function checkVideos() {
+    const pending = [...document.querySelectorAll(".video-processing[data-video-id]")];
+    if (pending.length === 0 || document.hidden) {
+        return;
+    }
+    const url = new URL("/media/videoStatus", window.location.origin);
+    pending.forEach(placeholder => url.searchParams.append("ids", placeholder.dataset.videoId));
+
+    fetch(url)
+        .then(response => response.ok ? response.json() : null)
+        .then(statuses => {
+            if (!statuses) {
+                return;
+            }
+            for (const placeholder of pending) {
+                const post = postOf(placeholder);
+                if (statuses[placeholder.dataset.videoId] !== "PROCESSING" && post && !hasDraftIn(post)) {
+                    refreshPost(post);
+                }
+            }
+        })
+        .catch(error => console.error("Request failed:", error));
+}
+
+setInterval(checkVideos, VIDEO_CHECK_MS);
 
 // New activity by others. The page carries the newest post or comment id by
 // someone else (data-latest); every 30 seconds while the tab is visible, and

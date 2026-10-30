@@ -4,6 +4,7 @@ import com.socialpath.entity.Publication;
 import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.FileStorageService;
+import com.socialpath.service.VideoService;
 import com.socialpath.service.impl.CommentsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,8 @@ class PublicationRootTest {
         service = new CommentsServiceImpl(
                 mock(UserRepository.class),
                 commentsRepository,
-                mock(FileStorageService.class));
+                mock(FileStorageService.class),
+                mock(VideoService.class));
     }
 
     private Publication publication(Long id, Long parentId) {

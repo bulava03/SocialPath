@@ -12,7 +12,10 @@
       <div class="commentMedia">
         <div th:if="${comment.media != null and !comment.media.isEmpty()}">
           <div th:if="${comment.media.size() == 1 and comment.isVideo}">
-            <video preload="metadata" controls th:src="'/images/' + ${comment.media[0]}"></video>
+            <video th:if="${comment.videoStatus == 'READY'}" preload="metadata" controls th:src="'/images/' + ${comment.media[0]}"></video>
+            <!-- Converted in the background; comments.js swaps this for the player once it is ready. -->
+            <p th:if="${comment.videoStatus == 'PROCESSING'}" class="video-processing" th:data-video-id="${comment.media[0]}">Video is processing…</p>
+            <p th:if="${comment.videoStatus == 'FAILED'}" class="video-failed">This video could not be processed.</p>
           </div>
 
           <div th:if="${comment.media.size() > 0 and !comment.isVideo}">
@@ -110,7 +113,7 @@
         <textarea type="text" th:id="'publication-text-' + ${comment.id}" class="reply-field" th:classappend="${comment.id}" placeholder="Write your comment here..."></textarea>
 
         <div th:id="'publication-media-preview-' + ${comment.id}" class="media-preview" th:classappend="${comment.id}"></div>
-        <input type="file" th:id="'publication-media-' + ${comment.id}" class="media-field" name="media" accept="image/*,video/mp4,video/webm" multiple style="display: none;">
+        <input type="file" th:id="'publication-media-' + ${comment.id}" class="media-field" name="media" accept="image/*,video/*" multiple style="display: none;">
 
         <div class="publication-actions">
           <button type="button" th:id="'publication-add-media-btn-' + ${comment.id}" class="publication-add-media-btn">Add media</button>

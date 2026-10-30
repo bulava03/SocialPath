@@ -93,3 +93,10 @@
     font-size: 12px;
     color: #6c757d;
 }
+
+/* Shown instead of a preview the browser cannot play. */
+.preview-note {
+    margin: 6px 0;
+    font-size: 13px;
+    color: #6c757d;
+}
