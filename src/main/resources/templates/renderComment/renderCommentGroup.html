@@ -111,7 +111,7 @@
       <textarea type="text" th:id="'publication-text-' + ${comment.id}" class="reply-field" th:classappend="${comment.id}" placeholder="Write your comment here..."></textarea>
 
       <div th:id="'publication-media-preview-' + ${comment.id}" class="media-preview" th:classappend="${comment.id}"></div>
-      <input type="file" th:id="'publication-media-' + ${comment.id}" class="media-field" name="media" accept="image/*,video/mp4" multiple style="display: none;">
+      <input type="file" th:id="'publication-media-' + ${comment.id}" class="media-field" name="media" accept="image/*,video/mp4,video/webm" multiple style="display: none;">
 
       <div class="publication-actions">
         <button type="button" th:id="'publication-add-media-btn-' + ${comment.id}" class="publication-add-media-btn">Add media</button>

@@ -47,7 +47,7 @@ function validateMedia(files) {
         return "Up to 5 photos or 1 video.";
     }
     for (const file of files) {
-        if (file.type === "video/mp4") {
+        if (file.type === "video/mp4" || file.type === "video/webm") {
             if (files.length > 1) {
                 return "You can attach only a single video without photos.";
             }
@@ -59,7 +59,7 @@ function validateMedia(files) {
                 return "A photo must not exceed 10 MB.";
             }
         } else {
-            return "Only photos and mp4 videos are allowed.";
+            return "Only photos and mp4 or WebM videos are allowed.";
         }
     }
     return null;

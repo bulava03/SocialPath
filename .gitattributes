@@ -3,5 +3,6 @@
 *.jpg binary
 *.ico binary
 *.heic binary
+*.webm binary
 mvnw text eol=lf
 mvnw.cmd text eol=crlf

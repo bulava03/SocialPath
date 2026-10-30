@@ -37,7 +37,8 @@ public class ImageController {
             "gif", MediaType.IMAGE_GIF,
             "bmp", MediaType.parseMediaType("image/bmp"),
             "webp", MediaType.parseMediaType("image/webp"),
-            "mp4", MediaType.parseMediaType("video/mp4"));
+            "mp4", MediaType.parseMediaType("video/mp4"),
+            "webm", MediaType.parseMediaType("video/webm"));
 
     private final FileStorageService fileStorageService;
 

@@ -24,3 +24,10 @@ img.save("rotated-photo.heic", quality=90, exif=exif.tobytes())
 data = open("rotated-photo.heic", "rb").read()
 open("broken-photo.heic", "wb").write(data[: len(data) // 2])
 ```
+
+- `clip.webm` — one second of ffmpeg's built-in test pattern, 64x48, VP8,
+  no sound, made with the ffmpeg bundled in the app's build:
+
+```
+ffmpeg -f lavfi -i "testsrc=size=64x48:rate=10:duration=1" -c:v libvpx -b:v 50k -an clip.webm
+```

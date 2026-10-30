@@ -28,6 +28,10 @@ class PublicationMediaRulesTest {
     private static final byte[] WEBP = ascii("RIFF\0\0\0\0WEBPVP8 ");
     private static final byte[] MP4 = ascii("\0\0\0\u0018ftypisom\0\0\0\0");
     private static final byte[] HTML = ascii("<script>alert(1)</script>");
+    /** The start of a real WebM file: EBML header with the document type "webm". */
+    private static final byte[] WEBM = {
+            0x1A, 0x45, (byte) 0xDF, (byte) 0xA3, (byte) 0x9F, 0x42, (byte) 0x86, (byte) 0x81, 0x01, 0x42, (byte) 0xF7, (byte) 0x81,
+            0x01, 0x42, (byte) 0xF2, (byte) 0x81, 0x04, 0x42, (byte) 0xF3, (byte) 0x81, 0x08, 0x42, (byte) 0x82, (byte) 0x84, 'w', 'e', 'b', 'm'};
 
     private static byte[] ascii(String text) {
         return text.getBytes(StandardCharsets.ISO_8859_1);
@@ -51,6 +55,17 @@ class PublicationMediaRulesTest {
         assertEquals(PublicationMediaType.GIF, PublicationMediaType.detect(GIF).orElseThrow());
         assertEquals(PublicationMediaType.WEBP, PublicationMediaType.detect(WEBP).orElseThrow());
         assertEquals(PublicationMediaType.MP4, PublicationMediaType.detect(MP4).orElseThrow());
+        assertEquals(PublicationMediaType.WEBM, PublicationMediaType.detect(WEBM).orElseThrow());
+    }
+
+    @Test
+    void detect_PlainMatroskaIsNotWebm() {
+        // Same container, but browsers only promise to play the WebM flavour.
+        byte[] matroska = Arrays.copyOf(WEBM, WEBM.length + 4);
+        byte[] docType = {(byte) 0x88, 'm', 'a', 't', 'r', 'o', 's', 'k', 'a'};
+        System.arraycopy(docType, 0, matroska, WEBM.length - 5, docType.length);
+
+        assertTrue(PublicationMediaType.detect(matroska).isEmpty());
     }
 
     @Test

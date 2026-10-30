@@ -22,10 +22,17 @@ public enum PublicationMediaType {
     /** WebP picture. */
     WEBP("webp", false),
     /** MP4 video. */
-    MP4("mp4", true);
+    MP4("mp4", true),
+    /** WebM video (Matroska with the "webm" document type; plain Matroska is not playable everywhere). */
+    WEBM("webm", true);
 
-    /** Bytes needed to tell the formats apart. */
-    public static final int HEADER_LENGTH = 12;
+    /** Bytes needed to tell the formats apart (the WebM document type sits a few dozen bytes in). */
+    public static final int HEADER_LENGTH = 64;
+
+    private static final Set<String> GIF_SIGNATURES = Set.of("GIF87a", "GIF89a");
+
+    /** EBML header element of the document type "webm": id 0x4282, size 4, then the text. */
+    private static final byte[] WEBM_DOC_TYPE = {0x42, (byte) 0x82, (byte) 0x84, 'w', 'e', 'b', 'm'};
 
     /** ISO base media brands of MP4 video (HEIF image brands are left out on purpose). */
     private static final Set<String> MP4_BRANDS = Set.of(
@@ -57,7 +64,7 @@ public enum PublicationMediaType {
 
     /**
      * Recognizes a format by the first bytes of a file.
-     * @param header at least the first HEADER_LENGTH bytes, fewer if the file is shorter
+     * @param header the first HEADER_LENGTH bytes, fewer if the file is shorter
      * @return the format, or empty when the file is none of the allowed ones
      */
     public static Optional<PublicationMediaType> detect(byte[] header) {
@@ -67,7 +74,7 @@ public enum PublicationMediaType {
         if (startsWith(header, 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A)) {
             return Optional.of(PNG);
         }
-        if (ascii(header, 0, 6).equals("GIF87a") || ascii(header, 0, 6).equals("GIF89a")) {
+        if (GIF_SIGNATURES.contains(ascii(header, 0, 6))) {
             return Optional.of(GIF);
         }
         if (ascii(header, 0, 4).equals("RIFF") && ascii(header, 8, 4).equals("WEBP")) {
@@ -76,7 +83,19 @@ public enum PublicationMediaType {
         if (ascii(header, 4, 4).equals("ftyp") && MP4_BRANDS.contains(ascii(header, 8, 4))) {
             return Optional.of(MP4);
         }
+        if (startsWith(header, 0x1A, 0x45, 0xDF, 0xA3) && contains(header, WEBM_DOC_TYPE)) {
+            return Optional.of(WEBM);
+        }
         return Optional.empty();
+    }
+
+    private static boolean contains(byte[] data, byte[] part) {
+        for (int i = 0; i + part.length <= data.length; i++) {
+            if (Arrays.equals(data, i, i + part.length, part, 0, part.length)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

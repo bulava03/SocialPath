@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
+import { fileURLToPath } from "node:url";
 import { createGroup, newUserSession, post, publish } from "./helpers.js";
 
 // Must match UploadLimitExceptionHandler.MESSAGE.
@@ -23,7 +24,7 @@ test.describe("upload limits", () => {
         await page.goto("/user/authorisation");
 
         await expect(page.locator("#new-publication .media-limits"))
-            .toHaveText("Up to 5 photos (10 MB each) or one mp4 video (up to 100 MB).");
+            .toHaveText("Up to 5 photos (10 MB each) or one mp4 or WebM video (up to 100 MB).");
 
         await publish(page, "A post to reply to");
         const first = post(page, "A post to reply to");
@@ -60,6 +61,25 @@ test.describe("upload limits", () => {
         await close();
     });
 
+    test("a WebM video is posted and played back", async ({ browser }) => {
+        const { page, close } = await newUserSession(browser);
+        await page.goto("/user/authorisation");
+
+        await page.locator("#publication-text").fill("Post with a WebM clip");
+        await page.locator("#publication-media")
+            .setInputFiles(fileURLToPath(new URL("../fixtures/clip.webm", import.meta.url)));
+        await expect(page.locator("#publication-media-preview video")).toHaveCount(1);
+        await page.locator("#new-publication-form").getByRole("button", { name: "Publish" }).click();
+
+        const video = post(page, "Post with a WebM clip").locator(".commentMedia video");
+        await expect(video).toHaveAttribute("src", /\.webm$/);
+        const response = await page.request.get(await video.getAttribute("src"));
+        expect(response.headers()["content-type"]).toBe("video/webm");
+        // The browser can actually decode it, not just download it.
+        await expect.poll(() => video.evaluate(element => element.readyState)).toBeGreaterThan(0);
+        await close();
+    });
+
     test("a page disguised as a photo is refused by the server", async ({ browser }) => {
         // The feed's script checks files too, but a forged request skips it.
         const { page, close } = await newUserSession(browser);
@@ -72,7 +92,7 @@ test.describe("upload limits", () => {
         });
 
         expect(response.status()).toBe(400);
-        expect(await response.json()).toEqual({ error: "Only photos and mp4 videos are allowed." });
+        expect(await response.json()).toEqual({ error: "Only photos and mp4 or WebM videos are allowed." });
         await page.goto("/user/authorisation");
         await expect(page.getByText("No posts yet.")).toBeVisible();
         await close();
