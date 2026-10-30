@@ -117,6 +117,7 @@
         <button type="button" th:id="'publication-add-media-btn-' + ${comment.id}" class="publication-add-media-btn">Add media</button>
         <button class="publish-btn" th:attr="onclick='submitComment(\'' + ${comment.id} + '\')'">Publish</button>
       </div>
+      <p th:replace="~{shared/mediaLimits :: hint}"></p>
     </div>
 
     <th:block th:if="${comment.publications != null and comment.publications.size() > 0}">

@@ -86,3 +86,10 @@
 .publication-add-media-btn:hover {
     background-color: #3a98fc;
 }
+
+/* Upload limits under the post and reply forms. */
+.media-limits {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: #6c757d;
+}
