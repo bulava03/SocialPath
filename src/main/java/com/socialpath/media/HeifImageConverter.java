@@ -1,48 +1,44 @@
 package com.socialpath.media;
 
 import com.socialpath.exception.InvalidImageException;
+import com.socialpath.media.BundledFfmpeg.Tool;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bytedeco.javacpp.Loader;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Locale;
+import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Converts HEIF-family photos (HEIC from iPhones, AVIF) into PNG so the rest
  * of the avatar pipeline can read them: Java's ImageIO cannot decode them.
  *
- * The conversion runs the ffmpeg binary bundled with the bytedeco ffmpeg
- * library, so nothing has to be installed on the machine and it works the
- * same locally and in Docker. It runs as a separate process with a timeout,
- * so a hostile or broken file cannot hang or crash the application, and only
- * a few conversions run at once. If the bundled binary cannot be loaded on
- * this platform, such uploads are rejected with a clear message.
+ * The conversion runs the bundled ffmpeg (see {@link BundledFfmpeg}), and only
+ * a few conversions run at once. If ffmpeg cannot run on this platform, such
+ * uploads are rejected with a clear message.
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class HeifImageConverter {
 
     /** ISO base media file brands of HEIF still images (HEIC, HEIF, AVIF). */
     private static final Set<String> HEIF_BRANDS = Set.of(
             "heic", "heix", "heim", "heis", "hevc", "hevx", "mif1", "msf1", "avif", "avis");
     private static final int HEADER_LENGTH = 12;
-    private static final long TIMEOUT_SECONDS = 60;
+    private static final Duration TIMEOUT = Duration.ofSeconds(60);
     private static final int MAX_PARALLEL_CONVERSIONS = 2;
 
+    private final BundledFfmpeg ffmpeg;
     private final Semaphore conversions = new Semaphore(MAX_PARALLEL_CONVERSIONS);
-    private String ffmpegPath;
-    private boolean ffmpegUnavailable;
 
     /**
      * Tells whether a file is a HEIF-family image, by its first bytes: an
@@ -78,85 +74,45 @@ public class HeifImageConverter {
      * @throws InvalidImageException when the image cannot be converted
      */
     public Path convertToPng(InputStreamSource source) throws IOException {
-        String ffmpeg = ffmpegPath();
+        if (ffmpeg.path(Tool.FFMPEG).isEmpty()) {
+            throw new InvalidImageException("HEIC and AVIF images are not supported on this server.");
+        }
         Path input = Files.createTempFile("avatar-heif-", ".bin");
         Path output = Files.createTempFile("avatar-heif-", ".png");
-        Path ffmpegLog = Files.createTempFile("avatar-heif-", ".log");
         boolean converted = false;
         try {
             try (InputStream in = source.getInputStream()) {
                 Files.copy(in, input, StandardCopyOption.REPLACE_EXISTING);
             }
-            conversions.acquire();
-            try {
-                ProcessBuilder builder = new ProcessBuilder(ffmpeg, "-v", "error", "-y",
-                        "-i", input.toString(), "-frames:v", "1", output.toString())
-                        .redirectErrorStream(true)
-                        .redirectOutput(ffmpegLog.toFile());
-                addBundledLibrariesToPath(builder, ffmpeg);
-                Process process = builder.start();
-                if (!process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                    process.destroyForcibly();
-                    throw new InvalidImageException("The image took too long to process.");
-                }
-                if (process.exitValue() != 0 || Files.size(output) == 0) {
-                    log.warn("ffmpeg could not convert a HEIF image: {}", Files.readString(ffmpegLog).trim());
-                    throw new InvalidImageException("The image file is damaged or unreadable.");
-                }
-            } finally {
-                conversions.release();
+            BundledFfmpeg.Result result = convert(input, output);
+            if (!result.succeeded() || Files.size(output) == 0) {
+                log.warn("ffmpeg could not convert a HEIF image: {}", result.stderr().trim());
+                throw new InvalidImageException("The image file is damaged or unreadable.");
             }
             converted = true;
             return output;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException("Interrupted while converting an image", e);
         } finally {
             Files.deleteIfExists(input);
-            Files.deleteIfExists(ffmpegLog);
             if (!converted) {
                 Files.deleteIfExists(output);
             }
         }
     }
 
-    /**
-     * The bundled shared libraries are extracted next to the ffmpeg binary.
-     * Windows looks for libraries in the executable's directory by itself;
-     * Linux and macOS have to be told through the library path variable.
-     * @param builder the ffmpeg process to configure
-     * @param ffmpeg the path of the ffmpeg executable
-     */
-    public static void addBundledLibrariesToPath(ProcessBuilder builder, String ffmpeg) {
-        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
-        if (os.contains("win")) {
-            return;
+    private BundledFfmpeg.Result convert(Path input, Path output) throws IOException {
+        try {
+            conversions.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while waiting to convert an image", e);
         }
-        String variable = os.contains("mac") ? "DYLD_LIBRARY_PATH" : "LD_LIBRARY_PATH";
-        String libraryDir = Path.of(ffmpeg).getParent().toString();
-        String existing = builder.environment().get(variable);
-        builder.environment().put(variable,
-                existing == null || existing.isEmpty() ? libraryDir : libraryDir + File.pathSeparator + existing);
-    }
-
-    /**
-     * Extracts the bundled ffmpeg binary on first use. A platform without a
-     * bundled binary is remembered, so the failure is logged only once.
-     * @return the path of the ffmpeg executable
-     */
-    private synchronized String ffmpegPath() {
-        if (ffmpegPath == null && !ffmpegUnavailable) {
-            try {
-                ffmpegPath = Loader.load(org.bytedeco.ffmpeg.ffmpeg.class);
-                log.info("Using bundled ffmpeg for HEIC/AVIF images: {}", ffmpegPath);
-            } catch (Throwable e) {
-                ffmpegUnavailable = true;
-                log.warn("Bundled ffmpeg is not available on this platform; HEIC/AVIF uploads are disabled", e);
-            }
+        try {
+            return ffmpeg.run(Tool.FFMPEG, TIMEOUT,
+                    "-v", "error", "-y", "-i", input.toString(), "-frames:v", "1", output.toString());
+        } catch (BundledFfmpeg.TimeoutException e) {
+            throw new InvalidImageException("The image took too long to process.", e);
+        } finally {
+            conversions.release();
         }
-        if (ffmpegUnavailable) {
-            throw new InvalidImageException("HEIC and AVIF images are not supported on this server.");
-        }
-        return ffmpegPath;
     }
 }

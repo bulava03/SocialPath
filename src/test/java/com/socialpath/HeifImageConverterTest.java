@@ -2,8 +2,9 @@ package com.socialpath;
 
 import com.socialpath.media.AvatarImageProcessor;
 import com.socialpath.media.AvatarImageProcessor.ProcessedAvatar;
+import com.socialpath.media.BundledFfmpeg;
+import com.socialpath.media.BundledFfmpeg.Tool;
 import com.socialpath.media.HeifImageConverter;
-import org.bytedeco.javacpp.Loader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.core.io.FileSystemResource;
@@ -11,11 +12,9 @@ import org.springframework.core.io.FileSystemResource;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -56,20 +55,15 @@ class HeifImageConverterTest {
     @Test
     void process_AvifPhoto_IsConvertedIntoAvatar(@TempDir Path dir) throws Exception {
         // Arrange
-        String ffmpeg = bundledFfmpeg();
+        BundledFfmpeg ffmpeg = new BundledFfmpeg();
+        assumeTrue(ffmpeg.path(Tool.FFMPEG).isPresent(), "bundled ffmpeg is not available on this platform");
         Path avif = dir.resolve("photo.avif");
-        Path ffmpegLog = dir.resolve("ffmpeg.log");
-        ProcessBuilder builder = new ProcessBuilder(ffmpeg, "-v", "error", "-y",
-                "-f", "lavfi", "-i", "color=c=red:s=300x200",
-                "-frames:v", "1", "-c:v", "libaom-av1", "-still-picture", "1", avif.toString())
-                .redirectErrorStream(true)
-                .redirectOutput(ffmpegLog.toFile());
-        HeifImageConverter.addBundledLibrariesToPath(builder, ffmpeg);
-        Process process = builder.start();
+        BundledFfmpeg.Result generated = ffmpeg.run(Tool.FFMPEG, Duration.ofSeconds(60),
+                "-v", "error", "-y", "-f", "lavfi", "-i", "color=c=red:s=300x200",
+                "-frames:v", "1", "-c:v", "libaom-av1", "-still-picture", "1", avif.toString());
         // ffmpeg is available here, so failing to run it is a real failure, not a skip.
-        assertTrue(process.waitFor(60, TimeUnit.SECONDS) && process.exitValue() == 0,
-                () -> "could not generate a test AVIF: " + readQuietly(ffmpegLog));
-        AvatarImageProcessor processor = new AvatarImageProcessor(new HeifImageConverter());
+        assertTrue(generated.succeeded(), () -> "could not generate a test AVIF: " + generated.stderr());
+        AvatarImageProcessor processor = new AvatarImageProcessor(new HeifImageConverter(ffmpeg));
 
         // Act
         ProcessedAvatar result = processor.process(new FileSystemResource(avif));
@@ -78,23 +72,6 @@ class HeifImageConverterTest {
         BufferedImage full = ImageIO.read(new ByteArrayInputStream(result.full()));
         assertEquals(200, full.getWidth());
         assertEquals(200, full.getHeight());
-    }
-
-    private static String bundledFfmpeg() {
-        try {
-            return Loader.load(org.bytedeco.ffmpeg.ffmpeg.class);
-        } catch (Throwable e) {
-            assumeTrue(false, "bundled ffmpeg is not available on this platform");
-            return null;
-        }
-    }
-
-    private static String readQuietly(Path file) {
-        try {
-            return Files.readString(file);
-        } catch (IOException e) {
-            return "(no ffmpeg output)";
-        }
     }
 
     private static byte[] header(String brand) {
