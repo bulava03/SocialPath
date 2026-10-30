@@ -4,7 +4,6 @@ import com.socialpath.entity.Group;
 import com.socialpath.entity.User;
 import com.socialpath.dto.request.GroupUserRequest;
 import com.socialpath.exception.ForbiddenOperationException;
-import com.socialpath.exception.ResourceNotFoundException;
 import com.socialpath.service.GroupService;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.ModelAttributesService;
@@ -12,12 +11,14 @@ import com.socialpath.web.GroupController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.modelmapper.ModelMapper;
+import org.springframework.ui.ExtendedModelMap;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -125,14 +126,28 @@ class GroupControllerAuthorizationTest {
     }
 
     @Test
-    void removeUserFromGroup_UnknownGroup_NotFound() {
-        Long missing = 999L;
-        when(groupService.getGroup(missing.toString())).thenThrow(new ResourceNotFoundException("Group not found"));
+    void removeFromAdmins_OwnerDemotesAdmin_Succeeds() {
+        controller.removeFromAdmins(user("owner"), request("admin"));
+        verify(groupService).removeFromAdmins(groupId, "admin");
+    }
 
-        GroupUserRequest request = request("member");
-        request.setGroupId(missing.toString());
+    @Test
+    void removeFromAdmins_AdminCannotDemoteAnotherAdmin() {
+        group.getAdmins().add("member");
 
-        assertThrows(ResourceNotFoundException.class,
-                () -> controller.removeUserFromGroup(user("owner"), request));
+        assertThrows(ForbiddenOperationException.class,
+                () -> controller.removeFromAdmins(user("admin"), request("member")));
+        verify(groupService, never()).removeFromAdmins(any(), any());
+    }
+
+    @Test
+    void updateGroup_NonOwnerCannotChangeTheGroup() throws Exception {
+        Group renamed = new Group();
+        renamed.setName("Taken over");
+
+        assertThrows(ForbiddenOperationException.class,
+                () -> controller.updateGroup(user("admin"), renamed, groupId.toString(), null, false,
+                        new ExtendedModelMap()));
+        verify(groupService, never()).updateGroup(any(), any(), anyBoolean());
     }
 }
