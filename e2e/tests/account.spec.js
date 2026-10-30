@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { test, expect } from "@playwright/test";
 import { createGroup, newUserSession, PASSWORD } from "./helpers.js";
 
@@ -9,8 +10,28 @@ const PICTURE = {
         "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEUlEQVR4nGM4YWODFTEMLQkAZZlQAVIPr1MAAAAASUVORK5CYII=",
         "base64"),
 };
+const fixture = name => fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));
 // Every stored avatar is re-encoded under a fresh id: {uuid}.jpg.
 const STORED_AVATAR = /^\/images\/[0-9a-f-]{36}\.jpg$/;
+
+/** Colour of the picture at the given URL, near its top and bottom edge, read in the browser. */
+async function topAndBottomColours(page, url) {
+    return page.evaluate(async src => {
+        const image = new Image();
+        image.src = src;
+        await image.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0);
+        const at = y => Array.from(context.getImageData(canvas.width / 2, y, 1, 1).data.slice(0, 3));
+        return { top: at(5), bottom: at(canvas.height - 5) };
+    }, url);
+}
+
+const isRed = ([r, g, b]) => r > 150 && g < 100 && b < 100;
+const isBlue = ([r, g, b]) => b > 150 && r < 100;
 
 /** Signs in through the endpoint without following the redirect. */
 async function signInStatus(request, login, password) {
@@ -85,6 +106,36 @@ test.describe("profile picture", () => {
         await expect(page.locator("#left img").first()).toHaveAttribute("src", "/pictures/photo.png");
         // The removed file is gone, not just unlinked.
         expect((await page.request.get(avatarUrl)).status()).toBe(404);
+        await close();
+    });
+
+    test("an iPhone photo (HEIC) becomes an upright avatar", async ({ browser }) => {
+        const { page, close } = await newUserSession(browser);
+        await page.goto("/user/getUserInfo");
+
+        // Stored sideways with an orientation mark, like a portrait photo from an iPhone.
+        await page.locator("#file").setInputFiles(fixture("rotated-photo.heic"));
+        await page.getByRole("button", { name: "Save" }).click();
+        await expect(page).toHaveURL(/\/user\/authorisation/);
+
+        const avatar = page.locator("#left img").first();
+        await expect(avatar).toHaveAttribute("src", STORED_AVATAR);
+        // Turned upright, the red half is on top; unturned or turned the wrong way it would not be.
+        const { top, bottom } = await topAndBottomColours(page, await avatar.getAttribute("src"));
+        expect(isRed(top), `top ${top}`).toBe(true);
+        expect(isBlue(bottom), `bottom ${bottom}`).toBe(true);
+        await close();
+    });
+
+    test("a damaged HEIC is refused and the current avatar stays", async ({ browser }) => {
+        const { page, close } = await newUserSession(browser);
+        await page.goto("/user/getUserInfo");
+
+        await page.locator("#file").setInputFiles(fixture("broken-photo.heic"));
+        await page.getByRole("button", { name: "Save" }).click();
+
+        await expect(page.locator(".errortext-top")).toHaveText("The image file is damaged or unreadable.");
+        await expect(page.locator("#avatar-preview")).toHaveAttribute("src", "/pictures/photo.png");
         await close();
     });
 
