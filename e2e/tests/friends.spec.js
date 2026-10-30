@@ -56,6 +56,23 @@ test.describe("friends", () => {
         await anna.close();
         await ben.close();
     });
+
+    test("nobody can befriend themselves, even with a forged request", async ({ browser }) => {
+        // The page offers no such button, so send the requests directly.
+        const { page, user, close } = await newUserSession(browser);
+
+        const invite = await page.request.post("/friends/inviteToFriends", { form: { login: user.login } });
+        expect(invite.status()).toBe(400);
+        expect(await invite.json()).toEqual({ error: "You cannot add yourself as a friend." });
+
+        // With no invite to accept, accepting creates nothing either.
+        const accept = await page.request.post("/friends/acceptToFriends", { form: { login: user.login } });
+        expect(await accept.json()).toMatchObject({ result: "NO_INVITE" });
+
+        await page.goto(`/user/getUsersFriends?id=${user.login}`);
+        await expect(page.locator(".table-wrapper")).toHaveCount(0);
+        await close();
+    });
 });
 
 test.describe("search", () => {

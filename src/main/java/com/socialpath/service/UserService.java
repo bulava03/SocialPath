@@ -15,6 +15,9 @@ import java.util.List;
  */
 public interface UserService {
 
+    /** Error for a friend request or acceptance aimed at the user themselves. */
+    String SELF_FRIENDSHIP = "You cannot add yourself as a friend.";
+
     /**
      * Validates raw registration input against its Bean Validation
      * constraints (including the plaintext password rules).

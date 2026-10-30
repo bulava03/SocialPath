@@ -152,6 +152,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void acceptToFriends(String myId, String anotherId) {
+        requireAnotherUser(myId, anotherId);
         addFriendOneWay(myId, anotherId);
         addFriendOneWay(anotherId, myId);
     }
@@ -159,6 +160,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void inviteUser(String myId, String anotherId) {
+        requireAnotherUser(myId, anotherId);
         User invited = userRepository.findByLogin(anotherId);
         if (invited == null) {
             return;
@@ -185,6 +187,18 @@ public class UserServiceImpl implements UserService {
     public void removeFromFriends(String myId, String anotherId) {
         removeFriendOneWay(myId, anotherId);
         removeFriendOneWay(anotherId, myId);
+    }
+
+    /**
+     * The UI never offers it, but a forged request could otherwise make a user
+     * their own friend. The database refuses such rows too (V5 migration).
+     * @param myId the acting user
+     * @param anotherId the user the action is aimed at
+     */
+    private static void requireAnotherUser(String myId, String anotherId) {
+        if (myId.equals(anotherId)) {
+            throw new IllegalArgumentException(SELF_FRIENDSHIP);
+        }
     }
 
     private void addFriendOneWay(String owner, String friend) {
