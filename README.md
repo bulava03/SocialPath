@@ -12,9 +12,12 @@ and video, and discuss them in threaded comments.
 
 ## Features
 
-- **Accounts** — registration with server-side validation, JWT sessions in
-  an HttpOnly cookie, password change, profile editing (contacts, birth
-  date, country, city, education, workplace).
+- **Accounts** — registration with server-side validation, profile editing
+  (contacts, birth date, country, city, education, workplace).
+- **Security page** — password change and the list of active sessions with
+  browser, system, IP and approximate location; any other device can be
+  signed out, or all of them at once. Sessions last 7 days without use and
+  are extended while used.
 - **Avatars** — any common format including HEIC and AVIF (decoded with a
   bundled ffmpeg); every upload is center-cropped to a square and stored as
   a 1024 px image plus a 256 px thumbnail for lists, comments and the header.
@@ -62,6 +65,8 @@ Configuration is environment-based:
 | `DB_PASSWORD` | `root`           | Database password                         |
 | `MEDIA_DIR`   | `./media`        | Directory for uploaded media (a named Docker volume in compose) |
 | `JWT_SECRET`  | dev-only default | HMAC key for session tokens — set a long random value in any real deployment |
+| `SESSION_TIMEOUT` | `7d`         | How long a session lasts without being used |
+| `GEOIP_DATABASE` | `./geoip/dbip-city-lite.mmdb` | Offline IP location database; the Docker image downloads it, without it locations show as unknown |
 | `SPRING_PROFILES_ACTIVE` | — | `dev` adds exception messages and stack traces to error responses, for local debugging only |
 
 ## Architecture
@@ -97,16 +102,18 @@ Measured with `show-sql` on a feed of 20 posts with 3 comments each:
 |---|---|
 | Feed, before (one query chain per post and comment) | 327 |
 | Feed, now (any portion size) | 5 |
-| Any page, per request for authentication | 4 → 2 |
+| Any page, per request for authentication | 4 → 2, + 1 session lookup |
 
 The last line comes from a classic Spring Boot pitfall: the JWT filter was
 a `@Component`, so it was registered both as a servlet filter and inside
 the security chain and ran twice per request. Its servlet registration is
-now disabled.
+now disabled. The session lookup (by primary key) came later with
+revocable sessions; writing a used session back happens at most once per
+five minutes, not on every request.
 
 ## Data model
 
-Nine tables around a natural primary key: `users.login` is immutable,
+Eleven tables around a natural primary key: `users.login` is immutable,
 embedded in JWTs and URLs, and referenced by every relation.
 
 - `friendships` stores mutual friendship as mirrored rows (one per
@@ -128,6 +135,9 @@ embedded in JWTs and URLs, and referenced by every relation.
   removed only after the transaction commits, so a rollback never leaves
   rows pointing at deleted files.
 - `countries` is an ISO 3166 reference table for profile countries.
+- `user_sessions` has one row per signed-in browser; the JWT carries its id,
+  so deleting the row signs that browser out. `video_jobs` is the queue of
+  uploaded videos waiting to be converted to MP4.
 
 ## Security
 
@@ -135,6 +145,12 @@ embedded in JWTs and URLs, and referenced by every relation.
   `SameSite=Strict` cookie set by the server; the token never passes through
   front-end JavaScript, and `SameSite=Strict` doubles as the CSRF defence
   for the cookie-based session.
+- **Revocable sessions** — the token names a server-side session and is
+  accepted only while that session exists, so logging out, ending a session
+  from the Security page or changing the password (which ends every other
+  session) stops even a copied token at once. IP locations come from the
+  offline [DB-IP](https://db-ip.com) Lite database (CC BY 4.0): addresses
+  are never sent to a third party.
 - **Passwords** — BCrypt (strength 12).
 - **Authorization from stored data only** — permissions never trust ids the
   client sends along. Where a comment lives is read from the top-level post
@@ -154,7 +170,7 @@ embedded in JWTs and URLs, and referenced by every relation.
 ## Testing & CI
 
 - **Unit tests** (JUnit 5 + Mockito) cover the security-sensitive and
-  tricky paths: JWT handling, every authorization rule of the comment and
+  tricky paths: JWT and session handling, every authorization rule of the comment and
   group endpoints, feed assembly and paging, the deletion invariant (media
   of the whole subtree is cleaned up), avatar processing including HEIC and
   AVIF, and date-of-birth validation.
@@ -163,6 +179,7 @@ embedded in JWTs and URLs, and referenced by every relation.
 - **Browser tests** (Playwright, `e2e/`) drive the running app the way a
   user does: sign-up and login, profile editing, the feed with infinite
   scroll and live updates, comments, groups and roles, friends and search,
+  active sessions and signing other devices out,
   including the permission rules as seen from the UI.
 
 GitHub Actions runs two jobs on every push: `build` (unit and integration

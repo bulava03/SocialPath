@@ -35,7 +35,7 @@ public class CommentsViewController {
 
         model.addAttribute("publications", feed.posts());
         model.addAttribute("nextBefore", feed.nextBefore());
-        model.addAttribute("author", new UserLogin(me.getLogin(), ""));
+        model.addAttribute("author", me);
         model.addAttribute("user", userService.findByLogin(login));
 
         return "user/partsOfPages/rightFrame :: posts";
@@ -48,7 +48,7 @@ public class CommentsViewController {
 
         model.addAttribute("publications", feed.posts());
         model.addAttribute("nextBefore", feed.nextBefore());
-        model.addAttribute("author", new UserLogin(me.getLogin(), ""));
+        model.addAttribute("author", me);
         model.addAttribute("group", group);
 
         return "group/partsOfPages/rightFrame :: posts";
@@ -99,7 +99,7 @@ public class CommentsViewController {
 
         model.addAttribute("publications", List.of(thread));
         model.addAttribute("nextBefore", null);
-        model.addAttribute("author", new UserLogin(me.getLogin(), ""));
+        model.addAttribute("author", me);
         if (root.getGroupId() != null) {
             model.addAttribute("group", groupService.getGroup(root.getGroupId().toString()));
             return "group/partsOfPages/rightFrame :: posts";

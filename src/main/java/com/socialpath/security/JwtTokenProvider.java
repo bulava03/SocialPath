@@ -16,82 +16,89 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
 
 /**
  * Issues and validates the JWT used as the session token. The token is stored
- * in an HttpOnly cookie set by the server (see AuthController), never touched
- * by front-end JavaScript.
+ * in an HttpOnly cookie set by the server (see AuthCookie), never touched by
+ * front-end JavaScript. Besides the login it names the server-side session
+ * (see SessionService), which is what can be ended before the token expires.
  */
 @Component
 public class JwtTokenProvider {
 
+    /** The claim holding the session id. */
+    static final String SESSION_CLAIM = "sid";
+
     private final UserDetailsService userDetailsService;
     private final SecretKey key;
-    private final long validityInMilliseconds;
     private final String cookieName;
+
+    /**
+     * What a valid token says.
+     * @param login the user
+     * @param sessionId the session it was issued for; null in tokens from
+     *        before sessions existed, which no session matches
+     */
+    public record TokenClaims(String login, String sessionId) {
+    }
 
     public JwtTokenProvider(@Qualifier("userDetailsServiceImpl") UserDetailsService userDetailsService,
                             @Value("${jwt.secret}") String secret,
-                            @Value("${jwt.expiration}") long validityInMilliseconds,
                             @Value("${jwt.cookie-name}") String cookieName) {
         this.userDetailsService = userDetailsService;
         this.key = io.jsonwebtoken.security.Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.validityInMilliseconds = validityInMilliseconds;
         this.cookieName = cookieName;
     }
 
     /**
-     * Creates a signed token whose subject is the user's login.
-     * @param username the login to embed as the subject
+     * Creates a signed token for a session.
+     * @param login the user, stored as the subject
+     * @param sessionId the session the token belongs to
+     * @param expiresAt when the token stops being accepted
      * @return compact JWT string
      */
-    public String createToken(String username) {
-        Date now = new Date();
-        Date validity = new Date(now.getTime() + validityInMilliseconds);
-
+    public String createToken(String login, String sessionId, Instant expiresAt) {
         return Jwts.builder()
-                .subject(username)
-                .issuedAt(now)
-                .expiration(validity)
+                .subject(login)
+                .claim(SESSION_CLAIM, sessionId)
+                .issuedAt(new Date())
+                .expiration(Date.from(expiresAt))
                 .signWith(key)
                 .compact();
     }
 
     /**
-     * Validates signature and expiration.
+     * Checks the signature and expiry and reads the token.
      * @param token compact JWT string
-     * @return true when the token is well-formed, signed by us and not expired
+     * @return the login and session id
+     * @throws JwtAuthenticationException when the token is malformed, forged or expired
      */
-    public boolean validateToken(String token) {
+    public TokenClaims parse(String token) {
         try {
-            parseClaims(token);
-            return true;
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return new TokenClaims(claims.getSubject(), claims.get(SESSION_CLAIM, String.class));
         } catch (JwtException | IllegalArgumentException e) {
             throw new JwtAuthenticationException("JWT token is expired or invalid", HttpStatus.UNAUTHORIZED);
         }
     }
 
     /**
-     * Builds an Authentication for the token's subject, refusing banned accounts.
-     * @param token compact JWT string
+     * Builds an Authentication for a user, refusing banned accounts.
+     * @param login the login from a valid token
      * @return authentication with the user's details and authorities
      */
-    public Authentication getAuthentication(String token) {
-        UserDetails userDetails = this.userDetailsService.loadUserByUsername(getUsername(token));
+    public Authentication getAuthentication(String login) {
+        UserDetails userDetails = this.userDetailsService.loadUserByUsername(login);
         if (!userDetails.isEnabled() || !userDetails.isAccountNonLocked()) {
             throw new JwtAuthenticationException("Account is banned", HttpStatus.FORBIDDEN);
         }
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
-    }
-
-    /**
-     * Extracts the login (subject) from a token.
-     * @param token compact JWT string
-     * @return the login stored in the subject claim
-     */
-    public String getUsername(String token) {
-        return parseClaims(token).getSubject();
     }
 
     /**
@@ -109,13 +116,5 @@ public class JwtTokenProvider {
             }
         }
         return null;
-    }
-
-    private Claims parseClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
     }
 }

@@ -47,7 +47,7 @@ public class SearchResultController {
         Group group = groupService.getGroup(foundedGroup.getGroupId());
 
         model.addAttribute("group", group);
-        model.addAttribute("author", new UserLogin(user.getLogin(), ""));
+        model.addAttribute("author", user);
         FeedPage feed = commentsService.loadGroupFeed(group.getId(), null);
         model.addAttribute("publications", feed.posts());
         model.addAttribute("nextBefore", feed.nextBefore());

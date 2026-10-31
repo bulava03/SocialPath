@@ -13,4 +13,8 @@ public class ChangePasswordForm {
     @NotBlank(message = "{user.password.required}")
     @Size(min = 8, max = 20, message = "{user.password.size}")
     private String password;
+
+    /** The new password typed a second time, to catch a typo before it locks the user out. */
+    @NotBlank(message = "{user.password.confirm.required}")
+    private String confirmPassword;
 }

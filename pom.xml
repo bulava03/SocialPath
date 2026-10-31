@@ -70,6 +70,13 @@
 			<artifactId>imageio-webp</artifactId>
 			<version>3.10.1</version>
 		</dependency>
+		<!-- Reads the offline IP geolocation database (DB-IP Lite, .mmdb) that
+		     the Docker build downloads; shows where a session was opened. -->
+		<dependency>
+			<groupId>com.maxmind.geoip2</groupId>
+			<artifactId>geoip2</artifactId>
+			<version>5.2.0</version>
+		</dependency>
 		<!-- ffmpeg bundled as a library: decodes HEIC/AVIF photos without any
 		     system installation. Only the Java classes here; the native binary
 		     for the build machine's platform comes from the profiles below. -->

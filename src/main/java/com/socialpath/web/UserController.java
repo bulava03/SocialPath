@@ -1,14 +1,12 @@
 package com.socialpath.web;
 
 import com.socialpath.entity.User;
-import com.socialpath.dto.request.ChangePasswordForm;
 import com.socialpath.dto.request.FoundedUser;
 import com.socialpath.dto.request.LeftFrameRequest;
 import com.socialpath.dto.request.UserUpdate;
 import com.socialpath.dto.response.FeedPage;
 import com.socialpath.dto.response.FriendshipStatus;
 import com.socialpath.dto.response.GroupSearchResult;
-import com.socialpath.dto.response.UserLogin;
 import com.socialpath.dto.response.UserSearchResult;
 import com.socialpath.exception.InvalidImageException;
 import com.socialpath.validation.ValidationResult;
@@ -17,12 +15,9 @@ import com.socialpath.service.CommentsService;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.ModelAttributesService;
 import com.socialpath.service.UserService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,7 +35,6 @@ public class UserController {
     private final CommentsService commentsService;
     private final ModelAttributesService modelAttributesService;
     private final HandleAvatarService handleAvatarService;
-    private final PasswordEncoder passwordEncoder;
 
     @GetMapping("/authorisation")
     public String getUserPageFirst(@CurrentUser User user, Model model) {
@@ -70,7 +64,7 @@ public class UserController {
 
         model.addAttribute("user", user);
         model.addAttribute("myUser", myUser);
-        model.addAttribute("author", new UserLogin(login, ""));
+        model.addAttribute("author", myUser);
         model.addAttribute("isAuthor", user.getLogin().equals(login));
         model.addAttribute("friendship", FriendshipStatus.between(myUser, user));
         FeedPage feed = commentsService.loadUserFeed(user.getLogin(), null);
@@ -85,7 +79,7 @@ public class UserController {
 
     @GetMapping("/getUserInfo")
     public String getUserInfo(@CurrentUser User user, Model model) {
-        model = modelAttributesService.userInfoModel(model, user, user.getLogin());
+        model = modelAttributesService.userInfoModel(model, UserUpdate.from(user));
         model = handleAvatarService.handleAvatar(user, model, false);
 
         return "user/userInfo";
@@ -121,7 +115,7 @@ public class UserController {
      * @return the profile form view
      */
     private String showUserInfoWithError(Model model, UserUpdate user, User myUser, String errorText) {
-        model = modelAttributesService.userInfoModel(model, user, myUser.getLogin());
+        model = modelAttributesService.userInfoModel(model, user);
         model = handleAvatarService.handleAvatar(myUser, model, false);
         model.addAttribute("errorText", errorText);
         return "user/userInfo";
@@ -193,32 +187,5 @@ public class UserController {
         userService.removeFromFriends(login, request.getId());
 
         return "redirect:/user/getUsersFriends?id=" + login;
-    }
-
-    @GetMapping("/getChangePasswordForm")
-    public String getChangePasswordForm(@CurrentUser User myUser, Model model) {
-        model = handleAvatarService.handleAvatar(myUser, model, false);
-        model.addAttribute("errorText", "");
-
-        return "user/changePasswordForm";
-    }
-
-    @PostMapping("/changePassword")
-    public String changePassword(@CurrentUser User myUser, @Valid ChangePasswordForm form, BindingResult bindingResult, Model model) {
-        if (bindingResult.hasErrors()) {
-            model = handleAvatarService.handleAvatar(myUser, model, false);
-            model.addAttribute("errorText", bindingResult.getAllErrors().get(0).getDefaultMessage());
-            return "user/changePasswordForm";
-        }
-
-        if (!passwordEncoder.matches(form.getOldPassword(), myUser.getPassword())) {
-            model = handleAvatarService.handleAvatar(myUser, model, false);
-            model.addAttribute("errorText", "The old password is incorrect.");
-            return "user/changePasswordForm";
-        }
-
-        userService.updatePassword(myUser.getLogin(), form.getPassword());
-
-        return "redirect:/user/authorisation";
     }
 }

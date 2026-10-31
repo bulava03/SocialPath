@@ -9,6 +9,23 @@ RUN mvn -q dependency:go-offline
 COPY src ./src
 RUN mvn -q package -DskipTests
 
+# ---- IP geolocation database ----
+# DB-IP Lite (CC BY 4.0) for the locations of active sessions. Published
+# monthly, so this month's file is tried first and last month's after it.
+# Without it the app still runs and shows locations as unknown, so a failed
+# download leaves the folder empty instead of failing the build.
+FROM alpine:3.22 AS geoip
+RUN mkdir /geoip \
+    && y=$(date +%Y) && m=$(date +%m) && m=${m#0} \
+    && if [ "$m" -eq 1 ]; then py=$((y - 1)); pm=12; else py=$y; pm=$((m - 1)); fi \
+    && for month in "$y-$(printf %02d "$m")" "$py-$(printf %02d "$pm")"; do \
+         wget -qO /tmp/db.mmdb.gz "https://download.db-ip.com/free/dbip-city-lite-$month.mmdb.gz" \
+           && gunzip -c /tmp/db.mmdb.gz > /geoip/dbip-city-lite.mmdb && break; \
+         rm -f /geoip/dbip-city-lite.mmdb; \
+       done; \
+    rm -f /tmp/db.mmdb.gz; \
+    [ -s /geoip/dbip-city-lite.mmdb ] || echo "IP geolocation database not downloaded: locations will show as unknown"
+
 # ---- Runtime stage ----
 FROM eclipse-temurin:21-jre
 WORKDIR /app
@@ -24,6 +41,7 @@ RUN useradd --system --no-create-home appuser \
     && chown appuser /var/socialpath/media
 USER appuser
 
+COPY --from=geoip /geoip/ ./geoip/
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080

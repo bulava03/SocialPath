@@ -42,12 +42,13 @@ async function signInStatus(request, login, password) {
 test.describe("password", () => {
     test("a changed password replaces the old one", async ({ browser }) => {
         const { page, user, close } = await newUserSession(browser);
-        await page.goto("/user/getChangePasswordForm");
+        await page.goto("/security");
 
         await page.locator("#oldPassword").fill(PASSWORD);
         await page.locator("#password").fill("brand-new-pass");
+        await page.locator("#confirmPassword").fill("brand-new-pass");
         await page.getByRole("button", { name: "Save" }).click();
-        await expect(page).toHaveURL(/\/user\/authorisation/);
+        await expect(page.getByText("The password has been changed.")).toBeVisible();
 
         // Success redirects (302); a failed sign-in shows the form again (200).
         expect(await signInStatus(page.request, user.login, "brand-new-pass")).toBe(302);
@@ -57,10 +58,11 @@ test.describe("password", () => {
 
     test("a wrong current password changes nothing", async ({ browser }) => {
         const { page, user, close } = await newUserSession(browser);
-        await page.goto("/user/getChangePasswordForm");
+        await page.goto("/security");
 
         await page.locator("#oldPassword").fill("not-my-password");
         await page.locator("#password").fill("brand-new-pass");
+        await page.locator("#confirmPassword").fill("brand-new-pass");
         await page.getByRole("button", { name: "Save" }).click();
 
         await expect(page.locator(".errortext")).toHaveText("The old password is incorrect.");
@@ -68,12 +70,27 @@ test.describe("password", () => {
         await close();
     });
 
+    test("a mistyped repeat of the new password changes nothing", async ({ browser }) => {
+        const { page, user, close } = await newUserSession(browser);
+        await page.goto("/security");
+
+        await page.locator("#oldPassword").fill(PASSWORD);
+        await page.locator("#password").fill("brand-new-pass");
+        await page.locator("#confirmPassword").fill("brand-new-pas");
+        await page.getByRole("button", { name: "Save" }).click();
+
+        await expect(page.locator(".errortext")).toHaveText("The new passwords do not match.");
+        expect(await signInStatus(page.request, user.login, PASSWORD)).toBe(302);
+        await close();
+    });
+
     test("a too short new password is refused", async ({ browser }) => {
         const { page, close } = await newUserSession(browser);
-        await page.goto("/user/getChangePasswordForm");
+        await page.goto("/security");
 
         await page.locator("#oldPassword").fill(PASSWORD);
         await page.locator("#password").fill("short");
+        await page.locator("#confirmPassword").fill("short");
         await page.getByRole("button", { name: "Save" }).click();
 
         await expect(page.locator(".errortext")).toHaveText("Password must be between 8 and 20 characters long.");

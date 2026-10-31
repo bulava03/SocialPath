@@ -2,6 +2,8 @@ package com.socialpath;
 
 import com.socialpath.security.JwtAuthenticationException;
 import com.socialpath.security.JwtTokenProvider;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
@@ -9,9 +11,14 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -26,37 +33,54 @@ class JwtTokenProviderTest {
     @BeforeEach
     void setUp() {
         userDetailsService = mock(UserDetailsService.class);
-        provider = new JwtTokenProvider(userDetailsService, SECRET, 3_600_000L, "token");
+        provider = new JwtTokenProvider(userDetailsService, SECRET, "token");
+    }
+
+    private static Instant inAnHour() {
+        return Instant.now().plus(1, ChronoUnit.HOURS);
     }
 
     @Test
-    void createToken_ThenValidateAndReadSubject() {
-        String token = provider.createToken("alice");
+    void createToken_ThenParse_ReturnsLoginAndSession() {
+        String token = provider.createToken("alice", "session-1", inAnHour());
 
-        assertTrue(provider.validateToken(token));
-        assertEquals("alice", provider.getUsername(token));
+        JwtTokenProvider.TokenClaims claims = provider.parse(token);
+
+        assertEquals("alice", claims.login());
+        assertEquals("session-1", claims.sessionId());
     }
 
     @Test
-    void validateToken_WithExpiredToken_Throws() {
-        JwtTokenProvider expiring = new JwtTokenProvider(userDetailsService, SECRET, -1_000L, "token");
-        String token = expiring.createToken("alice");
+    void parse_WithExpiredToken_Throws() {
+        String token = provider.createToken("alice", "session-1", Instant.now().minusSeconds(1));
 
-        assertThrows(JwtAuthenticationException.class, () -> expiring.validateToken(token));
+        assertThrows(JwtAuthenticationException.class, () -> provider.parse(token));
     }
 
     @Test
-    void validateToken_WithGarbage_Throws() {
-        assertThrows(JwtAuthenticationException.class, () -> provider.validateToken("not-a-jwt"));
+    void parse_WithGarbage_Throws() {
+        assertThrows(JwtAuthenticationException.class, () -> provider.parse("not-a-jwt"));
     }
 
     @Test
-    void validateToken_SignedWithDifferentKey_Throws() {
+    void parse_SignedWithDifferentKey_Throws() {
         JwtTokenProvider other = new JwtTokenProvider(userDetailsService,
-                "another-secret-key-0123456789abcdef0123456789abcdef", 3_600_000L, "token");
-        String token = other.createToken("alice");
+                "another-secret-key-0123456789abcdef0123456789abcdef", "token");
+        String token = other.createToken("alice", "session-1", inAnHour());
 
-        assertThrows(JwtAuthenticationException.class, () -> provider.validateToken(token));
+        assertThrows(JwtAuthenticationException.class, () -> provider.parse(token));
+    }
+
+    @Test
+    void parse_TokenFromBeforeSessions_HasNoSession() {
+        // Such a token names no session, so the filter finds none and refuses it.
+        String token = Jwts.builder()
+                .subject("alice")
+                .expiration(Date.from(inAnHour()))
+                .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8)))
+                .compact();
+
+        assertNull(provider.parse(token).sessionId());
     }
 
     @Test
@@ -64,8 +88,7 @@ class JwtTokenProviderTest {
         UserDetails details = User.withUsername("alice").password("x").authorities("ROLE_USER").build();
         when(userDetailsService.loadUserByUsername(anyString())).thenReturn(details);
 
-        String token = provider.createToken("alice");
-        Authentication authentication = provider.getAuthentication(token);
+        Authentication authentication = provider.getAuthentication("alice");
 
         assertEquals("alice", ((UserDetails) authentication.getPrincipal()).getUsername());
     }
@@ -76,8 +99,6 @@ class JwtTokenProviderTest {
                 .authorities("ROLE_USER").disabled(true).accountLocked(true).build();
         when(userDetailsService.loadUserByUsername(anyString())).thenReturn(details);
 
-        String token = provider.createToken("alice");
-
-        assertThrows(JwtAuthenticationException.class, () -> provider.getAuthentication(token));
+        assertThrows(JwtAuthenticationException.class, () -> provider.getAuthentication("alice"));
     }
 }

@@ -3,7 +3,6 @@ package com.socialpath.web;
 import com.socialpath.entity.Country;
 import com.socialpath.entity.User;
 import com.socialpath.dto.request.RegistrationForm;
-import com.socialpath.dto.response.UserFormView;
 import com.socialpath.validation.ValidationResult;
 import com.socialpath.service.CountryService;
 import com.socialpath.service.UserService;
@@ -39,21 +38,21 @@ public class RegistrationController {
 
     @GetMapping()
     public String getRegistrationPage(Model model) {
-        model.addAttribute("User", new UserFormView());
+        model.addAttribute("User", new RegistrationForm());
         return "registration/registration";
     }
 
     @PostMapping("/registration")
     public String registration(RegistrationForm form, Model model) {
         if (userService.findByLogin(form.getLogin()) != null) {
-            model.addAttribute("User", toFormView(form));
+            model.addAttribute("User", form);
             model.addAttribute("errorText", "This login is already taken.");
             return "registration/registration";
         }
 
         ValidationResult validation = userService.validateRegistration(form);
         if (!validation.isSuccess()) {
-            model.addAttribute("User", toFormView(form));
+            model.addAttribute("User", form);
             model.addAttribute("errorText", validation.getMessage());
             return "registration/registration";
         }
@@ -63,14 +62,5 @@ public class RegistrationController {
         userService.addUser(user);
 
         return "redirect:/";
-    }
-
-    private UserFormView toFormView(RegistrationForm form) {
-        UserFormView userForm = modelMapper.map(form, UserFormView.class);
-        // Echo the raw fields back, so an invalid date is shown as typed.
-        userForm.setDay(form.getDay());
-        userForm.setMonth(form.getMonth());
-        userForm.setYear(form.getYear());
-        return userForm;
     }
 }

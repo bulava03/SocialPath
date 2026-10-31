@@ -1,10 +1,16 @@
 package com.socialpath.dto.request;
 
+import com.socialpath.entity.User;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * The profile-edit form. It also backs the form when it is shown: filled from
+ * the stored user at first, and with the values as typed when an update is
+ * rejected, so the user sees exactly what they entered.
+ */
 @Data
 public class UserUpdate implements DateOfBirthInput {
     private String login;
@@ -45,4 +51,32 @@ public class UserUpdate implements DateOfBirthInput {
     private String city;
     private String education;
     private String workplace;
+
+    /**
+     * The form filled with a user's stored profile. The date of birth is
+     * split into the three fields the form shows; an absent date leaves them
+     * empty.
+     * @param user the stored user
+     * @return the filled form
+     */
+    public static UserUpdate from(User user) {
+        UserUpdate form = new UserUpdate();
+        form.setLogin(user.getLogin());
+        form.setFirstName(user.getFirstName());
+        form.setLastName(user.getLastName());
+        form.setEmail(user.getEmail());
+        form.setPhoneNumber(user.getPhoneNumber());
+        LocalDateTime dateOfBirth = user.getDateOfBirth();
+        if (dateOfBirth != null) {
+            form.setDay(String.valueOf(dateOfBirth.getDayOfMonth()));
+            form.setMonth(String.valueOf(dateOfBirth.getMonthValue()));
+            form.setYear(String.valueOf(dateOfBirth.getYear()));
+        }
+        form.setCountryCode(user.getCountry() == null ? null : user.getCountry().getCode());
+        form.setRegion(user.getRegion());
+        form.setCity(user.getCity());
+        form.setEducation(user.getEducation());
+        form.setWorkplace(user.getWorkplace());
+        return form;
+    }
 }

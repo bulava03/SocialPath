@@ -1,21 +1,27 @@
 package com.socialpath;
 
-import com.socialpath.dto.response.UserLogin;
 import com.socialpath.entity.User;
+import com.socialpath.entity.UserSession;
+import com.socialpath.security.AuthCookie;
 import com.socialpath.security.JwtTokenProvider;
+import com.socialpath.service.SessionService;
 import com.socialpath.service.UserService;
 import com.socialpath.web.AuthController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.ui.ExtendedModelMap;
+
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -29,20 +35,27 @@ import static org.mockito.Mockito.when;
  */
 class AuthControllerTest {
 
+    private static final String SECRET = "test-secret-key-0123456789abcdef0123456789abcdef";
+
     private UserService userService;
+    private SessionService sessionService;
     private JwtTokenProvider jwtTokenProvider;
     private PasswordEncoder passwordEncoder;
     private AuthController controller;
+    private MockHttpServletRequest request;
     private MockHttpServletResponse response;
 
     @BeforeEach
     void setUp() {
         userService = mock(UserService.class);
-        jwtTokenProvider = mock(JwtTokenProvider.class);
+        sessionService = mock(SessionService.class);
         passwordEncoder = mock(PasswordEncoder.class);
-        controller = new AuthController(userService, jwtTokenProvider, passwordEncoder);
-        ReflectionTestUtils.setField(controller, "cookieName", "token");
-        ReflectionTestUtils.setField(controller, "tokenValidityMs", 3_600_000L);
+        jwtTokenProvider = new JwtTokenProvider(mock(UserDetailsService.class), SECRET, "token");
+        controller = new AuthController(userService, sessionService, new AuthCookie(jwtTokenProvider, "token"),
+                passwordEncoder);
+        request = new MockHttpServletRequest();
+        request.setRemoteAddr("203.0.113.7");
+        request.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 Firefox/130.0");
         response = new MockHttpServletResponse();
 
         User anna = new User();
@@ -50,34 +63,42 @@ class AuthControllerTest {
         anna.setPassword("hash");
         when(userService.findByLogin("anna")).thenReturn(anna);
         when(passwordEncoder.matches("right", "hash")).thenReturn(true);
-        when(jwtTokenProvider.createToken("anna")).thenReturn("jwt-value");
+        LocalDateTime now = LocalDateTime.now();
+        when(sessionService.open("anna", "203.0.113.7", "Mozilla/5.0 Firefox/130.0"))
+                .thenReturn(new UserSession("anna", "203.0.113.7", null, null, now, now.plusHours(1)));
     }
 
     @Test
-    void login_RightPassword_SetsAProtectedSessionCookie() {
-        String view = controller.login(new UserLogin("anna", "right"), new ExtendedModelMap(), response);
+    void login_RightPassword_OpensASessionAndSetsAProtectedCookieForIt() {
+        String view = controller.login("anna", "right", new ExtendedModelMap(), request, response);
 
         assertEquals("redirect:/user/authorisation", view);
         String cookie = response.getHeader(HttpHeaders.SET_COOKIE);
-        assertTrue(cookie.startsWith("token=jwt-value;"), cookie);
+        assertTrue(cookie.startsWith("token="), cookie);
         assertTrue(cookie.contains("HttpOnly"), cookie);
         assertTrue(cookie.contains("Secure"), cookie);
         assertTrue(cookie.contains("SameSite=Strict"), cookie);
         assertTrue(cookie.contains("Path=/"), cookie);
-        assertTrue(cookie.contains("Max-Age=3600"), cookie);
+        // The cookie lasts as long as the session: an hour here, give or take the test's own run time.
+        assertTrue(cookie.contains("Max-Age=3599") || cookie.contains("Max-Age=3600"), cookie);
+
+        String token = cookie.substring("token=".length(), cookie.indexOf(';'));
+        JwtTokenProvider.TokenClaims claims = jwtTokenProvider.parse(token);
+        assertEquals("anna", claims.login());
+        verify(sessionService).open("anna", "203.0.113.7", "Mozilla/5.0 Firefox/130.0");
     }
 
     @Test
-    void login_WrongPassword_ShowsTheFormAgainWithoutACookie() {
+    void login_WrongPassword_ShowsTheFormAgainWithoutASession() {
         ExtendedModelMap model = new ExtendedModelMap();
 
-        String view = controller.login(new UserLogin("anna", "wrong"), model, response);
+        String view = controller.login("anna", "wrong", model, request, response);
 
         assertEquals("home/index", view);
         assertEquals("anna", model.get("login"));
         assertEquals("Incorrect login or password", model.get("errorText"));
         assertNull(response.getHeader(HttpHeaders.SET_COOKIE));
-        verify(jwtTokenProvider, never()).createToken(anyString());
+        verify(sessionService, never()).open(anyString(), anyString(), any());
     }
 
     @Test
@@ -85,17 +106,18 @@ class AuthControllerTest {
         // Telling "no such user" apart from "wrong password" would reveal which logins exist.
         ExtendedModelMap model = new ExtendedModelMap();
 
-        controller.login(new UserLogin("nobody", "whatever"), model, response);
+        controller.login("nobody", "whatever", model, request, response);
 
         assertEquals("Incorrect login or password", model.get("errorText"));
         assertNull(response.getHeader(HttpHeaders.SET_COOKIE));
     }
 
     @Test
-    void logout_ExpiresTheCookieWithTheSameFlags() {
-        String view = controller.logout(response);
+    void logout_EndsTheSessionAndExpiresTheCookieWithTheSameFlags() {
+        String view = controller.logout("session-1", response);
 
         assertEquals("redirect:/", view);
+        verify(sessionService).end("session-1");
         String cookie = response.getHeader(HttpHeaders.SET_COOKIE);
         assertTrue(cookie.startsWith("token=;"), cookie);
         assertTrue(cookie.contains("Max-Age=0"), cookie);

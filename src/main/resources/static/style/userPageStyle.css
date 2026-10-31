@@ -1,12 +1,14 @@
 /* A user's or a group's page: the profile card on the left, the search,
-   the new post form and the feed on the right. One column on phones. */
+   the new post form and the feed on the right. One column on phones. Up to
+   a wide desktop the page spans the window like the header above it; beyond
+   that it stops growing and leaves a margin on both sides. */
 #page {
     display: grid;
-    grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
+    grid-template-columns: minmax(260px, 22%) minmax(0, 1fr);
     gap: 20px;
     align-items: start;
     width: 100%;
-    max-width: 1240px;
+    max-width: 1680px;
     margin: 5px auto 0;
     padding: 0 15px;
 }

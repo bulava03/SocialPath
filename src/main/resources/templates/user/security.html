@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialPath</title>
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/userIconStyle.css">
+    <link rel="stylesheet" href="/style/forms.css">
+    <link rel="stylesheet" href="/style/security.css">
+</head>
+<body>
+<div th:insert="~{shared/layout2 :: #layoutHeader}"></div>
+
+<main class="form-page">
+    <div class="security-page">
+        <div class="form-card">
+            <nav class="security-tabs" aria-label="Security">
+                <a href="/security/password" th:classappend="${tab == 'password'} ? 'active'"
+                   th:attr="aria-current=${tab == 'password'} ? 'page'">Password</a>
+                <a href="/security/sessions" th:classappend="${tab == 'sessions'} ? 'active'"
+                   th:attr="aria-current=${tab == 'sessions'} ? 'page'">
+                    Sessions <span class="security-tab-count" th:text="${#lists.size(sessions)}">1</span>
+                </a>
+            </nav>
+
+            <section th:if="${tab == 'password'}">
+                <h1 class="form-title">Change password</h1>
+                <p class="form-subtitle">Every other device is signed out when the password changes.</p>
+                <p class="security-notice" th:if="${param.passwordChanged}">
+                    The password has been changed. Other sessions were ended.
+                </p>
+                <form id="regform" class="form-stack security-password" method="post" action="/security/changePassword">
+                    <label class="name" for="oldPassword">Old password</label>
+                    <input class="field" id="oldPassword" type="password" name="oldPassword" autocomplete="current-password" />
+                    <label class="name" for="password">New password</label>
+                    <input class="field" id="password" type="password" name="password" autocomplete="new-password" />
+                    <p class="form-hint">8 to 20 characters.</p>
+                    <label class="name" for="confirmPassword">Repeat new password</label>
+                    <input class="field" id="confirmPassword" type="password" name="confirmPassword" autocomplete="new-password" />
+                    <p class="errortext" th:text="${errorText}"></p>
+                    <button class="btn btn-primary btn-block" type="submit">Save</button>
+                </form>
+            </section>
+
+            <section th:if="${tab == 'sessions'}">
+                <h1 class="form-title">Active sessions</h1>
+                <p class="form-subtitle">Devices signed in to this account.</p>
+
+                <ul class="session-list">
+                    <li class="session" th:each="s : ${sessions}" th:classappend="${s.current} ? 'session-current'">
+                        <div class="session-info">
+                            <div class="session-device">
+                                <span th:text="${s.browser} + ' on ' + ${s.os}">Chrome on Windows</span>
+                                <span class="session-badge" th:if="${s.current}">This device</span>
+                            </div>
+                            <div class="session-meta">
+                                <span th:text="${s.location != null} ? ${s.location} : 'Unknown location'">Unknown location</span>
+                                <span aria-hidden="true">·</span>
+                                <span class="session-ip" th:text="${s.ip}">IP</span>
+                            </div>
+                            <div class="session-meta">
+                                <span th:text="'Signed in ' + ${#temporals.format(s.createdAt, 'dd.MM.yyyy HH:mm')}">Signed in</span>
+                                <span aria-hidden="true">·</span>
+                                <span th:if="${s.current}">Active now</span>
+                                <span th:unless="${s.current}"
+                                      th:text="'Last active ' + ${#temporals.format(s.lastSeenAt, 'dd.MM.yyyy HH:mm')}">Last active</span>
+                            </div>
+                        </div>
+                        <form th:unless="${s.current}" method="post" action="/security/endSession">
+                            <input type="hidden" name="id" th:value="${s.id}">
+                            <button class="btn btn-danger" type="submit">End</button>
+                        </form>
+                    </li>
+                </ul>
+
+                <form class="session-end-others" th:if="${#lists.size(sessions) > 1}" method="post"
+                      action="/security/endOtherSessions">
+                    <button class="btn btn-danger" type="submit">End all other sessions</button>
+                </form>
+
+                <p class="session-credit">
+                    IP locations by <a href="https://db-ip.com" target="_blank" rel="noopener">DB-IP</a>
+                </p>
+            </section>
+        </div>
+
+        <div class="form-footer"><a class="back-link with-icon" href="/user/authorisation">To my page</a></div>
+    </div>
+</main>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+</body>
+</html>

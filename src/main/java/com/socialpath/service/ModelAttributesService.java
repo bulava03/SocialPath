@@ -24,23 +24,12 @@ public interface ModelAttributesService {
     Model usersAttributes(Model model, User user, boolean isAuthor, FeedPage feed);
 
     /**
-     * Populates the profile-info form model from a stored user.
+     * Adds what the profile-info form needs: the form itself and the countries.
      * @param model the model to populate
-     * @param user the stored user
-     * @param login the viewer's login
+     * @param form the form, filled from the stored user or as submitted
      * @return the same model, for chaining
      */
-    Model userInfoModel(Model model, User user, String login);
-
-    /**
-     * Populates the profile-info form model from a rejected update, so the form
-     * re-renders with the user's entered values.
-     * @param model the model to populate
-     * @param user the submitted update
-     * @param login the viewer's login
-     * @return the same model, for chaining
-     */
-    Model userInfoModel(Model model, UserUpdate user, String login);
+    Model userInfoModel(Model model, UserUpdate form);
 
     /**
      * Adds the attributes the group members and admins pages need.

@@ -6,7 +6,6 @@ import com.socialpath.dto.request.GroupCreationForm;
 import com.socialpath.dto.request.GroupUserRequest;
 import com.socialpath.dto.request.LeftFrameRequest;
 import com.socialpath.dto.response.GroupSearchResult;
-import com.socialpath.dto.response.UserLogin;
 import com.socialpath.dto.response.UserSearchResult;
 import com.socialpath.exception.ForbiddenOperationException;
 import com.socialpath.exception.InvalidImageException;
@@ -40,7 +39,7 @@ public class GroupController {
 
     @GetMapping("/getGroupCreationForm")
     public String getGroupCreationForm(@CurrentUser User myUser, Model model) {
-        model.addAttribute("author", new UserLogin(myUser.getLogin(), ""));
+        model.addAttribute("author", myUser);
         model.addAttribute("group", new GroupCreationForm(myUser.getLogin()));
         handleAvatarService.handleAvatar(myUser, model, false);
         return "group/groupCreationForm";
@@ -52,8 +51,7 @@ public class GroupController {
 
         ValidationResult validation = groupService.validateGroup(groupCreationForm);
         if (!validation.isSuccess()) {
-            model.addAttribute("user", new UserLogin(myUser.getLogin(), ""));
-            model.addAttribute("author", new UserLogin(myUser.getLogin(), ""));
+            model.addAttribute("author", myUser);
             model.addAttribute("group", groupCreationForm);
             model.addAttribute("errorText", validation.getMessage());
             handleAvatarService.handleAvatar(myUser, model, false);
