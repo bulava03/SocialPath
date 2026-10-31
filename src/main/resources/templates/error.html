@@ -1,26 +1,26 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SocialPath</title>
     <link rel="stylesheet" href="/style/layout.css">
-    <link rel="stylesheet" href="/style/authFormStyle.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/forms.css">
 </head>
 <body>
 <div th:insert="~{shared/layout :: #layoutHeader}"></div>
 
 <!-- Rendered by MvcExceptionHandler (with a message) and by Spring Boot for
      any other error (status only; details stay in the server log). -->
-<div class="container">
-    <div class="authtitle">
-        <h1 th:text="${status == 404 ? 'Page not found' : (status == 403 ? 'Access denied' : 'Something went wrong')}">Something went wrong</h1>
-    </div>
-    <div class="authform">
+<main class="form-page">
+    <div class="form-card form-card-narrow form-card-center">
+        <p class="error-status" th:text="${status}">500</p>
+        <h1 class="form-title" th:text="${status == 404 ? 'Page not found' : (status == 403 ? 'Access denied' : 'Something went wrong')}">Something went wrong</h1>
         <p class="errortext" th:text="${message != null and !#strings.isEmpty(message) and status < 500 ? message : (status == 404 ? 'This page does not exist.' : 'Please try again later.')}">Please try again later.</p>
-        <a class="button" href="/user/authorisation">To my page</a>
+        <a class="btn btn-primary" href="/user/authorisation">To my page</a>
     </div>
-</div>
+</main>
 
 <footer id="layoutFooter">
     <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>

@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createGroup, newUserSession } from "./helpers.js";
 
 /** A person's card on the members or admins page. */
-const card = (page, name) => page.locator(".table-wrapper").filter({ hasText: name });
+const card = (page, name) => page.locator(".list-card").filter({ hasText: name });
 
 async function join(session, groupId) {
     const response = await session.page.request.post("/groupMembership/joinGroup", {
@@ -71,7 +71,7 @@ test.describe("group roles", () => {
         await join(joiners[0], groupId);
 
         await owner.page.goto(`/group/getGroupsMembers?id=${groupId}`);
-        await expect(owner.page.locator(".table-wrapper")).toHaveCount(6);
+        await expect(owner.page.locator(".list-card")).toHaveCount(6);
 
         await owner.close();
         await Promise.all(joiners.map(session => session.close()));

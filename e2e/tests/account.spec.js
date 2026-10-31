@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { test, expect } from "@playwright/test";
-import { createGroup, newUserSession, PASSWORD } from "./helpers.js";
+import { createGroup, newUserSession, PASSWORD, profileField } from "./helpers.js";
 
 // An 8x8 PNG, small enough to keep the tests fast, real enough to be processed.
 const PICTURE = {
@@ -165,7 +165,7 @@ test.describe("profile details", () => {
         await page.locator("#country").selectOption(await option.getAttribute("value"));
         await page.getByRole("button", { name: "Save" }).click();
 
-        await expect(page.locator("#left")).toContainText(`Country: ${country}`);
+        await expect(profileField(page, "Country")).toHaveText(country);
         await page.goto("/user/getUserInfo");
         await expect(page.locator("#country option:checked")).toHaveText(country);
 

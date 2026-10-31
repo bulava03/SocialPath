@@ -1,114 +1,234 @@
+/* The feed. Every post is a card; replies hang under it, each indented to
+   the text of the one it answers. The avatar sits in the left padding, so
+   all other parts of a comment simply flow in one column. */
 .comment {
+    position: relative;
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    background-color: #f0f0f0;
-    padding-left: 30px;
-    border-radius: 5px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.commentImage {
-    border-radius: 15px;
-    object-fit: cover;
-}
-
-.avatar-link {
-    text-decoration: none;
-}
-
-.comment-divider {
-  height: 2px;
-  background-color: #ccc;
-  margin-bottom: 8px;
-  width: 100%;
-  margin-top: 16px;
-}
-
-.comment-divider.first {
-  margin-top: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    min-height: 40px;
+    padding-left: 52px;
+    overflow-wrap: anywhere;
 }
 
 #publications > .comment {
-  padding-top: 20px;
+    margin-bottom: 16px;
+    padding: 18px 20px 14px 74px;
+    background: var(--surface-strong);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
 }
 
-.user-photo {
-    width: 50px;
-    height: 50px;
+.comment > .avatar-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    line-height: 0;
+}
+
+#publications > .comment > .avatar-link {
+    top: 18px;
+    left: 20px;
+}
+
+.commentImage {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    margin-bottom: -50px;
+    object-fit: cover;
+    box-shadow: 0 0 0 2px #ffffff;
+}
+
+#publications > .comment > .avatar-link .commentImage {
+    width: 44px;
+    height: 44px;
+}
+
+.comment > .username,
+.comment > .commentText,
+.comment > .commentMedia,
+.comment > .reply-section,
+.comment > .comment-divider,
+.comment > .comment {
+    flex: 0 0 100%;
 }
 
 .username {
-    font-weight: bold;
-    margin-right: 10px;
-    margin-top: -30px;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 700;
     text-decoration: none;
-    color: #333;
-    margin-left: 60px;
+}
+
+.username:hover {
+    color: var(--brand);
 }
 
 .commentText {
-    margin-left: 60px;
+    margin-top: 2px;
+    font-size: 15px;
+    white-space: pre-line;
 }
+
+.commentText:empty {
+    display: none;
+}
+
+/* Replies are a little smaller than the post they answer. */
+.comment .comment {
+    padding-left: 44px;
+}
+
+.comment .comment .commentImage {
+    width: 34px;
+    height: 34px;
+}
+
+.comment .comment .username,
+.comment .comment .commentText {
+    font-size: 14px;
+}
+
+.comment-divider {
+    height: 1px;
+    margin: 12px 0;
+    background-color: var(--line);
+}
+
+/* ---------- reply and delete ---------- */
 
 .reply-btn,
 .delete-btn {
-    background-color: #007bff;
-    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 6px 4px 0 0;
+    padding: 4px 10px;
     border: none;
-    border-radius: 5px;
-    padding: 5px 10px;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
-    margin-top: 10px;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.reply-btn::before,
+.delete-btn::before {
+    content: "";
+    width: 15px;
+    height: 15px;
+    background-color: currentColor;
+    -webkit-mask: var(--icon) center / contain no-repeat;
+    mask: var(--icon) center / contain no-repeat;
 }
 
 .reply-btn {
-    margin-left: 60px;
+    --icon: var(--icon-reply);
 }
 
 .delete-btn {
-    margin-left: 123px;
-    margin-top: -25px;
-    background-color: #dc3545;
+    --icon: var(--icon-trash);
 }
 
-.reply-btn:hover,
+/* Line the first button's icon up with the text above it. */
+.comment > .reply-btn,
+.comment > .delete-btn:not(.reply-btn + .delete-btn) {
+    margin-left: -10px;
+}
+
+.reply-btn:hover {
+    background-color: var(--brand-pastel);
+    color: var(--brand-pastel-ink);
+}
+
 .delete-btn:hover {
-    opacity: 0.8;
+    background-color: var(--danger-pastel);
+    color: var(--danger-pastel-ink);
 }
 
 .reply-btn:disabled,
 .delete-btn:disabled {
-    background-color: #6c757d;
+    background: transparent;
+    color: #b0b0b0;
     cursor: not-allowed;
 }
 
-#publications > .comment {
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    padding-right: 20px;
+/* ---------- photos and videos ---------- */
+
+/* Holds only whitespace when there is nothing to show (no :empty then). */
+.commentMedia:not(:has(*)) {
+    display: none;
 }
 
 .commentMedia {
-    width: 100%;
+    margin-top: 10px;
 }
 
-.commentMedia img,
-.commentMedia video {
-    width: 100%;
-    margin-top: 20px;
+.media-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    overflow: hidden;
+    border-radius: 12px;
 }
 
-.mediaTable {
+.media-grid img {
+    display: block;
     width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background-color: var(--surface-sunken);
 }
 
-.mediaTable img {
-    object-fit: contain;
+/* One photo is shown whole, at its own proportions. */
+.media-count-1 {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
 }
+
+.media-count-1 img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 460px;
+    aspect-ratio: auto;
+}
+
+/* Three or five photos: the first one across the whole width. */
+.media-count-3 img:first-child,
+.media-count-5 img:first-child {
+    grid-column: 1 / -1;
+    aspect-ratio: 16 / 9;
+}
+
+.media-video video {
+    display: block;
+    width: 100%;
+    max-height: 520px;
+    border-radius: 12px;
+    background-color: #000000;
+}
+
+/* A video that is still being converted, or could not be. */
+.video-processing,
+.video-failed {
+    padding: 28px 16px;
+    border-radius: 12px;
+    background-color: var(--surface-sunken);
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.video-failed {
+    color: var(--danger);
+}
+
+/* ---------- around the feed ---------- */
 
 /* Shown above the feed when others posted or commented while the viewer is
    scrolled down; sticks to the top so it stays in sight. */
@@ -123,30 +243,56 @@
 .feed-news button {
     padding: 8px 18px;
     border: none;
-    border-radius: 20px;
-    background-color: #e37f22;
-    color: #ffffff;
+    border-radius: var(--radius-pill);
+    background-color: var(--brand);
+    color: var(--text-on-brand);
     font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--shadow);
+}
+
+.feed-news button:hover {
+    background-color: var(--brand-hover);
 }
 
 .feed-more {
-    text-align: center;
     padding: 15px 0;
-}
-
-/* A video that is still being converted, or could not be. */
-.video-processing,
-.video-failed {
-    margin: 8px 0;
-    padding: 24px 16px;
-    border-radius: 8px;
-    background-color: #f1f3f5;
-    color: #495057;
     text-align: center;
+    color: #ffffff;
 }
 
-.video-failed {
-    color: #c92a2a;
+.feed-more button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: var(--surface-strong);
+    color: var(--text);
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+}
+
+.feed-empty {
+    padding: 40px 20px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text-muted);
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+@media (max-width: 520px) {
+    #publications > .comment {
+        padding: 14px 14px 12px 62px;
+    }
+
+    #publications > .comment > .avatar-link {
+        top: 14px;
+        left: 12px;
+    }
+
+    .comment .comment {
+        padding-left: 40px;
+    }
 }

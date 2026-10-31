@@ -1,19 +1,15 @@
+/* The background picture, slightly darkened so the panels in front of it
+   stay easy to read. Fixed: the page scrolls over it. */
+body {
+    background-color: #5d7486;
+}
+
 body::before {
     content: "";
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: inherit;
-    filter: brightness(0.8);
+    inset: 0;
     z-index: -1;
     pointer-events: none;
-}
-
-body {
-    background-image: url('/pictures/index.jpg');
-    background-size: cover;
-    background-repeat: repeat-y;
-    background-position: center;
+    background: url('/pictures/index.jpg') center / cover no-repeat;
+    filter: brightness(0.82);
 }

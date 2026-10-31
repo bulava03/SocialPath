@@ -1,65 +1,37 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SocialPath</title>
     <link rel="stylesheet" href="/style/layout.css">
     <link rel="stylesheet" href="/style/userIconStyle.css">
     <link rel="stylesheet" href="/style/gradientPage.css">
-    <link rel="stylesheet" href="/style/leftFrameResultStyle.css">
-    <link rel="stylesheet" href="/style/backButtonStyle.css">
+    <link rel="stylesheet" href="/style/lists.css">
 </head>
 <body>
 <div th:insert="~{shared/layout2 :: #layoutHeader}"></div>
 
-<div class="table-container">
-    <div class="table-wrapper" th:each="elem : ${admins}">
-        <table>
-            <tr>
-                <td class="photo-cell">
-                    <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
-                         style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
-                    <img th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId} + '?size=thumb'"
-                         style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
-                </td>
-            </tr>
-            <tr>
-                <td class="content-row">
-                    <div class="content-cell"></div>
-                    <div class="content-cell"><a class="card-link" th:href="@{/searchResult/getUserPage(anotherUserLogin=${elem.anotherUserLogin})}"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}">Name</b></a></div>
-                    <div class="content-cell"></div>
-                    <div class="content-cell" th:text="'Email: ' + ${elem.email}">Email</div>
-                    <div class="content-cell" th:if="${elem.phoneNumber != null and elem.phoneNumber != ''}" th:text="'Phone number: ' + ${elem.phoneNumber}">Phone Number</div>
-                    <div class="content-cell" th:if="${elem.countryName != null and elem.countryName != ''}" th:text="'Country: ' + ${elem.countryName}">Country</div>
-                    <div class="content-cell" th:if="${elem.region != null and elem.region != ''}" th:text="'Region: ' + ${elem.region}">Region</div>
-                    <div class="content-cell" th:if="${elem.city != null and elem.city != ''}" th:text="'City: ' + ${elem.city}">City</div>
-                    <div class="content-cell" th:if="${elem.education != null and elem.education != ''}" th:text="'Education: ' + ${elem.education}">Education</div>
-                    <div class="content-cell" th:if="${elem.workplace != null and elem.workplace != ''}" th:text="'Workplace: ' + ${elem.workplace}">Workplace</div>
-                    <form th:if="${author.login == owner and elem.anotherUserLogin != owner and admins.contains(elem)}"
-                          th:action="@{/group/removeFromAdminsAdminsList}" method="post">
-                        <input class="field" th:value="${groupId}" type="hidden" name="groupId" />
-                        <input class="field" th:value="${elem.anotherUserLogin}" type="hidden" name="userId" />
-                        <input class="userButton rejectButton" style="width: 250px;" type="submit" value="Remove from admins">
-                    </form>
-                    <div class="content-cell"></div>
-                    <div class="content-cell"></div>
-                </td>
-            </tr>
-        </table>
+<main class="list-page">
+    <div th:replace="~{shared/cards :: header('Admins', @{/searchResult/getGroupPage(groupId=${groupId})}, ${#lists.size(admins)})}"></div>
+
+    <div class="list-grid">
+        <div class="list-card" th:each="elem : ${admins}">
+            <th:block th:replace="~{shared/cards :: person(${elem})}"></th:block>
+            <div class="list-actions">
+                <form th:if="${author.login == owner and elem.anotherUserLogin != owner and admins.contains(elem)}" method="post" action="/group/removeFromAdminsAdminsList">
+                    <input type="hidden" name="groupId" th:value="${groupId}">
+                    <input type="hidden" name="userId" th:value="${elem.anotherUserLogin}">
+                    <button class="btn btn-danger" type="submit">Remove from admins</button>
+                </form>
+            </div>
+        </div>
     </div>
-</div>
-
-<div style="margin-left: 20px; margin-right: 20px;">
-    <form th:action="@{/searchResult/getGroupPage}" method="get">
-        <input class="field" id="groupId"  th:value="${groupId}" type="hidden" name="groupId" />
-        <input class="backButton" type="submit" value="Back">
-    </form>
-</div>
-
-<br><br>
+    <p class="list-empty" th:if="${#lists.isEmpty(admins)}">No admins.</p>
+</main>
 
 <footer id="layoutFooter">
     <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
 </footer>
-
 </body>
 </html>

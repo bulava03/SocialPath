@@ -1,92 +1,48 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/style/layout.css" />
-    <link rel="stylesheet" href="/style/userIconStyle.css" />
-    <link rel="stylesheet" href="/style/gradientPage.css" />
-    <link rel="stylesheet" href="/style/searchResultStyle.css">
-    <link rel="stylesheet" href="/style/searchStyle.css">
     <title>SocialPath</title>
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/userIconStyle.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/lists.css">
+    <link rel="stylesheet" href="/style/searchStyle.css">
 </head>
 <body>
 <div th:insert="~{shared/layout2 :: #layoutHeader}"></div>
 
-<div class="container">
-    <div class="search-container">
-        <form id="searchForm" method="get" th:action="@{/searchResult/getSearchResult}">
-            <input id="searchInput" type="text" name="searchText" placeholder="Search..."
-                   required pattern=".*\S.*" title="Enter something to search for">
-            <input id="searchButton" type="submit" value="Search">
-        </form>
-    </div>
+<main class="list-page">
+    <form id="searchForm" method="get" th:action="@{/searchResult/getSearchResult}">
+        <input id="searchInput" type="text" name="searchText" placeholder="Search..." th:value="${param.searchText}"
+               required pattern=".*\S.*" title="Enter something to search for">
+        <input id="searchButton" type="submit" value="Search">
+    </form>
 
-    <div class="container-search">
-        <div id="table-left">
-            <h3 class="table-title">People</h3>
-
-            <div class="table-container">
-                <div th:each="elem : ${users}" class="table-wrapper">
-                    <table>
-                        <tr>
-                            <td>
-                                <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
-                                     width="50px" height="50px" alt="usericon">
-                                <img th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId} + '?size=thumb'"
-                                     width="50px" height="50px" alt="usericon">
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="content-row">
-                                <div class="content-cell"></div>
-                                <div class="content-cell"><a class="card-link" th:href="@{/searchResult/getUserPage(anotherUserLogin=${elem.anotherUserLogin})}"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}"></b></a></div>
-                                <div class="content-cell"></div>
-                                <div class="content-cell">Email: <span th:text="${elem.email}"></span></div>
-                                <div th:if="${elem.PhoneNumber != null}" class="content-cell">Phone number: <span th:text="${elem.phoneNumber}"></span></div>
-                                <div th:if="${elem.countryName != null}" class="content-cell">Country: <span th:text="${elem.countryName}"></span></div>
-                                <div th:if="${elem.Region != null}" class="content-cell">Region: <span th:text="${elem.region}"></span></div>
-                                <div th:if="${elem.City != null}" class="content-cell">City: <span th:text="${elem.city}"></span></div>
-                                <div th:if="${elem.Education != null}" class="content-cell">Education: <span th:text="${elem.education}"></span></div>
-                                <div th:if="${elem.Workplace != null}" class="content-cell">Workplace: <span th:text="${elem.workplace}"></span></div>
-                                <div class="content-cell"></div>
-                                <div class="content-cell"></div>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
+    <section class="list-section">
+        <h2 class="list-section-title">People <span class="list-count" th:text="${#lists.size(users)}"></span></h2>
+        <div class="list-grid">
+            <div class="list-card" th:each="elem : ${users}">
+                <th:block th:replace="~{shared/cards :: person(${elem})}"></th:block>
             </div>
         </div>
+        <p class="list-empty" th:if="${#lists.isEmpty(users)}">No people found.</p>
+    </section>
 
-        <div id="table-centre">
-            <h3 class="table-title">Groups</h3>
-
-            <div class="table-container">
-                <div th:each="elem : ${groups}" class="table-wrapper">
-                    <table>
-                        <tr>
-                            <td>
-                                <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
-                                     width="50px" height="50px" alt="usericon">
-                                <img th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId} + '?size=thumb'"
-                                     width="50px" height="50px" alt="usericon">
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="content-row">
-                                <div class="content-cell"></div>
-                                <div class="content-cell"><a class="card-link" th:href="@{/searchResult/getGroupPage(groupId=${elem.id})}"><b th:text="${elem.name}"></b></a></div>
-                                <div class="content-cell"></div>
-                                <div class="content-cell"></div>
-                                <div class="content-cell"></div>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
+    <section class="list-section">
+        <h2 class="list-section-title">Groups <span class="list-count" th:text="${#lists.size(groups)}"></span></h2>
+        <div class="list-grid">
+            <div class="list-card" th:each="elem : ${groups}">
+                <th:block th:replace="~{shared/cards :: group(${elem})}"></th:block>
             </div>
         </div>
+        <p class="list-empty" th:if="${#lists.isEmpty(groups)}">No groups found.</p>
+    </section>
+</main>
 
-    </div>
-</div>
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
 </body>
 </html>

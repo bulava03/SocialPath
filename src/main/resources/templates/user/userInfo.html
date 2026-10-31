@@ -1,96 +1,93 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SocialPath</title>
-  <link rel="stylesheet" href="/style/layout.css">
-  <link rel="stylesheet" href="/style/userIconStyle.css">
-  <link rel="stylesheet" href="/style/personalInfoStyle.css">
-  <link rel="stylesheet" href="/style/gradientPage.css">
-  <link rel="stylesheet" href="/style/avatarPicker.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialPath</title>
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/userIconStyle.css">
+    <link rel="stylesheet" href="/style/forms.css">
+    <link rel="stylesheet" href="/style/avatarPicker.css">
 </head>
 <body>
 <div th:insert="~{shared/layout2 :: #layoutHeader}"></div>
 
-<div class="container">
-  <div class="authtitle"><h1>About me</h1></div>
-  <div class="authform">
-    <!-- Server-side errors go on top: the form is long and the page reloads scrolled up. -->
-    <p class="errortext errortext-top" th:if="${errorText}" th:text="${errorText}"></p>
-    <form id="regform" method="post" action="/user/changeUserInfo" enctype="multipart/form-data">
-      <div class="authinput">
-        <div class="avatar-block">
-          <img id="avatar-preview"
-               th:src="${avatar != null} ? '/images/' + ${avatar} + '?size=thumb' : '/pictures/photo.png'"
-               alt="Photo" title="Change photo">
-          <div class="avatar-actions">
-            <label for="file" class="avatar-button">Change photo</label>
-            <button type="button" id="remove-photo" class="avatar-button avatar-button-secondary">Remove</button>
+<main class="form-page">
+    <div class="form-card">
+        <h1 class="form-title">About me</h1>
+        <!-- Server-side errors go on top: the form is long and the page reloads scrolled up. -->
+        <p class="errortext errortext-top" th:if="${errorText}" th:text="${errorText}"></p>
+        <form id="regform" method="post" action="/user/changeUserInfo" enctype="multipart/form-data">
+          <div class="form-grid">
+            <div class="avatar-block">
+              <img id="avatar-preview"
+                   th:src="${avatar != null} ? '/images/' + ${avatar} + '?size=thumb' : '/pictures/photo.png'"
+                   alt="Photo" title="Change photo">
+              <div class="avatar-actions">
+                <label for="file" class="avatar-button">Change photo</label>
+                <button type="button" id="remove-photo" class="avatar-button avatar-button-secondary">Remove</button>
+              </div>
+              <p id="avatar-note" class="avatar-note" hidden>Preview is not available for this file. It will be checked and converted when you save.</p>
+              <input id="file" type="file" name="file" accept="image/*,.heic,.heif,.avif" class="visually-hidden">
+              <input type="hidden" id="removeImage" name="removeImage" value="false">
+            </div>
+            <label class="name" for="name">First name</label>
+            <input class="field" id="name" th:value="${user.firstName}" type="text" name="firstName">
+            <label class="name" for="surname">Last name</label>
+            <input class="field" id="surname" th:value="${user.lastName}" type="text" name="lastName">
+            <label class="name" for="phone">Phone number</label>
+            <input class="field" id="phone" th:value="${user.phoneNumber}" type="text" name="phoneNumber">
+            <label class="name" for="email">Email</label>
+            <input class="field" id="email" th:value="${user.email}" type="text" name="email">
+            <label class="name" for="dob-day">Date of birth</label>
+            <div class="dob-row">
+            <input class="field" id="dob-day" th:value="${user.day}"
+                   type="text" name="day" placeholder="Day" inputmode="numeric">
+            <select id="dob-month" name="month">
+              <option value="" disabled hidden th:selected="${user.month == null}">Month</option>
+              <option value="1" th:selected="${user.month == '1'}">January</option>
+              <option value="2" th:selected="${user.month == '2'}">February</option>
+              <option value="3" th:selected="${user.month == '3'}">March</option>
+              <option value="4" th:selected="${user.month == '4'}">April</option>
+              <option value="5" th:selected="${user.month == '5'}">May</option>
+              <option value="6" th:selected="${user.month == '6'}">June</option>
+              <option value="7" th:selected="${user.month == '7'}">July</option>
+              <option value="8" th:selected="${user.month == '8'}">August</option>
+              <option value="9" th:selected="${user.month == '9'}">September</option>
+              <option value="10" th:selected="${user.month == '10'}">October</option>
+              <option value="11" th:selected="${user.month == '11'}">November</option>
+              <option value="12" th:selected="${user.month == '12'}">December</option>
+            </select>
+            <select id="dob-year" name="year">
+              <option value="" disabled hidden th:selected="${user.year == null}">Year</option>
+              <option th:each="y : ${#numbers.sequence(#dates.year(#dates.createNow()), 1900, -1)}"
+                      th:value="${y}" th:text="${y}" th:selected="${#strings.toString(y) == user.year}"></option>
+            </select>
+            </div>
+            <label class="name" for="country">Country</label>
+            <select id="country" name="countryCode">
+              <option value="" th:selected="${#strings.isEmpty(user.countryCode)}">Country</option>
+              <option th:each="c : ${countries}" th:value="${c.code}" th:text="${c.name}"
+                      th:selected="${c.code == user.countryCode}"></option>
+            </select>
+            <label class="name" for="region">Region</label>
+            <input class="field" id="region" th:value="${user.region}" type="text" name="region">
+            <label class="name" for="city">City</label>
+            <input class="field" id="city" th:value="${user.city}" type="text" name="city" autocomplete="address-level2">
+            <label class="name" for="education">Education</label>
+            <input class="field" id="education" th:value="${user.education}" type="text" name="education">
+            <label class="name" for="workplace">Workplace</label>
+            <input class="field" id="workplace" th:value="${user.workplace}" type="text" name="workplace">
+            <div class="form-actions"><button class="btn btn-primary" type="submit">Save</button></div>
           </div>
-          <p id="avatar-note" class="avatar-note" hidden>Preview is not available for this file. It will be checked and converted when you save.</p>
-          <input id="file" type="file" name="file" accept="image/*,.heic,.heif,.avif" class="visually-hidden">
-          <input type="hidden" id="removeImage" name="removeImage" value="false">
-        </div>
-        <h2 class="name">First name</h2>
-        <input class="field" id="name" th:value="${user.firstName}" type="text" name="firstName">
-        <h2 class="name">Last name</h2>
-        <input class="field" id="surname" th:value="${user.lastName}" type="text" name="lastName">
-        <h2 class="name">Phone number</h2>
-        <input class="field" id="phone" th:value="${user.phoneNumber}" type="text" name="phoneNumber">
-        <h2 class="name">Email</h2>
-        <input class="field" id="email" th:value="${user.email}" type="text" name="email">
-        <h2 class="name">Date of birth</h2>
-        <div class="dob-row">
-        <input class="field" id="dob-day" th:value="${user.day}"
-               type="text" name="day" placeholder="Day" inputmode="numeric">
-        <select id="dob-month" name="month">
-          <option value="" disabled hidden th:selected="${user.month == null}">Month</option>
-          <option value="1" th:selected="${user.month == '1'}">January</option>
-          <option value="2" th:selected="${user.month == '2'}">February</option>
-          <option value="3" th:selected="${user.month == '3'}">March</option>
-          <option value="4" th:selected="${user.month == '4'}">April</option>
-          <option value="5" th:selected="${user.month == '5'}">May</option>
-          <option value="6" th:selected="${user.month == '6'}">June</option>
-          <option value="7" th:selected="${user.month == '7'}">July</option>
-          <option value="8" th:selected="${user.month == '8'}">August</option>
-          <option value="9" th:selected="${user.month == '9'}">September</option>
-          <option value="10" th:selected="${user.month == '10'}">October</option>
-          <option value="11" th:selected="${user.month == '11'}">November</option>
-          <option value="12" th:selected="${user.month == '12'}">December</option>
-        </select>
-        <select id="dob-year" name="year">
-          <option value="" disabled hidden th:selected="${user.year == null}">Year</option>
-          <option th:each="y : ${#numbers.sequence(#dates.year(#dates.createNow()), 1900, -1)}"
-                  th:value="${y}" th:text="${y}" th:selected="${#strings.toString(y) == user.year}"></option>
-        </select>
-        </div>
-        <h2 class="name">Country</h2>
-        <select id="country" name="countryCode">
-          <option value="" th:selected="${#strings.isEmpty(user.countryCode)}">Country</option>
-          <option th:each="c : ${countries}" th:value="${c.code}" th:text="${c.name}"
-                  th:selected="${c.code == user.countryCode}"></option>
-        </select>
-        <h2 class="name">Region</h2>
-        <input class="field" id="region" th:value="${user.region}" type="text" name="region">
-        <h2 class="name">City</h2>
-        <input class="field" id="city" th:value="${user.city}" type="text" name="city" autocomplete="address-level2">
-        <h2 class="name">Education</h2>
-        <input class="field" id="education" th:value="${user.education}" type="text" name="education">
-        <h2 class="name">Workplace</h2>
-        <input class="field" id="workplace" th:value="${user.workplace}" type="text" name="workplace">
-
-        <input class="button" type="submit" value="Save" />
-      </div>
-    </form>
-    <div id="backform">
-      <a class="button" id="buttonback" href="/user/authorisation">To my page</a>
+        </form>
+        <div class="form-footer"><a class="back-link with-icon" href="/user/authorisation">To my page</a></div>
     </div>
-  </div>
-</div>
+</main>
 
 <footer id="layoutFooter">
-  <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
 </footer>
 
 <script src="/script/avatarPreview.js"></script>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!-- The inside of a person's or a group's card in the lists (friends,
+     requests, members, admins, search). The page wraps it in a
+     <div class="list-card"> and adds its own buttons after it. The name link
+     stretches over the whole card (lists.css), so the card opens the page. -->
+
+<th:block th:fragment="person(elem)">
+    <img class="list-avatar" th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png" alt="">
+    <img class="list-avatar" th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId} + '?size=thumb'" alt="">
+    <div class="list-body">
+        <a class="card-link list-name" th:href="@{/searchResult/getUserPage(anotherUserLogin=${elem.anotherUserLogin})}"
+           th:text="${elem.firstName + ' ' + (elem.lastName ?: '')}"></a>
+        <p class="list-meta" th:if="${!#strings.isEmpty(elem.workplace)}" th:text="${elem.workplace}"></p>
+        <p class="list-meta" th:if="${!#strings.isEmpty(elem.education)}" th:text="${elem.education}"></p>
+        <th:block th:with="place=${#strings.listJoin({elem.city, elem.region, elem.countryName}.?[#this != null and #this != ''], ', ')}">
+            <p class="list-meta" th:if="${!#strings.isEmpty(place)}" th:text="${place}"></p>
+        </th:block>
+        <p class="list-meta" th:text="${elem.email}"></p>
+    </div>
+</th:block>
+
+<th:block th:fragment="group(elem)">
+    <img class="list-avatar" th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png" alt="">
+    <img class="list-avatar" th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId} + '?size=thumb'" alt="">
+    <div class="list-body">
+        <a class="card-link list-name" th:href="@{/searchResult/getGroupPage(groupId=${elem.id})}" th:text="${elem.name}"></a>
+        <p class="list-meta">Group</p>
+    </div>
+</th:block>
+
+<!-- The bar above a list: a way back, the title and how many there are. -->
+<div th:fragment="header(title, back, count)" class="list-header">
+    <a class="back-link with-icon" th:href="${back}">Back</a>
+    <h1 th:text="${title}"></h1>
+    <span class="list-count" th:text="${count}"></span>
+</div>
+</html>

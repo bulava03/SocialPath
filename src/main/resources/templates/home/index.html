@@ -1,35 +1,33 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SocialPath</title>
     <link rel="stylesheet" href="/style/layout.css">
-    <link rel="stylesheet" href="/style/authFormStyle.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/forms.css">
 </head>
 <body>
 <div th:insert="~{shared/layoutIndex :: #layoutHeader}"></div>
 
-<div class="container">
-    <div class="authtitle">
-        <h1>SocialPath</h1>
-    </div>
-    <div class="authform">
-        <form id="authForm" action="/auth/login" method="post">
-            <div class="authinput">
-                <h2 class="name">Login</h2>
-                <input class="field" id="login" name="login" type="text" th:value="${login}"
-                       autocomplete="username" required>
-                <h2 class="name">Password</h2>
-                <input class="field" id="password" name="password" type="password"
-                       autocomplete="current-password" required>
-                <input class="button" type="submit" value="Sign in">
-            </div>
+<main class="form-page">
+    <div class="form-card form-card-narrow">
+        <h1 class="form-title">Welcome back</h1>
+        <p class="form-subtitle">Sign in to see what your friends are up to.</p>
+        <form id="authForm" class="form-stack" action="/auth/login" method="post">
+            <label class="name" for="login">Login</label>
+            <input class="field" id="login" name="login" type="text" th:value="${login}"
+                   autocomplete="username" required>
+            <label class="name" for="password">Password</label>
+            <input class="field" id="password" name="password" type="password"
+                   autocomplete="current-password" required>
+            <p id="errortext" class="errortext" th:text="${errorText}"></p>
+            <button class="btn btn-primary btn-block" type="submit">Sign in</button>
         </form>
-        <a class="button" href="/registration">Sign up</a>
-        <p id="errortext" class="errortext" th:text="${errorText}"></p>
+        <p class="form-switch">New to SocialPath? <a href="/registration">Sign up</a></p>
     </div>
-</div>
+</main>
 
 <footer id="layoutFooter">
     <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>

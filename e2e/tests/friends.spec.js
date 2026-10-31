@@ -70,7 +70,7 @@ test.describe("friends", () => {
         expect(await accept.json()).toMatchObject({ result: "NO_INVITE" });
 
         await page.goto(`/user/getUsersFriends?id=${user.login}`);
-        await expect(page.locator(".table-wrapper")).toHaveCount(0);
+        await expect(page.locator(".list-card")).toHaveCount(0);
         await close();
     });
 });

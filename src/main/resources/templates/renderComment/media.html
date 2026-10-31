@@ -1,0 +1,19 @@
+<html xmlns:th="http://www.thymeleaf.org">
+  <!-- The photos or the video of a post or comment, shared by the user and
+       group feeds. Photos are laid out by commentsStyle.css according to
+       their number (media-count-1 .. media-count-5). -->
+  <th:block th:fragment="media(comment)">
+    <th:block th:if="${comment.media != null and !comment.media.isEmpty()}">
+      <div th:if="${comment.media.size() == 1 and comment.isVideo}" class="media-video">
+        <video th:if="${comment.videoStatus == 'READY'}" preload="metadata" controls th:src="'/images/' + ${comment.media[0]}"></video>
+        <!-- Converted in the background; comments.js swaps this for the player once it is ready. -->
+        <p th:if="${comment.videoStatus == 'PROCESSING'}" class="video-processing" th:data-video-id="${comment.media[0]}">Video is processing…</p>
+        <p th:if="${comment.videoStatus == 'FAILED'}" class="video-failed">This video could not be processed.</p>
+      </div>
+
+      <div th:unless="${comment.isVideo}" th:class="'media-grid media-count-' + ${comment.media.size()}">
+        <img th:each="mediaId : ${comment.media}" loading="lazy" th:src="'/images/' + ${mediaId}" alt="image">
+      </div>
+    </th:block>
+  </th:block>
+</html>

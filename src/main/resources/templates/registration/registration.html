@@ -1,36 +1,37 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SocialPath</title>
-    <link rel="stylesheet" th:href="@{/style/layout.css}">
-    <link rel="stylesheet" th:href="@{/style/regFormStyle.css}">
-    <link rel="stylesheet" th:href="@{/style/gradientPage.css}">
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/forms.css">
 </head>
 <body>
 <div th:insert="~{shared/layout :: #layoutHeader}"></div>
 
-<div class="container">
-    <div class="regtitle">
-        <h1>Sign up</h1>
-    </div>
-    <div class="regform">
+<main class="form-page">
+    <div class="form-card">
+        <h1 class="form-title">Create your account</h1>
+        <p class="form-subtitle">Login, password, first name, phone and email are required. The rest is optional.</p>
+        <!-- Server-side errors go on top: the form is long and the page reloads scrolled up. -->
+        <p class="errortext errortext-top" th:if="${errorText}" th:text="${errorText}"></p>
         <form id="regform" method="post" action="/registration/registration">
-            <div class="reginput">
-                <h2 class="name">Login</h2>
+            <div class="form-grid">
+                <label class="name" for="login">Login</label>
                 <input class="field" id="login" th:value="${User.login}" type="text" name="login">
-                <h2 class="name">Password</h2>
+                <label class="name" for="password">Password</label>
                 <input class="field" id="password" type="password" name="password" autocomplete="new-password">
-                <h2 class="name">First name</h2>
+                <label class="name" for="name">First name</label>
                 <input class="field" id="name" th:value="${User.firstName}" type="text" name="firstName">
-                <h2 class="name">Last name</h2>
+                <label class="name" for="surname">Last name</label>
                 <input class="field" id="surname" th:value="${User.lastName}" type="text" name="lastName">
-                <h2 class="name">Phone number</h2>
+                <label class="name" for="phone">Phone number</label>
                 <input class="field" id="phone" th:value="${User.phoneNumber}" type="text" name="phoneNumber">
-                <h2 class="name">Email</h2>
+                <label class="name" for="email">Email</label>
                 <input class="field" id="email" th:value="${User.email}" type="text" name="email">
-                <h2 class="name">Date of birth</h2>
+                <label class="name" for="dob-day">Date of birth</label>
                 <div class="dob-row">
                 <input class="field" id="dob-day" th:value="${User.day}"
                        type="text" name="day" placeholder="Day" inputmode="numeric">
@@ -55,26 +56,26 @@
                             th:value="${y}" th:text="${y}" th:selected="${#strings.toString(y) == User.year}"></option>
                 </select>
                 </div>
-                <h2 class="name">Country</h2>
+                <label class="name" for="country">Country</label>
                 <select id="country" name="countryCode">
                     <option value="" th:selected="${#strings.isEmpty(User.countryCode)}">Country</option>
                     <option th:each="c : ${countries}" th:value="${c.code}" th:text="${c.name}"
                             th:selected="${c.code == User.countryCode}"></option>
                 </select>
-                <h2 class="name">Region</h2>
+                <label class="name" for="region">Region</label>
                 <input class="field" id="region" th:value="${User.Region}" type="text" name="region">
-                <h2 class="name">City</h2>
+                <label class="name" for="city">City</label>
                 <input class="field" id="city" th:value="${User.City}" type="text" name="city">
-                <h2 class="name">Education</h2>
+                <label class="name" for="education">Education</label>
                 <input class="field" id="education" th:value="${User.Education}" type="text" name="education">
-                <h2 class="name">Workplace</h2>
+                <label class="name" for="workplace">Workplace</label>
                 <input class="field" id="workplace" th:value="${User.Workplace}" type="text" name="workplace">
-                <input class="button" type="submit" value="Sign up">
-                <p class="errortext" th:text="${errorText}"></p>
+                <div class="form-actions"><button class="btn btn-primary" type="submit">Sign up</button></div>
             </div>
         </form>
+        <p class="form-switch">Already have an account? <a href="/">Sign in</a></p>
     </div>
-</div>
+</main>
 
 <footer id="layoutFooter">
     <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>

@@ -1,61 +1,143 @@
+/* A user's or a group's page: the profile card on the left, the search,
+   the new post form and the feed on the right. One column on phones. */
 #page {
     display: grid;
-    grid-template-columns: 25% 75%;
-    grid-template-rows: 100%;
-    height: 100%;
-}
-
-#left {
-    grid-column: 1;
-    background-color: #edc7a4;
-    padding-left: 20px;
-    padding-top: 40px;
-    padding-bottom: 50px;
-    padding-right: 20px;
-    color: #595959;
-    margin-left: 15px;
-    margin-bottom: 20px;
-    border-radius: 10px;
-}
-
-#right {
-    grid-column: 2;
-    padding-left: 20px;
-    padding-right: 15px;
-    padding-top: 50px;
-    padding-bottom: 50px;
-}
-
-.leftFrameButton {
-    background-color: #e37f22;
-    display: block;
-    margin: 20px, 20px, 20px, 20px;
-    margin-top: 40px;
-    text-align: center;
-    border-radius: 12px;
-    border: 0;
+    grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
     width: 100%;
-    padding: 14px 5px;
-    outline: none;
-    color: white;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
+    max-width: 1240px;
+    margin: 5px auto 0;
+    padding: 0 15px;
 }
 
-.leftFrameButton:last-of-type {
+/* ---------- profile card ---------- */
+
+/* A full-height column beside the feed. Its content scrolls with the page,
+   so at the top of the page everything is where it always is. */
+#left {
+    align-self: stretch;
+    padding: 28px 22px 22px;
+    text-align: center;
+}
+
+#left h1 {
+    margin: 16px 0 4px;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.profile-info {
+    margin: 18px 0 0;
+    padding: 14px 0 0;
+    border-top: 1px solid var(--line);
+    text-align: left;
+    font-size: 14px;
+}
+
+.profile-info > div + div {
+    margin-top: 10px;
+}
+
+.profile-info dt {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.profile-info dd {
+    margin: 1px 0 0;
+    overflow-wrap: anywhere;
+}
+
+.profile-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     margin-top: 20px;
+}
+
+/* Fragments wrap some buttons in their own blocks; let those take part in
+   the column as if they were not there. */
+.profile-nav div,
+.profile-nav form {
+    display: contents;
+}
+
+/* Page links: quiet until pointed at. */
+.leftFrameButton {
+    display: block;
+    width: 100%;
+    padding: 11px 14px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background-color: var(--brand-soft);
+    color: var(--brand-active);
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
 }
 
 .leftFrameButton:hover {
-    background-color: #fa9434;
+    background-color: var(--brand);
+    color: var(--text-on-brand);
+    box-shadow: var(--glow-brand);
 }
 
-#divLeftFrameButtons button {
-    margin-top: 20px;
+/* Actions (add friend, join, accept): the main thing to do on the card. */
+button.leftFrameButton {
+    background-color: var(--brand);
+    color: var(--text-on-brand);
+    box-shadow: var(--shadow-sm);
 }
 
-a.leftFrameButton {
-    text-decoration: none;
-    box-sizing: border-box;
+button.leftFrameButton:hover {
+    background-color: var(--brand-hover);
+    box-shadow: var(--glow-brand);
+}
+
+/* Actions that undo something: a red outline that fills under the pointer. */
+#submitRemove,
+#submitRemoveInvite,
+#submitReject,
+#leaveButton {
+    background-color: transparent;
+    color: var(--danger);
+    box-shadow: inset 0 0 0 1px rgba(201, 48, 44, 0.35);
+}
+
+#submitRemove:hover,
+#submitRemoveInvite:hover,
+#submitReject:hover,
+#leaveButton:hover {
+    background-color: var(--danger);
+    color: var(--text-on-brand);
+    box-shadow: var(--glow-danger);
+}
+
+/* ---------- right column ---------- */
+
+#right {
+    min-width: 0;
+    padding-bottom: 30px;
+}
+
+/* ---------- phones and narrow windows ---------- */
+
+@media (max-width: 800px) {
+    #page {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 15px;
+    }
+
+    #left {
+        align-self: start;
+    }
 }

@@ -97,6 +97,11 @@ export async function expectAlert(page, action) {
 /** The top-level posts of the feed. */
 export const posts = page => page.locator("#publications > .comment");
 
+/** A value from the profile card on a user page, by its label. */
+export const profileField = (page, label) => page.locator("#left .profile-info > div")
+    .filter({ has: page.locator("dt", { hasText: label }) })
+    .locator("dd");
+
 /** Publishes "post 1" ... "post N" and returns their ids in that order. */
 export async function publishMany(request, count, { groupId, prefix = "post" } = {}) {
     const ids = [];

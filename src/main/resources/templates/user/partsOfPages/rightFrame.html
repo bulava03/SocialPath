@@ -7,25 +7,24 @@
             <input id="searchButton" type="submit" value="Search">
         </form>
 
-        <div th:if="${isAuthor}">
-            <br><br>
-            <div id="new-publication">
-                <form id="new-publication-form" enctype="multipart/form-data">
-                    <textarea id="publication-text" name="text" placeholder="Write a post..."></textarea>
+        <div th:if="${isAuthor}" id="new-publication" class="composer card">
+            <form id="new-publication-form" enctype="multipart/form-data">
+                <div class="composer-body">
+                    <img th:if="${avatar == null}" class="composer-avatar" src="/pictures/photo.png" alt="">
+                    <img th:unless="${avatar == null}" class="composer-avatar" th:src="'/images/' + ${avatar} + '?size=thumb'" alt="">
+                    <textarea id="publication-text" name="text" placeholder="What's new?" aria-label="New post"></textarea>
+                </div>
 
-                    <div id="publication-media-preview" class="media-preview"></div>
-                    <input type="file" id="publication-media" name="media" accept="image/*,video/*" multiple style="display: none;">
+                <div id="publication-media-preview" class="media-preview"></div>
+                <input type="file" id="publication-media" name="media" accept="image/*,video/*" multiple style="display: none;">
 
-                    <div class="publication-actions">
-                        <button type="button" id="publication-add-media-btn" class="publication-add-media-btn">Add media</button>
-                        <button class="submit-btn" type="button" onclick="submitPublication()">Publish</button>
-                    </div>
-                    <p th:replace="~{shared/mediaLimits :: hint}"></p>
-                </form>
-            </div>
+                <div class="publication-actions">
+                    <button type="button" id="publication-add-media-btn" class="publication-add-media-btn">Add media</button>
+                    <button class="submit-btn" type="button" onclick="submitPublication()">Publish</button>
+                </div>
+                <p th:replace="~{shared/mediaLimits :: hint}"></p>
+            </form>
         </div>
-
-        <br><br>
 
         <div id="publications" data-scope="user" th:data-target="${user.login}" th:data-latest="${latestActivity}">
             <!-- One feed portion, newest first; also returned on its own for the

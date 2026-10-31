@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { registerUser, signIn } from "./helpers.js";
+import { profileField, registerUser, signIn } from "./helpers.js";
 
 test.describe("profile editing", () => {
     test.beforeEach(async ({ page }) => {
@@ -24,8 +24,8 @@ test.describe("profile editing", () => {
         await page.getByRole("button", { name: "Save" }).click();
 
         await expect(page).toHaveURL(/\/user\/authorisation/);
-        await expect(page.locator("#left")).toContainText("Date of birth: 05.03.1999");
-        await expect(page.locator("#left")).toContainText("City: Riverside");
+        await expect(profileField(page, "Date of birth")).toHaveText("05.03.1999");
+        await expect(profileField(page, "City")).toHaveText("Riverside");
 
         // Opening the form again shows the stored date split into its fields.
         await page.goto("/user/getUserInfo");

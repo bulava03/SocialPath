@@ -1,50 +1,30 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SocialPath</title>
     <link rel="stylesheet" href="/style/layout.css">
     <link rel="stylesheet" href="/style/userIconStyle.css">
     <link rel="stylesheet" href="/style/gradientPage.css">
-    <link rel="stylesheet" href="/style/leftFrameResultStyle.css">
-    <link rel="stylesheet" href="/style/backButtonStyle.css">
+    <link rel="stylesheet" href="/style/lists.css">
 </head>
 <body>
 <div th:insert="~{shared/layout2 :: #layoutHeader}"></div>
 
-<div class="container">
-    <div class="table-container">
-        <div th:each="elem : ${groups}" class="table-wrapper">
-            <table>
-                <tr>
-                    <td class="photo-cell">
-                        <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
-                             style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
-                        <img th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId} + '?size=thumb'"
-                             style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
-                    </td>
-                </tr>
-                <tr>
-                    <td class="content-row">
-                        <div class="content-cell"></div>
-                        <div class="content-cell"><a class="card-link" th:href="@{/searchResult/getGroupPage(groupId=${elem.id})}"><b th:text="${elem.name}"></b></a></div>
-                        <div class="content-cell"></div>
-                        <div class="content-cell"></div>
-                        <div class="content-cell"></div>
-                    </td>
-                </tr>
-            </table>
+<main class="list-page">
+    <div th:replace="~{shared/cards :: header('Groups', @{/user/anotherUserPage(anotherUserLogin=${login})}, ${#lists.size(groups)})}"></div>
+
+    <div class="list-grid">
+        <div class="list-card" th:each="elem : ${groups}">
+            <th:block th:replace="~{shared/cards :: group(${elem})}"></th:block>
         </div>
     </div>
-
-    <form method="get" action="anotherUserPage">
-        <input class="field" id="anotherUserLogin" th:value="${login}" type="hidden" name="anotherUserLogin" />
-        <input class="backButton" type="submit" value="Back">
-    </form>
-</div>
+    <p class="list-empty" th:if="${#lists.isEmpty(groups)}">Not a member of any group yet.</p>
+</main>
 
 <footer id="layoutFooter">
     <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
 </footer>
-
 </body>
 </html>

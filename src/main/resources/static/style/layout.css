@@ -1,49 +1,141 @@
-body, p {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+/* Design tokens shared by every page: the brand orange of the original
+   design, translucent light surfaces that let the background show through,
+   and one set of radii, shadows and text colours. */
+:root {
+    --brand: #e37f22;
+    --brand-hover: #f08d2e;
+    --brand-active: #c96d16;
+    --brand-soft: rgba(227, 127, 34, 0.12);
+    --brand-soft-hover: rgba(227, 127, 34, 0.2);
+    --danger: #c9302c;
+    --danger-hover: #dc4a45;
+    --danger-soft: rgba(201, 48, 44, 0.1);
+    /* Under the pointer, filled buttons get lighter and glow in their colour. */
+    --glow-brand: 0 4px 14px rgba(227, 127, 34, 0.45);
+    --glow-danger: 0 4px 14px rgba(201, 48, 44, 0.42);
+    /* Opaque light fills for hovers that stay light (replies, the menu). */
+    --brand-pastel: #f8c38f;
+    --brand-pastel-ink: #7a3c03;
+    --danger-pastel: #f3b6b2;
+    --danger-pastel-ink: #8c1c18;
+
+    --text: #262626;
+    --text-muted: #6b6b6b;
+    --text-on-brand: #ffffff;
+
+    --surface: rgba(255, 255, 255, 0.86);
+    --surface-strong: rgba(255, 255, 255, 0.95);
+    --surface-sunken: rgba(0, 0, 0, 0.04);
+    --line: rgba(0, 0, 0, 0.08);
+
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-pill: 999px;
+    --shadow: 0 8px 28px rgba(20, 30, 45, 0.18);
+    --shadow-sm: 0 2px 8px rgba(20, 30, 45, 0.12);
+    --blur: blur(14px) saturate(1.2);
+
+    --font: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    /* Line icons (Feather, MIT), drawn in the text colour through CSS masks. */
+    --icon-paperclip: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'/%3E%3C/svg%3E");
+    --icon-reply: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 14 4 9 9 4'/%3E%3Cpath d='M20 20v-7a4 4 0 0 0-4-4H4'/%3E%3C/svg%3E");
+    --icon-trash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/%3E%3Cpath d='M10 11v6M14 11v6'/%3E%3Cpath d='M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2'/%3E%3C/svg%3E");
+    --icon-back: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='19' y1='12' x2='5' y2='12'/%3E%3Cpolyline points='12 19 5 12 12 5'/%3E%3C/svg%3E");
+}
+
+/* An icon before a button's label, in the label's colour. */
+.with-icon::before {
+    content: "";
+    flex: none;
+    width: 1.1em;
+    height: 1.1em;
+    background-color: currentColor;
+    -webkit-mask: var(--icon) center / contain no-repeat;
+    mask: var(--icon) center / contain no-repeat;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body,
+p {
     margin: 0;
 }
 
+body {
+    font-family: var(--font);
+    color: var(--text);
+    line-height: 1.45;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
+:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+}
+
+/* ---------- header ---------- */
+
 #layoutHeader {
-    padding: 0 20px;
-    height: 50px;
-    background-color: #e37f22;
     display: flex;
     align-items: center;
+    gap: 16px;
+    height: 56px;
     margin: 15px;
-    border-radius: 10px;
+    padding: 0 12px 0 22px;
+    border-radius: var(--radius);
+    background: linear-gradient(100deg, var(--brand) 0%, #ec9440 100%);
+    box-shadow: var(--shadow);
 }
 
-#layoutHeader .navbar-header a {
-    text-decoration: none;
-    color: white;
-    font-size: 24px;
-}
-
+#layoutHeader .navbar-header a,
 #bigbuttonlink {
+    color: var(--text-on-brand);
+    font-size: 23px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
     text-decoration: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
+
+/* ---------- footer ---------- */
 
 #layoutFooter {
-    position: relative;
-    bottom: 0;
-    color: white;
-    font-weight: bold;
-    left: 0;
-    right: 0;
-    width: 100%;
+    margin-top: auto;
+    padding: 18px 0;
     text-align: center;
-    border-top: 3px solid white;
-    padding: 10px 0;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 13px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- shared building blocks ---------- */
+
+/* A translucent panel over the background picture. */
+.card {
+    background: var(--surface);
+    -webkit-backdrop-filter: var(--blur);
+    backdrop-filter: var(--blur);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
 }
 
 .container {
-    margin-top: 90px;
-    margin-bottom: calc(100vh - 639px);
-    margin-left: 20px;
-    margin-right: 20px;
+    margin: 30px 20px;
 }
 
 .container:after {
@@ -52,11 +144,92 @@ body, p {
     clear: both;
 }
 
-
 /* Links styled as buttons (plain navigation that used to be wrapped in GET forms). */
 a.button {
     display: inline-block;
-    box-sizing: border-box;
     text-decoration: none;
     text-align: center;
+}
+
+/* Buttons. Primary: the main thing to do; soft: secondary; danger: undoes
+   something, so it is outlined rather than filled. */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border: none;
+    border-radius: var(--radius-pill);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.btn-primary {
+    background-color: var(--brand);
+    color: var(--text-on-brand);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+    background-color: var(--brand-hover);
+    box-shadow: var(--glow-brand);
+}
+
+.btn-soft {
+    background-color: var(--brand-soft);
+    color: var(--brand-active);
+}
+
+.btn-soft:hover {
+    background-color: var(--brand);
+    color: var(--text-on-brand);
+}
+
+.btn-danger {
+    background-color: transparent;
+    color: var(--danger);
+    box-shadow: inset 0 0 0 1px rgba(201, 48, 44, 0.35);
+}
+
+.btn-danger:hover {
+    background-color: var(--danger);
+    color: var(--text-on-brand);
+    box-shadow: var(--glow-danger);
+}
+
+.btn-ghost {
+    background-color: transparent;
+    color: var(--text-muted);
+}
+
+.btn-ghost:hover {
+    background-color: var(--surface-sunken);
+    color: var(--text);
+}
+
+/* "Back" at the top of a list or a form. */
+.back-link {
+    --icon: var(--icon-back);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px 7px 12px;
+    border-radius: var(--radius-pill);
+    background-color: var(--brand);
+    color: var(--text-on-brand);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.15s, box-shadow 0.15s;
+}
+
+.back-link:hover {
+    background-color: var(--brand-hover);
+    box-shadow: var(--glow-brand);
 }

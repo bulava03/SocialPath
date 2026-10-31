@@ -1,63 +1,36 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SocialPath</title>
-    <link rel="stylesheet" href="/style/gradientPage.css">
-    <link rel="stylesheet" href="/style/leftFrameResultStyle.css">
-    <link rel="stylesheet" href="/style/backButtonStyle.css">
     <link rel="stylesheet" href="/style/layout.css">
     <link rel="stylesheet" href="/style/userIconStyle.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/lists.css">
 </head>
 <body>
 <div th:insert="~{shared/layout2 :: #layoutHeader}"></div>
 
-<div class="container">
-    <div class="table-container" th:each="elem : ${users}">
-        <div class="table-wrapper">
-            <table>
-                <tr>
-                    <td class="photo-cell">
-                        <img th:if="${#strings.isEmpty(elem.imageId)}" src="/pictures/photo.png"
-                             style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
-                        <img th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId} + '?size=thumb'"
-                             style="border-radius: 50px;" width="100px" height="100px" alt="usericon">
-                    </td>
-                </tr>
-                <tr>
-                    <td class="content-row">
-                        <div class="content-cell"></div>
-                        <div class="content-cell"><a class="card-link" th:href="@{/searchResult/getUserPage(anotherUserLogin=${elem.anotherUserLogin})}"><b th:text="${elem.firstName} + ' ' + ${elem.lastName}"></b></a></div>
-                        <div class="content-cell"></div>
-                        <div class="content-cell" th:text="'Email: ' + ${elem.email}"></div>
-                        <div class="content-cell" th:if="${elem.phoneNumber != null}" th:text="'Phone number: ' + ${elem.phoneNumber}"></div>
-                        <div class="content-cell" th:if="${elem.countryName != null}" th:text="'Country: ' + ${elem.countryName}"></div>
-                        <div class="content-cell" th:if="${elem.region != null}" th:text="'Region: ' + ${elem.region}"></div>
-                        <div class="content-cell" th:if="${elem.city != null}" th:text="'City: ' + ${elem.city}"></div>
-                        <div class="content-cell" th:if="${elem.education != null}" th:text="'Education: ' + ${elem.education}"></div>
-                        <div class="content-cell" th:if="${elem.workplace != null}" th:text="'Workplace: ' + ${elem.workplace}"></div>
-                        <div class="content-cell" th:if="${login == author.login}">
-                            <form typeof="hidden" method="post" action="/user/removeFromFriendsMyPage">
-                                <input class="field" th:value="${elem.anotherUserLogin}"  type="hidden" name="id" />
-                                <input class="userButton rejectButton" style="width: 200px;" type="submit" value="Remove from friends">
-                            </form>
-                        </div>
-                        <div class="content-cell"></div>
-                        <div class="content-cell"></div>
-                    </td>
-                </tr>
-            </table>
+<main class="list-page">
+    <div th:replace="~{shared/cards :: header('Friends', @{/user/anotherUserPage(anotherUserLogin=${login})}, ${#lists.size(users)})}"></div>
+
+    <div class="list-grid">
+        <div class="list-card" th:each="elem : ${users}">
+            <th:block th:replace="~{shared/cards :: person(${elem})}"></th:block>
+            <div class="list-actions">
+                <form th:if="${login == author.login}" method="post" action="/user/removeFromFriendsMyPage">
+                    <input type="hidden" name="id" th:value="${elem.anotherUserLogin}">
+                    <button class="btn btn-danger" type="submit">Remove from friends</button>
+                </form>
+            </div>
         </div>
     </div>
-
-    <form typeof="hidden" method="get" action="/user/anotherUserPage">
-        <input class="field" th:value="${login}" type="hidden" name="anotherUserLogin" />
-        <input class="backButton" type="submit" value="Back">
-    </form>
-</div>
+    <p class="list-empty" th:if="${#lists.isEmpty(users)}">No friends yet.</p>
+</main>
 
 <footer id="layoutFooter">
     <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
 </footer>
-
 </body>
 </html>

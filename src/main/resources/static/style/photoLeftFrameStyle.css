@@ -1,8 +1,12 @@
 #left img {
-    width: calc(100% - 80px);
+    display: block;
+    width: 160px;
+    max-width: 70%;
     aspect-ratio: 1 / 1;
+    margin: 0 auto;
     object-fit: cover;
     border-radius: 50%;
-    margin-left: 40px;
-    margin-right: 40px;
+    border: 4px solid #ffffff;
+    box-shadow: var(--shadow-sm);
+    background-color: #ffffff;
 }
