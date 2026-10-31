@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequiredArgsConstructor
 public class SearchResultController {
     private final GroupService groupService;
+    private final UserService userService;
     private final CommentsService commentsService;
     private final SearchService searchService;
     private final HandleAvatarService handleAvatarService;
@@ -47,6 +48,7 @@ public class SearchResultController {
         Group group = groupService.getGroup(foundedGroup.getGroupId());
 
         model.addAttribute("group", group);
+        model.addAttribute("groupOwner", userService.findByLogin(group.getOwner()));
         model.addAttribute("author", user);
         FeedPage feed = commentsService.loadGroupFeed(group.getId(), null);
         model.addAttribute("publications", feed.posts());

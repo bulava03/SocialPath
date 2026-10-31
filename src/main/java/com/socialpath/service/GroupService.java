@@ -1,7 +1,7 @@
 package com.socialpath.service;
 
 import com.socialpath.entity.Group;
-import com.socialpath.dto.request.GroupCreationForm;
+import com.socialpath.dto.request.GroupForm;
 import com.socialpath.validation.ValidationResult;
 import com.socialpath.dto.response.UserSearchResult;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,14 +17,14 @@ import java.util.List;
 public interface GroupService {
 
     /**
-     * Validates a group creation form against its Bean Validation constraints.
+     * Validates a group form against its Bean Validation constraints.
      * @param group the form to validate
      * @return success, or a failure carrying the first violation message
      */
-    ValidationResult validateGroup(GroupCreationForm group);
+    ValidationResult validateGroup(GroupForm group);
 
     /**
-     * Persists a new group.
+     * Persists a new group, stamped with the current time.
      * @param group the group to create
      * @return the stored group, including its generated id
      */
@@ -89,14 +89,15 @@ public interface GroupService {
     void removeUserFromGroup(Long groupId, String userId);
 
     /**
-     * Updates a group's name and avatar. A new file replaces the current
+     * Updates a group's details and avatar. A new file replaces the current
      * avatar, removeImage clears it without a replacement, otherwise the
      * avatar is left unchanged.
-     * @param groupUpdated the group carrying the new name (and id)
+     * @param id the group
+     * @param form the new details, already validated
      * @param file the uploaded avatar, possibly empty
      * @param removeImage whether to clear the current avatar
      */
-    void updateGroup(Group groupUpdated, MultipartFile file, boolean removeImage) throws IOException;
+    void updateGroup(Long id, GroupForm form, MultipartFile file, boolean removeImage) throws IOException;
 
     /**
      * Adds a member to a group.

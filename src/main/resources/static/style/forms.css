@@ -220,3 +220,25 @@ p.errorText-top {
         width: 100%;
     }
 }
+
+/* A multi-line field: as tall as its rows, resizable only in height. */
+.field-textarea {
+    height: auto;
+    min-height: 110px;
+    padding: 10px 14px;
+    font-family: inherit;
+    line-height: 1.45;
+    resize: vertical;
+}
+
+/* The group's own topic: asked for only while "Other" is the chosen one. */
+.custom-topic {
+    display: none;
+}
+
+.form-stack:has(#category option[value="OTHER"]:checked) .custom-topic {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+}

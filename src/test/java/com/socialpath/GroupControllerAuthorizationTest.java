@@ -1,5 +1,6 @@
 package com.socialpath;
 
+import com.socialpath.dto.request.GroupForm;
 import com.socialpath.entity.Group;
 import com.socialpath.entity.User;
 import com.socialpath.dto.request.GroupUserRequest;
@@ -7,15 +8,17 @@ import com.socialpath.exception.ForbiddenOperationException;
 import com.socialpath.service.GroupService;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.ModelAttributesService;
+import com.socialpath.validation.ValidationResult;
 import com.socialpath.web.GroupController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.modelmapper.ModelMapper;
 import org.springframework.ui.ExtendedModelMap;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -37,7 +40,6 @@ class GroupControllerAuthorizationTest {
         groupService = mock(GroupService.class);
         controller = new GroupController(
                 groupService,
-                mock(ModelMapper.class),
                 mock(ModelAttributesService.class),
                 mock(HandleAvatarService.class));
 
@@ -142,12 +144,41 @@ class GroupControllerAuthorizationTest {
 
     @Test
     void updateGroup_NonOwnerCannotChangeTheGroup() throws Exception {
-        Group renamed = new Group();
+        GroupForm renamed = new GroupForm();
         renamed.setName("Taken over");
 
         assertThrows(ForbiddenOperationException.class,
                 () -> controller.updateGroup(user("admin"), renamed, groupId.toString(), null, false,
                         new ExtendedModelMap()));
-        verify(groupService, never()).updateGroup(any(), any(), anyBoolean());
+        verify(groupService, never()).updateGroup(any(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    void updateGroup_OwnerSavesTheValidatedDetails() throws Exception {
+        GroupForm details = new GroupForm();
+        details.setName("Chess club");
+        when(groupService.validateGroup(details)).thenReturn(ValidationResult.success());
+
+        String view = controller.updateGroup(user("owner"), details, groupId.toString(), null, false,
+                new ExtendedModelMap());
+
+        assertEquals("redirect:/searchResult/getGroupPage?groupId=" + groupId, view);
+        verify(groupService).updateGroup(groupId, details, null, false);
+    }
+
+    @Test
+    void updateGroup_InvalidDetails_ShowTheFormAgainWithTheTypedValues() throws Exception {
+        GroupForm details = new GroupForm();
+        details.setName("");
+        details.setWebsite("not a link");
+        when(groupService.validateGroup(details)).thenReturn(ValidationResult.failure("Group name must not be empty."));
+        ExtendedModelMap model = new ExtendedModelMap();
+
+        String view = controller.updateGroup(user("owner"), details, groupId.toString(), null, false, model);
+
+        assertEquals("group/groupUpdatingForm", view);
+        assertEquals("Group name must not be empty.", model.get("errorText"));
+        assertSame(details, model.get("form"));
+        verify(groupService, never()).updateGroup(any(), any(), any(), anyBoolean());
     }
 }

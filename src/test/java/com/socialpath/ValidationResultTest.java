@@ -1,6 +1,6 @@
 package com.socialpath;
 
-import com.socialpath.dto.request.GroupCreationForm;
+import com.socialpath.dto.request.GroupForm;
 import com.socialpath.validation.ValidationResult;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -49,7 +49,7 @@ class ValidationResultTest {
     @Test
     void of_WithViolation_FailsWithItsMessage() {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        GroupCreationForm form = new GroupCreationForm("alice");
+        GroupForm form = new GroupForm();
 
         ValidationResult result = ValidationResult.of(validator.validate(form));
 

@@ -1,8 +1,9 @@
 package com.socialpath.web;
 
 import com.socialpath.entity.Group;
+import com.socialpath.entity.GroupCategory;
 import com.socialpath.entity.User;
-import com.socialpath.dto.request.GroupCreationForm;
+import com.socialpath.dto.request.GroupForm;
 import com.socialpath.dto.request.GroupUserRequest;
 import com.socialpath.dto.request.LeftFrameRequest;
 import com.socialpath.dto.response.GroupSearchResult;
@@ -15,7 +16,6 @@ import com.socialpath.service.GroupService;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.ModelAttributesService;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,35 +33,38 @@ import java.util.List;
 public class GroupController {
 
     private final GroupService groupService;
-    private final ModelMapper modelMapper;
     private final ModelAttributesService modelAttributesService;
     private final HandleAvatarService handleAvatarService;
 
     @GetMapping("/getGroupCreationForm")
     public String getGroupCreationForm(@CurrentUser User myUser, Model model) {
-        model.addAttribute("author", myUser);
-        model.addAttribute("group", new GroupCreationForm(myUser.getLogin()));
-        handleAvatarService.handleAvatar(myUser, model, false);
-        return "group/groupCreationForm";
+        return showGroupCreationForm(myUser, new GroupForm(), null, model);
     }
 
     @PostMapping("/createGroup")
-    public String createGroup(@CurrentUser User myUser, GroupCreationForm groupCreationForm, Model model) {
-        String login = myUser.getLogin();
-
-        ValidationResult validation = groupService.validateGroup(groupCreationForm);
+    public String createGroup(@CurrentUser User myUser, GroupForm form, Model model) {
+        ValidationResult validation = groupService.validateGroup(form);
         if (!validation.isSuccess()) {
-            model.addAttribute("author", myUser);
-            model.addAttribute("group", groupCreationForm);
-            model.addAttribute("errorText", validation.getMessage());
-            handleAvatarService.handleAvatar(myUser, model, false);
-            return "group/groupCreationForm";
+            return showGroupCreationForm(myUser, form, validation.getMessage(), model);
         }
 
-        Group group = modelMapper.map(groupCreationForm, Group.class);
-        group.setOwner(login);
+        Group group = new Group();
+        form.applyTo(group);
+        group.setOwner(myUser.getLogin());
         group = groupService.addGroup(group);
         return "redirect:/searchResult/getGroupPage?groupId=" + group.getId();
+    }
+
+    private String showGroupCreationForm(User user, GroupForm form, String errorText, Model model) {
+        model.addAttribute("author", user);
+        model.addAttribute("group", form);
+        model.addAttribute("categories", GroupCategory.values());
+        if (errorText != null) {
+            // Only when there is one: an upload over the limit brings its message as a flash attribute.
+            model.addAttribute("errorText", errorText);
+        }
+        handleAvatarService.handleAvatar(user, model, false);
+        return "group/groupCreationForm";
     }
 
     @GetMapping("/getGroupsMembers")
@@ -146,11 +149,11 @@ public class GroupController {
             throw new ForbiddenOperationException("Only the group owner can edit the group");
         }
 
-        return showGroupUpdatingForm(groupFounded, user, model);
+        return showGroupUpdatingForm(groupFounded, GroupForm.from(groupFounded), user, null, model);
     }
 
     @PostMapping("/updateGroup")
-    public String updateGroup(@CurrentUser User user, Group group, String groupId, MultipartFile file,
+    public String updateGroup(@CurrentUser User user, GroupForm form, String groupId, MultipartFile file,
                               @RequestParam(name = "removeImage", defaultValue = "false") boolean removeImage,
                               Model model)
             throws IOException {
@@ -160,22 +163,31 @@ public class GroupController {
             throw new ForbiddenOperationException("Only the group owner can edit the group");
         }
 
-        group.setId(groupFounded.getId());
+        ValidationResult validation = groupService.validateGroup(form);
+        if (!validation.isSuccess()) {
+            return showGroupUpdatingForm(groupFounded, form, user, validation.getMessage(), model);
+        }
         try {
-            groupService.updateGroup(group, file, removeImage);
+            groupService.updateGroup(groupFounded.getId(), form, file, removeImage);
         } catch (InvalidImageException e) {
-            model.addAttribute("errorText", e.getMessage());
-            return showGroupUpdatingForm(groupFounded, user, model);
+            return showGroupUpdatingForm(groupFounded, form, user, e.getMessage(), model);
         }
 
-        return "redirect:/searchResult/getGroupPage?groupId=" + group.getId();
+        return "redirect:/searchResult/getGroupPage?groupId=" + groupFounded.getId();
     }
 
-    private String showGroupUpdatingForm(Group groupFounded, User user, Model model) {
+    // The group gives the id and the avatar, the form the values shown in the fields.
+    private String showGroupUpdatingForm(Group groupFounded, GroupForm form, User user, String errorText, Model model) {
         GroupSearchResult group = GroupSearchResult.from(groupFounded);
         group = handleAvatarService.resolveDisplayAvatar(groupFounded, group);
 
         model.addAttribute("group", group);
+        model.addAttribute("form", form);
+        model.addAttribute("categories", GroupCategory.values());
+        if (errorText != null) {
+            // Only when there is one: an upload over the limit brings its message as a flash attribute.
+            model.addAttribute("errorText", errorText);
+        }
         model.addAttribute("author", user);
         model = handleAvatarService.handleAvatar(user, model, false);
 

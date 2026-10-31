@@ -143,3 +143,45 @@ button.leftFrameButton:hover {
         align-self: start;
     }
 }
+
+/* ---------- group card ---------- */
+
+/* Under the group name: the topic and how many members there are. */
+.group-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.group-topic {
+    padding: 2px 10px;
+    border-radius: var(--radius-pill);
+    background-color: var(--brand-soft);
+    color: var(--brand-active);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* The owner's own words: line breaks are kept as typed. */
+.group-description {
+    margin: 14px 0 0;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: left;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.profile-info dd a {
+    color: var(--brand-active);
+    text-decoration: none;
+}
+
+.profile-info dd a:hover {
+    text-decoration: underline;
+}

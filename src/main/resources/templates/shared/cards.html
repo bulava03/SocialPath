@@ -25,7 +25,8 @@
     <img class="list-avatar" th:unless="${#strings.isEmpty(elem.imageId)}" th:src="'/images/' + ${elem.imageId} + '?size=thumb'" alt="">
     <div class="list-body">
         <a class="card-link list-name" th:href="@{/searchResult/getGroupPage(groupId=${elem.id})}" th:text="${elem.name}"></a>
-        <p class="list-meta">Group</p>
+        <p class="list-meta" th:text="${(elem.category != null ? elem.category + ' · ' : '')
+                + elem.memberCount + (elem.memberCount == 1 ? ' member' : ' members')}">Group</p>
     </div>
 </th:block>
 

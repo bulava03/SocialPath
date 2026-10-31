@@ -1,6 +1,7 @@
 package com.socialpath.repository;
 
 import com.socialpath.entity.Group;
+import com.socialpath.entity.GroupCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -29,10 +30,28 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
      */
     List<Group> findByMembersContains(String memberLogin);
 
+    /**
+     * Writes the details the owner edits. One statement rather than saving
+     * the loaded entity, which would also write back its member lists and
+     * could undo a join that happened in between.
+     * @param id the group
+     * @param name the new name
+     * @param imageId the avatar, or null for none
+     * @param description the description, or null for none
+     * @param category the topic, or null for none
+     * @param customCategory the owner's own topic, with OTHER only
+     * @param website the link, or null for none
+     */
     @Transactional
     @Modifying
-    @Query("update Group g set g.name = :name, g.imageId = :imageId where g.id = :id")
-    void updateGroup(@Param("id") Long id, @Param("name") String name, @Param("imageId") String imageId);
+    @Query("""
+            update Group g set g.name = :name, g.imageId = :imageId, g.description = :description,
+                g.category = :category, g.customCategory = :customCategory, g.website = :website
+            where g.id = :id
+            """)
+    void updateDetails(@Param("id") Long id, @Param("name") String name, @Param("imageId") String imageId,
+                       @Param("description") String description, @Param("category") GroupCategory category,
+                       @Param("customCategory") String customCategory, @Param("website") String website);
 
     @Transactional
     @Modifying

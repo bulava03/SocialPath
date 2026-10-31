@@ -2,7 +2,7 @@ package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import com.socialpath.entity.Group;
-import com.socialpath.dto.request.GroupCreationForm;
+import com.socialpath.dto.request.GroupForm;
 import com.socialpath.dto.response.UserSearchResult;
 import com.socialpath.exception.ResourceNotFoundException;
 import com.socialpath.validation.ValidationResult;
@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -28,7 +29,7 @@ public class GroupServiceImpl implements GroupService {
     private final Validator validator;
 
     @Override
-    public ValidationResult validateGroup(GroupCreationForm group) {
+    public ValidationResult validateGroup(GroupForm group) {
         return ValidationResult.of(validator.validate(group));
     }
 
@@ -39,6 +40,7 @@ public class GroupServiceImpl implements GroupService {
         // keep in sync (the document model synchronized two arrays here).
         group.setMembers(new ArrayList<>(Collections.singletonList(group.getOwner())));
         group.setAdmins(new ArrayList<>(Collections.singletonList(group.getOwner())));
+        group.setCreatedAt(LocalDateTime.now());
         return groupRepository.save(group);
     }
 
@@ -108,12 +110,13 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public void updateGroup(Group groupUpdated, MultipartFile file, boolean removeImage) throws IOException {
-        Group group = findGroupById(groupUpdated.getId());
-        group.setName(groupUpdated.getName());
+    public void updateGroup(Long id, GroupForm form, MultipartFile file, boolean removeImage) throws IOException {
+        Group group = findGroupById(id);
+        form.applyTo(group);
         group.setImageId(handleAvatarService.updateGroupAvatar(group, file, removeImage));
 
-        groupRepository.updateGroup(group.getId(), group.getName(), group.getImageId());
+        groupRepository.updateDetails(group.getId(), group.getName(), group.getImageId(),
+                group.getDescription(), group.getCategory(), group.getCustomCategory(), group.getWebsite());
     }
 
     @Override

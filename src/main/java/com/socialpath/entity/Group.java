@@ -4,6 +4,8 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,6 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -37,6 +40,30 @@ public class Group {
     @Column(name = "owner_login", length = 20, nullable = false)
     private String owner;
 
+    /** What the group is about, in the owner's words; null when not given. */
+    @Column(name = "description", length = 1000)
+    private String description;
+
+    /** The topic from the fixed list; null when not chosen. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", length = 20)
+    private GroupCategory category;
+
+    /** The topic in the owner's words; only with {@link GroupCategory#OTHER}. */
+    @Column(name = "custom_category", length = 30)
+    private String customCategory;
+
+    /** An http(s) link to the group's site or channel; null when not given. */
+    @Column(name = "website", length = 255)
+    private String website;
+
+    /**
+     * When the group was created. For groups older than this column it was
+     * estimated from their first posts (see V8__group_details.sql).
+     */
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
     /** Logins of members, the owner included. EAGER: read in templates and auth checks. */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "group_members", joinColumns = @JoinColumn(name = "group_id"))
@@ -48,6 +75,18 @@ public class Group {
     @CollectionTable(name = "group_admins", joinColumns = @JoinColumn(name = "group_id"))
     @Column(name = "admin_login", length = 20, nullable = false)
     private List<String> admins;
+
+    /**
+     * The topic as people see it: the owner's own words for OTHER, the
+     * list's name otherwise.
+     * @return e.g. "Games" or "Urban gardening", or null without a topic
+     */
+    public String getTopic() {
+        if (category == GroupCategory.OTHER && customCategory != null) {
+            return customCategory;
+        }
+        return category == null ? null : category.getLabel();
+    }
 
     public boolean isOwner(String login) {
         return owner != null && owner.equals(login);

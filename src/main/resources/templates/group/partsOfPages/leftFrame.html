@@ -6,6 +6,27 @@
          th:src="'/images/' + ${groupAvatar}" alt="GroupIcon">
 
     <h1 th:text="${group.name}"></h1>
+    <p class="group-stats">
+      <span class="group-topic" th:if="${group.topic != null}" th:text="${group.topic}">Topic</span>
+      <span th:with="count=${#lists.size(group.members)}"
+            th:text="${count} + (${count} == 1 ? ' member' : ' members')">1 member</span>
+    </p>
+
+    <p class="group-description" th:if="${group.description != null}" th:text="${group.description}"></p>
+
+    <dl class="profile-info">
+      <div th:if="${group.website != null}">
+        <dt>Website</dt>
+        <dd><a class="group-website" th:href="${group.website}" th:text="${group.website}"
+               target="_blank" rel="noopener nofollow ugc"></a></dd>
+      </div>
+      <div th:if="${groupOwner != null}">
+        <dt>Created by</dt>
+        <dd><a th:href="@{/user/anotherUserPage(anotherUserLogin=${group.owner})}"
+               th:text="${groupOwner.firstName + ' ' + (groupOwner.lastName ?: '')}"></a></dd>
+      </div>
+      <div><dt>Created</dt><dd th:text="${#temporals.format(group.createdAt, 'dd.MM.yyyy')}"></dd></div>
+    </dl>
 
     <div class="profile-nav">
       <a class="leftFrameButton" th:if="${group.isOwner(author.login)}" th:href="@{/group/getGroupUpdatingForm(id=${group.id})}">Manage group</a>

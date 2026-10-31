@@ -25,6 +25,9 @@ and video, and discuss them in threaded comments.
   friendship is always mutual.
 - **Groups** — anyone can create a group and becomes its owner; owners
   appoint admins from the members, admins moderate posts and membership.
+  A group has a topic, a description and a link to its site; its page
+  shows the member count, the owner and the creation date, and search
+  results show the topic.
 - **Feed** — posts with up to five photos or an mp4 video, on a user page or
   in a group, with nested comments of unlimited depth.
   - Loads in portions of 20 with infinite scroll.
@@ -121,7 +124,10 @@ embedded in JWTs and URLs, and referenced by every relation.
   side; pending invitations live in `friend_invites`.
 - `social_groups` (named so because `GROUPS` is a reserved word in MySQL 8)
   with `group_members` and `group_admins` join tables; the owner is always
-  present in both. Joining and leaving are single `INSERT`/`DELETE`
+  present in both. Groups created before `created_at` existed got an
+  estimate in the migration: the earliest first post among the group and
+  all groups after it (ids follow creation order), the latest time that
+  agrees with both facts. Joining and leaving are single `INSERT`/`DELETE`
   statements, idempotent thanks to the composite primary keys.
 - `publications` holds posts **and** comments in one table with a
   self-referencing `parent_id` (adjacency list): a comment is simply a
@@ -176,6 +182,9 @@ embedded in JWTs and URLs, and referenced by every relation.
   AVIF, and date-of-birth validation.
 - **Integration test** — boots the full context against a real MySQL via
   Testcontainers, exercising the Flyway migrations end to end.
+- **Migration test** — migrates an empty database to the previous version,
+  writes rows the old schema allows, then runs the new migration and checks
+  how it filled in the data it had to derive.
 - **Browser tests** (Playwright, `e2e/`) drive the running app the way a
   user does: sign-up and login, profile editing, the feed with infinite
   scroll and live updates, comments, groups and roles, friends and search,

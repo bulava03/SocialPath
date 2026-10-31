@@ -1,6 +1,6 @@
 package com.socialpath;
 
-import com.socialpath.dto.request.GroupCreationForm;
+import com.socialpath.dto.request.GroupForm;
 import com.socialpath.dto.request.LeftFrameRequest;
 import com.socialpath.entity.Group;
 import com.socialpath.entity.User;
@@ -13,7 +13,6 @@ import com.socialpath.validation.ValidationResult;
 import com.socialpath.web.GroupController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.modelmapper.ModelMapper;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 
@@ -45,7 +44,7 @@ class GroupControllerHeaderAvatarTest {
         ModelAttributesService modelAttributes = mock(ModelAttributesService.class);
         when(modelAttributes.groupsAttributes(any(), any(), any(), any(), any()))
                 .thenAnswer(call -> call.getArgument(0));
-        controller = new GroupController(groupService, mock(ModelMapper.class), modelAttributes,
+        controller = new GroupController(groupService, modelAttributes,
                 new HandleAvatarServiceImpl(mock(FileStorageService.class), mock(AvatarImageProcessor.class)));
 
         viewer.setLogin("viewer");
@@ -69,7 +68,7 @@ class GroupControllerHeaderAvatarTest {
     void groupCreationForm_RejectedName_StillShowsTheViewersAvatar() {
         when(groupService.validateGroup(any())).thenReturn(ValidationResult.failure("Name is required"));
 
-        controller.createGroup(viewer, new GroupCreationForm("viewer"), model);
+        controller.createGroup(viewer, new GroupForm(), model);
 
         assertEquals(AVATAR, model.getAttribute("avatar"));
     }

@@ -18,7 +18,27 @@
         <p class="form-subtitle">You will be its owner and can add admins later.</p>
         <form id="regForm" class="form-stack" method="post" action="/group/createGroup">
             <label class="name" for="name">Group name</label>
-            <input class="field" id="name" type="text" th:value="${group.name}" name="Name" />
+            <input class="field" id="name" type="text" th:value="${group.name}" name="name" maxlength="50" />
+            <label class="name" for="category">Topic</label>
+            <select id="category" name="category">
+                <option value="" th:selected="${group.category == null}">No topic</option>
+                <option th:each="c : ${categories}" th:value="${c.name()}" th:text="${c.label}"
+                        th:selected="${c == group.category}"></option>
+            </select>
+            <!-- Shown by forms.css only while "Other" is chosen. -->
+            <div class="custom-topic">
+                <label class="name" for="customCategory">Your topic</label>
+                <input class="field" id="customCategory" type="text" name="customCategory" maxlength="30"
+                       placeholder="e.g. Urban gardening" th:value="${group.customCategory}" />
+            </div>
+            <label class="name" for="description">Description</label>
+            <textarea class="field field-textarea" id="description" name="description" maxlength="1000" rows="5"
+                      placeholder="What is the group about?" th:text="${group.description}"></textarea>
+            <p class="form-hint">Optional, up to 1000 characters.</p>
+            <label class="name" for="website">Website</label>
+            <input class="field" id="website" type="url" name="website" maxlength="255"
+                   placeholder="https://" th:value="${group.website}" />
+            <p class="form-hint">Optional: the group's site or channel.</p>
             <p class="errorText" th:text="${errorText}" th:if="${errorText}"></p>
             <p id="errorText" class="errorText"></p>
             <button class="btn btn-primary btn-block" type="submit">Create</button>
