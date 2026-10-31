@@ -33,7 +33,7 @@ and video, and discuss them in threaded comments.
 
 ## Tech stack
 
-Java 21 · Spring Boot 3.3 (Web MVC, Security, Validation) · MySQL 8 ·
+Java 21 · Spring Boot 4.1 (Web MVC, Security, Validation) · MySQL 8.4 ·
 Spring Data JPA (Hibernate) · Flyway · Thymeleaf · vanilla JavaScript ·
 JWT (jjwt) · BCrypt · JUnit 5 + Mockito · Testcontainers · Playwright ·
 Checkstyle · GitHub Actions · Docker

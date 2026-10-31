@@ -1,6 +1,10 @@
 services:
   mysql:
-    image: mysql:8.0
+    # Upgrades in place: the server converts the existing mysql-data volume on
+    # its first start. Moving between versions needs a clean shutdown first.
+    image: mysql:8.4
+    # Lets MySQL finish flushing on stop; the 10s default kills it mid-way.
+    stop_grace_period: 1m
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: socialpath

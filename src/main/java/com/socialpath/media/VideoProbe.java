@@ -1,7 +1,7 @@
 package com.socialpath.media;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.socialpath.exception.InvalidVideoException;
 import com.socialpath.media.BundledFfmpeg.Tool;
 import lombok.RequiredArgsConstructor;
@@ -70,13 +70,13 @@ public class VideoProbe {
                 Duration.ofMillis(Math.round(seconds * 1000)),
                 video.path("width").asInt(),
                 video.path("height").asInt(),
-                video.path("codec_name").asText(),
-                audio == null ? null : audio.path("codec_name").asText());
+                video.path("codec_name").asString(),
+                audio == null ? null : audio.path("codec_name").asString());
     }
 
     private static JsonNode firstStream(JsonNode root, String type) {
         for (JsonNode stream : root.path("streams")) {
-            if (type.equals(stream.path("codec_type").asText())) {
+            if (type.equals(stream.path("codec_type").asString())) {
                 return stream;
             }
         }
