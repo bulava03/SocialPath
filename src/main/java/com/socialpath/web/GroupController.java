@@ -42,6 +42,7 @@ public class GroupController {
     public String getGroupCreationForm(@CurrentUser User myUser, Model model) {
         model.addAttribute("author", new UserLogin(myUser.getLogin(), ""));
         model.addAttribute("group", new GroupCreationForm(myUser.getLogin()));
+        handleAvatarService.handleAvatar(myUser, model, false);
         return "group/groupCreationForm";
     }
 
@@ -55,6 +56,7 @@ public class GroupController {
             model.addAttribute("author", new UserLogin(myUser.getLogin(), ""));
             model.addAttribute("group", groupCreationForm);
             model.addAttribute("errorText", validation.getMessage());
+            handleAvatarService.handleAvatar(myUser, model, false);
             return "group/groupCreationForm";
         }
 
@@ -73,6 +75,7 @@ public class GroupController {
 
         model = modelAttributesService.groupsAttributes(model, user, admins, request.getId(), group.getOwner());
         model.addAttribute("users", list);
+        handleAvatarService.handleAvatar(user, model, false);
         return "group/groupsMembers";
     }
 
@@ -83,6 +86,7 @@ public class GroupController {
         List<UserSearchResult> list = groupService.findGroupsAdminsPresentable(group.getId());
 
         model = modelAttributesService.groupsAttributes(model, user, list, request.getId(), group.getOwner());
+        handleAvatarService.handleAvatar(user, model, false);
         return "group/groupsAdmins";
     }
 
