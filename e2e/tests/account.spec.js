@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { test, expect } from "@playwright/test";
-import { createGroup, newUserSession, PASSWORD, profileField } from "./helpers.js";
+import { createGroup, newUserSession, PASSWORD, profileField, uniqueName } from "./helpers.js";
 
 // An 8x8 PNG, small enough to keep the tests fast, real enough to be processed.
 const PICTURE = {
@@ -154,7 +154,7 @@ test.describe("profile picture", () => {
 
 test.describe("profile details", () => {
     test("a chosen country is shown on the page and found by search", async ({ browser }) => {
-        const unique = `Zq${Date.now().toString(36).replace(/\d/g, "")}land`;
+        const unique = `${uniqueName()}land`;
         const target = await newUserSession(browser, { firstName: unique });
         const { page } = target;
         await page.goto("/user/getUserInfo");

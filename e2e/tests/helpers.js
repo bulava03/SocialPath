@@ -9,6 +9,22 @@ export function uniqueLogin(prefix = "u") {
 }
 
 /**
+ * A first name nobody has used yet. Names allow letters only, so the time and
+ * a random part are written in base 26 with the letters a-z as digits.
+ */
+export function uniqueName(prefix = "Zq") {
+    const letters = n => {
+        let s = "";
+        do {
+            s = String.fromCharCode(97 + n % 26) + s;
+            n = Math.floor(n / 26);
+        } while (n > 0);
+        return s;
+    };
+    return `${prefix}${letters(Date.now())}${letters(Math.floor(Math.random() * 26 ** 4))}`;
+}
+
+/**
  * Registers a user through the registration endpoint. The UI form itself is
  * covered by auth.spec.js; elsewhere this is only setup.
  * @returns {Promise<{login: string, firstName: string}>}
