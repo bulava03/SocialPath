@@ -1,9 +1,12 @@
 package com.socialpath;
 
+import com.socialpath.entity.PhoneCode;
 import com.socialpath.entity.User;
 import com.socialpath.entity.UserSession;
 import com.socialpath.security.AuthCookie;
 import com.socialpath.security.JwtTokenProvider;
+import com.socialpath.security.SignIn;
+import com.socialpath.service.PhoneVerificationService;
 import com.socialpath.service.SessionService;
 import com.socialpath.service.UserService;
 import com.socialpath.web.AuthController;
@@ -41,6 +44,7 @@ class AuthControllerTest {
     private SessionService sessionService;
     private JwtTokenProvider jwtTokenProvider;
     private PasswordEncoder passwordEncoder;
+    private PhoneVerificationService phoneVerification;
     private AuthController controller;
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
@@ -51,8 +55,10 @@ class AuthControllerTest {
         sessionService = mock(SessionService.class);
         passwordEncoder = mock(PasswordEncoder.class);
         jwtTokenProvider = new JwtTokenProvider(mock(UserDetailsService.class), SECRET, "token");
-        controller = new AuthController(userService, sessionService, new AuthCookie(jwtTokenProvider, "token"),
-                passwordEncoder);
+        phoneVerification = mock(PhoneVerificationService.class);
+        AuthCookie authCookie = new AuthCookie(jwtTokenProvider, "token");
+        controller = new AuthController(userService, sessionService, authCookie, passwordEncoder,
+                new SignIn(sessionService, authCookie), phoneVerification);
         request = new MockHttpServletRequest();
         request.setRemoteAddr("203.0.113.7");
         request.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 Firefox/130.0");
@@ -62,6 +68,7 @@ class AuthControllerTest {
         anna.setLogin("anna");
         anna.setPassword("hash");
         when(userService.findByLogin("anna")).thenReturn(anna);
+        when(userService.findByVerifiedPhone("+12015550123")).thenReturn(anna);
         when(passwordEncoder.matches("right", "hash")).thenReturn(true);
         LocalDateTime now = LocalDateTime.now();
         when(sessionService.open("anna", "203.0.113.7", "Mozilla/5.0 Firefox/130.0"))
@@ -110,6 +117,53 @@ class AuthControllerTest {
 
         assertEquals("Incorrect login or password", model.get("errorText"));
         assertNull(response.getHeader(HttpHeaders.SET_COOKIE));
+    }
+
+    @Test
+    void login_ConfirmedPhoneNumberInTheLoginField_SignsInTheNumbersAccount() {
+        // Any international spelling of the number: spaces, dashes, brackets.
+        for (String typed : new String[] {"+12015550123", "+1 201-555-0123", " +1 (201) 555 0123 "}) {
+            MockHttpServletResponse signedIn = new MockHttpServletResponse();
+
+            String view = controller.login(typed, "right", new ExtendedModelMap(), request, signedIn);
+
+            assertEquals("redirect:/user/authorisation", view, typed);
+            assertTrue(signedIn.getHeader(HttpHeaders.SET_COOKIE).startsWith("token="), typed);
+        }
+    }
+
+    @Test
+    void login_UnconfirmedOrUnknownNumber_GetsTheSameMessageAsAWrongPassword() {
+        // An unconfirmed number is not found by findByVerifiedPhone, the same as one nobody has.
+        for (String[] attempt : new String[][] {{"+1 201 555 0199", "right"}, {"+1 201 555 0123", "wrong"},
+                                                 {"+not a number", "right"}}) {
+            ExtendedModelMap model = new ExtendedModelMap();
+
+            String view = controller.login(attempt[0], attempt[1], model, request, response);
+
+            assertEquals("home/index", view);
+            assertEquals(attempt[0], model.get("login"));
+            assertEquals("Incorrect login or password", model.get("errorText"));
+        }
+        assertNull(response.getHeader(HttpHeaders.SET_COOKIE));
+        verify(sessionService, never()).open(anyString(), anyString(), any());
+    }
+
+    @Test
+    void login_RegistrationNotConfirmed_SendsACodeInsteadOfSigningIn() {
+        User pending = new User();
+        pending.setLogin("newbie");
+        pending.setPassword("hash");
+        pending.setPendingSince(LocalDateTime.now());
+        when(userService.findByLogin("newbie")).thenReturn(pending);
+        PhoneCode code = new PhoneCode("newbie");
+        when(phoneVerification.requestCode(pending)).thenReturn(code);
+
+        String view = controller.login("newbie", "right", new ExtendedModelMap(), request, response);
+
+        assertEquals("redirect:/registration/confirm?id=" + code.getId(), view);
+        assertNull(response.getHeader(HttpHeaders.SET_COOKIE));
+        verify(sessionService, never()).open(anyString(), anyString(), any());
     }
 
     @Test

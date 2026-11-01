@@ -2,8 +2,36 @@ import { expect } from "@playwright/test";
 
 export const PASSWORD = "password123";
 
-/** A real-format number from the range kept for fiction (555-01xx), as typed and as shown. */
-export const PHONE = { region: "US", typed: "201 555 0123", shown: "+1 201-555-0123", e164: "+12015550123" };
+/**
+ * A number nobody has used yet, as typed, as shown and as stored. A confirmed
+ * number belongs to one account, so every user needs their own: the 555
+ * exchange of a fictional area code line, the last four digits and the
+ * exchange made random (8 million numbers, all valid for libphonenumber).
+ */
+export function uniquePhone() {
+    const exchange = String(200 + Math.floor(Math.random() * 800));
+    const line = String(Math.floor(Math.random() * 10_000)).padStart(4, "0");
+    return {
+        region: "US",
+        typed: `201 ${exchange} ${line}`,
+        shown: `+1 201-${exchange}-${line}`,
+        e164: `+1201${exchange}${line}`,
+    };
+}
+
+/**
+ * The code last sent to a number, read from the demo phone (/dev/sms): the
+ * app has no real SMS operator.
+ */
+export async function smsCode(request, e164) {
+    let code = null;
+    await expect.poll(async () => {
+        const messages = await (await request.get("/dev/sms/messages", { params: { phone: e164 } })).json();
+        code = messages[0]?.text.match(/\b\d{6}\b/)?.[0] ?? null;
+        return code;
+    }, { message: `an SMS code for ${e164}` }).not.toBeNull();
+    return code;
+}
 
 /** A login nobody has used yet (the app allows up to 20 characters). */
 export function uniqueLogin(prefix = "u") {
@@ -28,12 +56,15 @@ export function uniqueName(prefix = "Zq") {
 }
 
 /**
- * Registers a user through the registration endpoint. The UI form itself is
- * covered by auth.spec.js; elsewhere this is only setup.
- * @returns {Promise<{login: string, firstName: string}>}
+ * Registers a user through the registration endpoints and confirms the phone
+ * with the code from the demo phone. The UI forms themselves are covered by
+ * auth.spec.js; elsewhere this is only setup. Confirming signs the user in,
+ * so the helper signs out again: callers sign in when they need to.
+ * @returns {Promise<{login: string, firstName: string, phone: ReturnType<typeof uniquePhone>}>}
  */
 export async function registerUser(request, { prefix, firstName = "Tester" } = {}) {
     const login = uniqueLogin(prefix);
+    const phone = uniquePhone();
     const response = await request.post("/registration/registration", {
         form: {
             login,
@@ -41,14 +72,24 @@ export async function registerUser(request, { prefix, firstName = "Tester" } = {
             firstName,
             lastName: "Example",
             email: `${login}@example.com`,
-            phoneRegion: PHONE.region,
-            phoneNumber: PHONE.typed,
+            phoneRegion: phone.region,
+            phoneNumber: phone.typed,
         },
         maxRedirects: 0,
     });
-    // Success redirects to the login page; a validation error re-renders the form.
+    // Success redirects to the code page; a validation error re-renders the form.
     expect(response.status(), "registration should redirect").toBe(302);
-    return { login, firstName };
+    const confirmPage = new URL(response.headers()["location"], "http://app");
+    expect(confirmPage.pathname).toBe("/registration/confirm");
+
+    const confirmed = await request.post("/registration/confirm", {
+        form: { id: confirmPage.searchParams.get("id"), code: await smsCode(request, phone.e164) },
+        maxRedirects: 0,
+    });
+    expect(confirmed.status(), "the code should be accepted").toBe(302);
+    expect(confirmed.headers()["location"]).toContain("/user/authorisation");
+    await request.post("/auth/logout", { maxRedirects: 0 });
+    return { login, firstName, phone };
 }
 
 /**

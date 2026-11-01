@@ -93,6 +93,22 @@ public class User {
     @Column(name = "phone_visibility", length = 10, nullable = false)
     private PhoneVisibility phoneVisibility = PhoneVisibility.FRIENDS;
 
+    /**
+     * Whether the owner entered the code sent to the number. Only a
+     * confirmed number signs in, and only one account can confirm a number
+     * (a unique key on the verified_phone column).
+     */
+    @Column(name = "phone_verified", nullable = false)
+    private boolean phoneVerified;
+
+    /**
+     * When the registration was sent, while it still waits for its phone
+     * code; null for a finished account. A pending account cannot sign in,
+     * is not found by search and is removed after a day.
+     */
+    @Column(name = "pending_since")
+    private LocalDateTime pendingSince;
+
     @Past(message = "{user.dateOfBirth.past}")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Column(name = "date_of_birth")

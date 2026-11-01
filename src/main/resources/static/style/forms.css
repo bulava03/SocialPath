@@ -166,7 +166,102 @@
     text-decoration: underline;
 }
 
+/* ---------- tabs ----------
+   A pill switch between forms that each have their own address: the
+   Security page's tabs. */
+
+.form-tabs {
+    display: flex;
+    gap: 4px;
+    width: fit-content;
+    margin: 0 auto 22px;
+    padding: 4px;
+    border-radius: var(--radius-pill);
+    background-color: var(--surface-sunken);
+}
+
+.form-tabs a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 20px;
+    border-radius: var(--radius-pill);
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.form-tabs a:hover {
+    color: var(--text);
+}
+
+.form-tabs a.active {
+    background-color: #ffffff;
+    color: var(--brand-active);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ---------- phone codes ----------
+   The forms that take the code sent by SMS: the registration's
+   confirmation page and the Security page's phone tab. */
+
+.code-field {
+    font-size: 22px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.3em;
+    text-align: center;
+}
+
+.code-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 16px;
+    margin-top: 16px;
+}
+
+/* A form button that reads as a link: the secondary actions under a form. */
+.btn-link {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--brand-active);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-link:hover {
+    color: var(--brand);
+    text-decoration: underline;
+}
+
+.demo-sms {
+    margin-top: 14px;
+    text-align: center;
+}
+
+.demo-sms a {
+    color: var(--brand-active);
+    font-weight: 600;
+}
+
 /* ---------- messages ---------- */
+
+/* A note that something worked, e.g. "the password has been changed". */
+.form-notice {
+    margin: 16px 0 0;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    background-color: var(--brand-soft);
+    color: var(--brand-active);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+}
 
 /* Both spellings: the group pages use errorText. */
 p.errortext,

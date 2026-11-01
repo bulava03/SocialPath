@@ -16,9 +16,11 @@
 <main class="form-page">
     <div class="security-page">
         <div class="form-card">
-            <nav class="security-tabs" aria-label="Security">
+            <nav class="form-tabs" aria-label="Security">
                 <a href="/security/password" th:classappend="${tab == 'password'} ? 'active'"
                    th:attr="aria-current=${tab == 'password'} ? 'page'">Password</a>
+                <a href="/security/phone" th:classappend="${tab == 'phone'} ? 'active'"
+                   th:attr="aria-current=${tab == 'phone'} ? 'page'">Phone</a>
                 <a href="/security/sessions" th:classappend="${tab == 'sessions'} ? 'active'"
                    th:attr="aria-current=${tab == 'sessions'} ? 'page'">
                     Sessions <span class="security-tab-count" th:text="${#lists.size(sessions)}">1</span>
@@ -28,7 +30,7 @@
             <section th:if="${tab == 'password'}">
                 <h1 class="form-title">Change password</h1>
                 <p class="form-subtitle">Every other device is signed out when the password changes.</p>
-                <p class="security-notice" th:if="${param.passwordChanged}">
+                <p class="form-notice" th:if="${param.passwordChanged}">
                     The password has been changed. Other sessions were ended.
                 </p>
                 <form id="regform" class="form-stack security-password" method="post" action="/security/changePassword">
@@ -42,6 +44,51 @@
                     <p class="errortext" th:text="${errorText}"></p>
                     <button class="btn btn-primary btn-block" type="submit">Save</button>
                 </form>
+            </section>
+
+            <section th:if="${tab == 'phone'}">
+                <h1 class="form-title">Phone number</h1>
+                <p class="form-subtitle">A confirmed number signs you in instead of the login, with the same password.</p>
+                <p class="form-notice" th:if="${param.confirmed}">The number is confirmed. You can sign in with it now.</p>
+                <p class="form-notice" th:if="${param.sent}">A code is on its way.</p>
+                <p class="form-notice" th:if="${param.wait}"
+                   th:text="'You can ask for a new code in ' + ${resendIn} + ' s.'">You can ask for a new code soon.</p>
+
+                <div class="phone-status" th:if="${phone}">
+                    <span class="phone-status-number" th:text="${phone}">+1 201-555-0123</span>
+                    <span class="session-badge" th:if="${phoneVerified}">Confirmed</span>
+                    <span class="phone-badge-pending" th:unless="${phoneVerified}">Not confirmed</span>
+                </div>
+                <p class="form-hint phone-status-hint" th:unless="${phone}">
+                    Your profile has no number that can be confirmed. <a href="/user/getUserInfo">Add it</a>
+                </p>
+
+                <div class="security-password" th:if="${phone != null and !phoneVerified}">
+                    <form th:unless="${codeSent}" class="form-stack" method="post" action="/security/phone/sendCode">
+                        <p class="errortext" th:text="${errorText}"></p>
+                        <button class="btn btn-primary btn-block" type="submit">Send code</button>
+                    </form>
+                    <th:block th:if="${codeSent}">
+                        <form class="form-stack" method="post" action="/security/phone/confirm">
+                            <label class="name" for="code">Code from the SMS</label>
+                            <input class="field code-field" id="code" name="code" type="text" inputmode="numeric"
+                                   autocomplete="one-time-code" maxlength="6" pattern="[0-9 ]*" required>
+                            <p class="errortext" th:text="${errorText}"></p>
+                            <button class="btn btn-primary btn-block" type="submit">Confirm</button>
+                        </form>
+                        <div class="code-actions">
+                            <form method="post" action="/security/phone/sendCode">
+                                <button class="btn-link" type="submit">Send the code again</button>
+                            </form>
+                        </div>
+                    </th:block>
+                    <p class="form-hint demo-sms" th:if="${demoInbox}">
+                        Demo mode: no real SMS is sent. <a th:href="${demoInbox}" target="_blank" rel="noopener">Open the demo phone</a>
+                    </p>
+                </div>
+                <p class="form-hint phone-status-hint" th:if="${phoneVerified}">
+                    To use another number, change it in <a href="/user/getUserInfo">your profile</a> and confirm it here.
+                </p>
             </section>
 
             <section th:if="${tab == 'sessions'}">

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -40,6 +41,38 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     List<User> findByImageIdIsNotNull();
 
+    /**
+     * The account a number signs in. Only a confirmed number counts, and a
+     * unique key keeps it to one account.
+     * @param phone the number in E.164
+     * @return the account, or null when no account has confirmed the number
+     */
+    @Query("select u from User u where u.phone = :phone and u.phoneVerified = true")
+    User findByVerifiedPhone(@Param("phone") String phone);
+
+    /**
+     * Whether another account has already confirmed a number.
+     * @param phone the number in E.164
+     * @param login the account to leave out, or null for a new one
+     * @return true when the number belongs to someone else
+     */
+    @Query("""
+            select count(u) > 0 from User u
+            where u.phone = :phone and u.phoneVerified = true and (:login is null or u.login <> :login)
+            """)
+    boolean isPhoneVerifiedByOther(@Param("phone") String phone, @Param("login") String login);
+
+    /**
+     * Removes registrations nobody confirmed. Their phone codes and anything
+     * else hanging off them go with them through ON DELETE CASCADE.
+     * @param before registrations sent before this are removed
+     * @return how many were removed
+     */
+    @Transactional
+    @Modifying
+    @Query("delete from User u where u.pendingSince < :before")
+    int deletePendingBefore(@Param("before") LocalDateTime before);
+
     @Transactional
     @Modifying
     @Query("update User u set u.imageId = :imageId where u.login = :login")
@@ -51,14 +84,16 @@ public interface UserRepository extends JpaRepository<User, String> {
      * query keeps it index-unfriendly but simple; a FULLTEXT index would be
      * the next step if profiles grow large. A phone number is searched only
      * when its owner shows it to everyone: otherwise search would reveal who
-     * a hidden number belongs to.
+     * a hidden number belongs to. Registrations still waiting for their phone
+     * code are not accounts yet and are left out.
      * @param searchValue the substring to look for
      * @return users matching in any profile field
      */
     @Query("""
             select u from User u
             left join u.country c
-            where lower(u.firstName) like lower(concat('%', :q, '%'))
+            where u.pendingSince is null and (
+                  lower(u.firstName) like lower(concat('%', :q, '%'))
                or lower(u.lastName) like lower(concat('%', :q, '%'))
                or lower(u.email) like lower(concat('%', :q, '%'))
                or (u.phoneVisibility = com.socialpath.entity.PhoneVisibility.EVERYONE
@@ -67,7 +102,7 @@ public interface UserRepository extends JpaRepository<User, String> {
                or lower(u.region) like lower(concat('%', :q, '%'))
                or lower(u.city) like lower(concat('%', :q, '%'))
                or lower(u.education) like lower(concat('%', :q, '%'))
-               or lower(u.workplace) like lower(concat('%', :q, '%'))
+               or lower(u.workplace) like lower(concat('%', :q, '%')))
             """)
     List<User> findMatchingUsers(@Param("q") String searchValue);
 }

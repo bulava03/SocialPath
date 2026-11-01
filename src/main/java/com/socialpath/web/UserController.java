@@ -87,6 +87,8 @@ public class UserController {
 
     @PostMapping("/changeUserInfo")
     public String changeUserInfo(@CurrentUser User myUser, UserUpdate user, MultipartFile file, Model model) throws IOException {
+        // Whose profile it is comes from the session, never from the form.
+        user.setLogin(myUser.getLogin());
         ValidationResult validation = userService.validateUserUpdate(user);
         if (!validation.isSuccess()) {
             return showUserInfoWithError(model, user, myUser, validation.getMessage());
@@ -97,7 +99,6 @@ public class UserController {
         } catch (InvalidImageException e) {
             return showUserInfoWithError(model, user, myUser, e.getMessage());
         }
-        user.setLogin(myUser.getLogin());
 
         userService.updateUser(user);
 

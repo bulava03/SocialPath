@@ -28,10 +28,20 @@ public interface UserService {
 
     /**
      * Validates a profile update against its Bean Validation constraints.
-     * @param user the update to validate
+     * @param user the update to validate, with the login of whose profile it is
      * @return success, or a failure carrying the first violation message
      */
     ValidationResult validateUserUpdate(UserUpdate user);
+
+    /** Shown when a number is already confirmed by someone else. */
+    String PHONE_TAKEN = "This phone number is already linked to another account.";
+
+    /**
+     * The account a confirmed number signs in.
+     * @param phone the number in E.164
+     * @return the account, or null when no account has confirmed the number
+     */
+    User findByVerifiedPhone(String phone);
 
     /**
      * Looks up a user by login, which is also the primary key.

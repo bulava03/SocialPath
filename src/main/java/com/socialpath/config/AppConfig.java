@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Clock;
+
 @Configuration
 public class AppConfig {
 
@@ -18,5 +20,14 @@ public class AppConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
+    }
+
+    /**
+     * The time for expiring phone codes; a bean so tests can move it.
+     * @return the system clock
+     */
+    @Bean
+    public Clock clock() {
+        return Clock.systemDefaultZone();
     }
 }

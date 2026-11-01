@@ -29,6 +29,9 @@ services:
       MEDIA_DIR: /var/socialpath/media
       # Set to true for one start to convert avatars uploaded before avatar processing.
       AVATAR_CONVERT_ON_STARTUP: ${AVATAR_CONVERT_ON_STARTUP:-false}
+      # No real SMS operator: phone codes show up on the demo phone page,
+      # http://localhost:8080/dev/sms. Set to false where others can reach the app.
+      SMS_DEMO_INBOX: ${SMS_DEMO_INBOX:-true}
       # Override in real deployments: JWT_SECRET=<long random string>
       JWT_SECRET: ${JWT_SECRET:-local-dev-only-secret-key-change-me-0123456789abcdef0123456789abcdef}
     volumes:

@@ -1,41 +1,9 @@
-/* The Security page: one card with two tabs, the password form and the list
-   of active sessions. Each tab is a link to its own address. */
+/* The Security page: one card with three tabs (forms.css .form-tabs) - the
+   password form, the phone number and the list of active sessions. Each tab
+   is a link to its own address. */
 .security-page {
     width: 100%;
     max-width: 640px;
-}
-
-.security-tabs {
-    display: flex;
-    gap: 4px;
-    width: fit-content;
-    margin: 0 auto 22px;
-    padding: 4px;
-    border-radius: var(--radius-pill);
-    background-color: var(--surface-sunken);
-}
-
-.security-tabs a {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 8px 20px;
-    border-radius: var(--radius-pill);
-    color: var(--text-muted);
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
-}
-
-.security-tabs a:hover {
-    color: var(--text);
-}
-
-.security-tabs a.active {
-    background-color: #ffffff;
-    color: var(--brand-active);
-    box-shadow: var(--shadow-sm);
 }
 
 .security-tab-count {
@@ -54,15 +22,40 @@
     margin-right: auto;
 }
 
-.security-notice {
-    margin: 16px 0 0;
-    padding: 10px 14px;
-    border-radius: var(--radius-sm);
-    background-color: var(--brand-soft);
-    color: var(--brand-active);
-    font-size: 14px;
+/* ---------- phone ---------- */
+
+.phone-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    font-size: 17px;
     font-weight: 600;
+}
+
+.phone-status-number {
+    font-variant-numeric: tabular-nums;
+}
+
+.phone-badge-pending {
+    padding: 2px 9px;
+    border-radius: var(--radius-pill);
+    background-color: var(--danger-soft);
+    color: var(--danger);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.phone-status-hint {
+    margin-top: 16px;
     text-align: center;
+}
+
+.phone-status-hint a {
+    color: var(--brand-active);
+    font-weight: 600;
 }
 
 /* ---------- sessions ---------- */

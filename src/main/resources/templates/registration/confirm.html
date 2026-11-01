@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialPath</title>
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/forms.css">
+</head>
+<body>
+<div th:insert="~{shared/layout :: #layoutHeader}"></div>
+
+<main class="form-page">
+    <div class="form-card form-card-narrow">
+        <h1 class="form-title">Confirm your phone</h1>
+        <p class="form-subtitle">
+            We sent a 6-digit code to <strong class="phone-sent-to" th:text="${phone}">+1 201-555-0123</strong>.
+        </p>
+        <p class="form-notice" th:if="${param.resent}">A new code is on its way.</p>
+        <p class="form-notice" th:if="${param.wait}"
+           th:text="'You can ask for a new code in ' + ${resendIn} + ' s.'">You can ask for a new code soon.</p>
+
+        <form class="form-stack" method="post" action="/registration/confirm">
+            <input type="hidden" name="id" th:value="${codeId}">
+            <label class="name" for="code">Code</label>
+            <input class="field code-field" id="code" name="code" type="text" inputmode="numeric"
+                   autocomplete="one-time-code" maxlength="6" pattern="[0-9 ]*" required autofocus>
+            <p id="errortext" class="errortext" th:text="${errorText}"></p>
+            <button class="btn btn-primary btn-block" type="submit">Confirm</button>
+        </form>
+
+        <!-- No operator stands behind this demo: its messages are on the inbox page. -->
+        <p class="form-hint demo-sms" th:if="${demoInbox}">
+            Demo mode: no real SMS is sent. <a th:href="${demoInbox}" target="_blank" rel="noopener">Open the demo phone</a>
+        </p>
+
+        <div class="code-actions">
+            <form method="post" action="/registration/resend">
+                <input type="hidden" name="id" th:value="${codeId}">
+                <button class="btn-link" type="submit">Send the code again</button>
+            </form>
+            <form method="post" action="/registration/cancel">
+                <input type="hidden" name="id" th:value="${codeId}">
+                <button class="btn-link" type="submit">Wrong number? Start over</button>
+            </form>
+        </div>
+    </div>
+</main>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+</body>
+</html>

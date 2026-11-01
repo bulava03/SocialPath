@@ -14,7 +14,8 @@
 <main class="form-page">
     <div class="form-card">
         <h1 class="form-title">Create your account</h1>
-        <p class="form-subtitle">Login, password, first name, phone and email are required. The rest is optional.</p>
+        <p class="form-subtitle">Login, password, first name, phone and email are required. The rest is optional.
+            We will send a code to the phone to confirm it.</p>
         <!-- Server-side errors go on top: the form is long and the page reloads scrolled up. -->
         <p class="errortext errortext-top" th:if="${errorText}" th:text="${errorText}"></p>
         <form id="regform" method="post" action="/registration/registration">

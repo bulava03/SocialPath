@@ -16,9 +16,10 @@
         <h1 class="form-title">Welcome back</h1>
         <p class="form-subtitle">Sign in to see what your friends are up to.</p>
         <form id="authForm" class="form-stack" action="/auth/login" method="post">
-            <label class="name" for="login">Login</label>
+            <label class="name" for="login">Login or phone number</label>
             <input class="field" id="login" name="login" type="text" th:value="${login}"
-                   autocomplete="username" required>
+                   autocomplete="username" aria-describedby="login-hint" required>
+            <p class="form-hint" id="login-hint">A phone number with + and the country code.</p>
             <label class="name" for="password">Password</label>
             <input class="field" id="password" name="password" type="password"
                    autocomplete="current-password" required>

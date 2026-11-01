@@ -18,10 +18,19 @@ and video, and discuss them in threaded comments.
   Google's libphonenumber, stored in E.164 and shown grouped as a `tel:`
   link. The owner decides who sees it (everyone, friends, only them); a
   number is found by search only when it is public.
-- **Security page** — password change and the list of active sessions with
-  browser, system, IP and approximate location; any other device can be
-  signed out, or all of them at once. Sessions last 7 days without use and
-  are extended while used.
+- **Phone confirmation and phone sign-in** — a registration is finished by
+  entering the 6-digit code sent to the number (10 minutes, 5 attempts, a
+  new code after 60 s); a confirmed number then signs in instead of the
+  login: it goes in the same field, in the international format (+ and the
+  country code), with the same password. A number can be confirmed by one account
+  only. There is no real SMS operator: messages go to the log and to a demo
+  phone page, `/dev/sms`, on when `SMS_DEMO_INBOX=true` (the default in
+  `docker-compose.yml`, off otherwise). Unconfirmed registrations are
+  removed after a day.
+- **Security page** — password change, confirming the phone number, and
+  the list of active sessions with browser, system, IP and approximate
+  location; any other device can be signed out, or all of them at once.
+  Sessions last 7 days without use and are extended while used.
 - **Avatars** — any common format including HEIC and AVIF (decoded with a
   bundled ffmpeg); every upload is center-cropped to a square and stored as
   a 1024 px image plus a 256 px thumbnail for lists, comments and the header.
@@ -120,7 +129,7 @@ five minutes, not on every request.
 
 ## Data model
 
-Eleven tables around a natural primary key: `users.login` is immutable,
+Twelve tables around a natural primary key: `users.login` is immutable,
 embedded in JWTs and URLs, and referenced by every relation.
 
 - `friendships` stores mutual friendship as mirrored rows (one per
@@ -149,6 +158,11 @@ embedded in JWTs and URLs, and referenced by every relation.
   (parsing takes libphonenumber): numbers without a country code were read
   as local numbers of the profile's country, and what still could not be
   read is kept as typed in `phone_legacy` until the user corrects it.
+- A number is confirmed per account (`users.phone_verified`), and a stored
+  generated column `verified_phone` - the number while it is confirmed,
+  `NULL` otherwise - carries a unique key: any number may be typed by
+  several accounts but confirmed by one, the one it signs in.
+  `phone_codes` keeps the last code sent to each user as a BCrypt hash.
 - `user_sessions` has one row per signed-in browser; the JWT carries its id,
   so deleting the row signs that browser out. `video_jobs` is the queue of
   uploaded videos waiting to be converted to MP4.
@@ -166,6 +180,11 @@ embedded in JWTs and URLs, and referenced by every relation.
   offline [DB-IP](https://db-ip.com) Lite database (CC BY 4.0): addresses
   are never sent to a third party.
 - **Passwords** — BCrypt (strength 12).
+- **Phone codes** — random 6 digits from `SecureRandom`, stored only as a
+  BCrypt hash, valid for 10 minutes and 5 attempts, and only for the number
+  they were sent to. A failed sign-in says "incorrect login or password"
+  whatever was wrong, so it does not reveal which logins or numbers have
+  accounts.
 - **Authorization from stored data only** — permissions never trust ids the
   client sends along. Where a comment lives is read from the top-level post
   of its thread, so a comment cannot be posted to, or deleted from, a feed
@@ -220,6 +239,9 @@ npm run stack:down         # removes it with everything the tests wrote
 
 The browser tests never touch the instance on port 8080: they run against
 a separate Compose project (`docker-compose.e2e.yml`) whose data is thrown
-away with its containers. `BASE_URL` points them at another instance. The
+away with its containers. `BASE_URL` points them at another instance, and
+`PLAYWRIGHT_OUTPUT_DIR` puts what they write (screenshots, traces, the
+106 MB files of the upload tests; `e2e/test-results` by default) into its
+`socialpath` subfolder. The
 screenshots above are produced by `npm run screenshots` in `e2e/`, which
 fills that empty instance with demo data and captures the pages.

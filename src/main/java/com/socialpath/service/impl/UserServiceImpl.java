@@ -41,24 +41,33 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ValidationResult validateRegistration(RegistrationForm form) {
-        return validateProfile(form, form.getCountryCode());
+        return validateProfile(form, form.getCountryCode(), null);
     }
 
     @Override
     public ValidationResult validateUserUpdate(UserUpdate user) {
-        return validateProfile(user, user.getCountryCode());
+        return validateProfile(user, user.getCountryCode(), user.getLogin());
+    }
+
+    @Override
+    public User findByVerifiedPhone(String phone) {
+        return userRepository.findByVerifiedPhone(phone);
     }
 
     /**
      * Shared checks of the registration and profile forms: the date of birth
      * is assembled first, so the bean constraints (@Past) see the result, and
-     * the phone number is checked and converted to E.164.
+     * the phone number is checked, converted to E.164 and must not be one
+     * that another account has confirmed (that number signs the other
+     * account in).
      * @param <F> a form with both a date of birth and a phone number
      * @param form the submitted form
      * @param countryCode the selected country code, possibly empty
+     * @param login whose profile it is, or null for a new account
      * @return the first failure, or success
      */
-    private <F extends DateOfBirthInput & PhoneInput> ValidationResult validateProfile(F form, String countryCode) {
+    private <F extends DateOfBirthInput & PhoneInput> ValidationResult validateProfile(F form, String countryCode,
+                                                                                      String login) {
         ValidationResult dateOfBirth = DateOfBirthResolver.resolve(form);
         if (!dateOfBirth.isSuccess()) {
             return dateOfBirth;
@@ -66,6 +75,9 @@ public class UserServiceImpl implements UserService {
         ValidationResult phone = PhoneNumbers.resolve(form);
         if (!phone.isSuccess()) {
             return phone;
+        }
+        if (userRepository.isPhoneVerifiedByOther(form.getPhone(), login)) {
+            return ValidationResult.failure(PHONE_TAKEN);
         }
         ValidationResult constraints = ValidationResult.of(validator.validate(form));
         if (!constraints.isSuccess()) {
@@ -103,6 +115,10 @@ public class UserServiceImpl implements UserService {
         user.setFirstName(userUpdate.getFirstName());
         user.setLastName(userUpdate.getLastName());
         user.setEmail(userUpdate.getEmail());
+        if (!userUpdate.getPhone().equals(user.getPhone())) {
+            // A new number has to be confirmed before it signs in.
+            user.setPhoneVerified(false);
+        }
         user.setPhone(userUpdate.getPhone());
         // Saved with a checked number, an old unreadable one is gone.
         user.setPhoneLegacy(null);

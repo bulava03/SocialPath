@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo phone - SocialPath</title>
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/forms.css">
+    <link rel="stylesheet" href="/style/smsInbox.css">
+</head>
+<body>
+<div th:insert="~{shared/layout :: #layoutHeader}"></div>
+
+<main class="form-page">
+    <div class="sms-phone">
+        <div class="sms-phone-top">
+            <h1 class="sms-phone-title">Messages</h1>
+            <p class="sms-phone-subtitle"
+               th:text="${phoneShown != null} ? ${phoneShown} : 'All numbers'">All numbers</p>
+        </div>
+
+        <form class="sms-filter" method="get" action="/dev/sms">
+            <input class="field" name="phone" type="tel" th:value="${phone}" placeholder="+12015550123"
+                   aria-label="Show messages to this number">
+            <button class="btn btn-soft" type="submit">Show</button>
+        </form>
+
+        <ul class="sms-list" th:unless="${#lists.isEmpty(messages)}">
+            <li class="sms" th:each="m : ${messages}">
+                <div class="sms-meta">
+                    <span class="sms-from">SocialPath</span>
+                    <span th:if="${phoneShown == null}" th:text="'to ' + ${m.phoneForDisplay()}">to +1 201-555-0123</span>
+                    <time th:text="${#temporals.format(m.sentAt, 'dd.MM HH:mm:ss')}">01.11 12:00:00</time>
+                </div>
+                <p class="sms-text" th:text="${m.text}">SocialPath code: 123456.</p>
+            </li>
+        </ul>
+        <p class="sms-empty" th:if="${#lists.isEmpty(messages)}">No messages yet.</p>
+
+        <p class="sms-note">
+            A pretend operator for the demo: the app sends no real SMS. Messages are kept in memory
+            until the server restarts.
+        </p>
+    </div>
+</main>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+</body>
+</html>

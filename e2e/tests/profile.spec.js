@@ -1,11 +1,13 @@
 import { test, expect } from "@playwright/test";
-import { newUserSession, PHONE, profileField, registerUser, signIn } from "./helpers.js";
+import { newUserSession, profileField, registerUser, signIn } from "./helpers.js";
 
 test.describe("profile editing", () => {
     let login;
+    /** The user's own number: a confirmed number belongs to one account. */
+    let PHONE;
 
     test.beforeEach(async ({ page }) => {
-        ({ login } = await registerUser(page.request));
+        ({ login, phone: PHONE } = await registerUser(page.request));
         await signIn(page, login);
         await page.goto("/user/getUserInfo");
     });

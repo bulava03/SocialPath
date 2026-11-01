@@ -55,6 +55,12 @@ public class SecurityConfig {
                                 "/auth/login",
                                 "/registration",
                                 "/registration/registration",
+                                "/registration/confirm",
+                                "/registration/resend",
+                                "/registration/cancel",
+                                // Answers 404 unless the demo inbox is on (DemoSmsController).
+                                "/dev/sms",
+                                "/dev/sms/messages",
                                 "/pictures/**",
                                 "/script/**",
                                 "/style/**").permitAll()

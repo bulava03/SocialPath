@@ -17,18 +17,19 @@ const PASSWORD = "password123";
 const VIEWPORT = { width: 1280, height: 900 };
 
 // Deliberately generic people with no country or city: the screenshots are
-// meant for anyone reading the README.
+// meant for anyone reading the README. Their numbers are from the range kept
+// for fiction (555-01xx), one each: a confirmed number belongs to one account.
 const PEOPLE = {
-    alex: { first: "Alex", last: "Morgan", education: "Computer Science, BSc",
+    alex: { phone: "201 555 0101", first: "Alex", last: "Morgan", education: "Computer Science, BSc",
         workplace: "Frontend developer", colors: ["#f6a04d", "#d9661c"],
         birth: { day: "14", month: "5", year: "1998" } },
-    sam: { first: "Sam", last: "Taylor", education: "Software Engineering, MSc",
+    sam: { phone: "201 555 0102", first: "Sam", last: "Taylor", education: "Software Engineering, MSc",
         workplace: "Backend engineer", colors: ["#4f8fe0", "#2c5aa0"],
         birth: { day: "2", month: "11", year: "1995" } },
-    jordan: { first: "Jordan", last: "Lee", education: "Fine Arts, BA",
+    jordan: { phone: "201 555 0103", first: "Jordan", last: "Lee", education: "Fine Arts, BA",
         workplace: "Photographer", colors: ["#53b98a", "#2e7d5b"],
         birth: { day: "23", month: "8", year: "1997" } },
-    riley: { first: "Riley", last: "Carter", education: "Information Systems, BSc",
+    riley: { phone: "201 555 0104", first: "Riley", last: "Carter", education: "Information Systems, BSc",
         workplace: "QA engineer", colors: ["#a170d8", "#6b3fa8"],
         birth: { day: "9", month: "1", year: "2000" } },
 };
@@ -133,13 +134,22 @@ async function signedInAs(login) {
     const registered = await api.post("/registration/registration", {
         form: {
             login, password: PASSWORD, firstName: person.first, lastName: person.last,
-            email: `${login}@example.com`, phoneRegion: "US", phoneNumber: "201 555 0123",
+            email: `${login}@example.com`, phoneRegion: "US", phoneNumber: person.phone,
         },
         maxRedirects: 0,
     });
     check(registered.status() === 302, `register ${login}`);
-    const loggedIn = await api.post("/auth/login", { form: { login, password: PASSWORD }, maxRedirects: 0 });
-    check(loggedIn.status() === 302, `log in ${login}`);
+    // The code goes to the demo phone (/dev/sms); entering it signs the new user in.
+    const id = new URL(registered.headers()["location"], BASE_URL).searchParams.get("id");
+    const e164 = "+1" + person.phone.replaceAll(" ", "");
+    const [sms] = await (await api.get("/dev/sms/messages", { params: { phone: e164 } })).json();
+    check(sms, `code for ${login}`);
+    const confirmed = await api.post("/registration/confirm", {
+        form: { id, code: sms.text.match(/\d{6}/)[0] },
+        maxRedirects: 0,
+    });
+    check(confirmed.status() === 302 && confirmed.headers()["location"].includes("/user/authorisation"),
+        `confirm the phone of ${login}`);
     return api;
 }
 
@@ -154,7 +164,7 @@ async function updateProfile(api, login, avatar) {
     const form = new FormData();
     const fields = {
         firstName: person.first, lastName: person.last, email: `${login}@example.com`,
-        phoneRegion: "US", phoneNumber: "201 555 0123", phoneVisibility: "FRIENDS", ...person.birth, countryCode: "",
+        phoneRegion: "US", phoneNumber: person.phone, phoneVisibility: "FRIENDS", ...person.birth, countryCode: "",
         education: person.education, workplace: person.workplace, removeImage: "false",
     };
     Object.entries(fields).forEach(([name, value]) => form.append(name, value));
