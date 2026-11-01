@@ -187,12 +187,42 @@ class PhoneVerificationServiceTest {
     }
 
     @Test
-    void confirm_NumberChangedSinceTheCodeWasSent_DoesNotConfirmTheNewOne() {
-        PhoneCode code = service.requestCode(anna);
-        anna.setPhone("+12015550199");
+    void confirm_CodeForANewNumber_PutsItInPlaceOfTheOldOne() {
+        anna.setPendingSince(null);
+        anna.setPhoneVerified(true);
+        anna.setPhoneLegacy("old text");
+        PhoneCode code = service.requestCode(anna, "+12015550199");
+        assertEquals("+12015550199", sent.getLast().phone());
+        // Asking for the change does not touch the profile.
+        assertEquals(PHONE, anna.getPhone());
 
-        assertEquals(Outcome.EXPIRED, service.confirm(code, lastCode()));
-        assertFalse(anna.isPhoneVerified());
+        assertEquals(Outcome.CONFIRMED, service.confirm(code, lastCode()));
+
+        assertEquals("+12015550199", anna.getPhone());
+        assertTrue(anna.isPhoneVerified());
+        assertNull(anna.getPhoneLegacy());
+    }
+
+    @Test
+    void requestCode_ForAnotherNumber_SendsAtOnceAndReplacesTheWaitingCode() {
+        service.requestCode(anna, "+12015550199");
+        String firstHash = stored.getCodeHash();
+
+        // A different number is a new request, not a resend: no waiting.
+        PhoneCode second = service.requestCode(anna, "+12015550188");
+
+        assertEquals(2, sent.size());
+        assertEquals("+12015550188", second.getPhone());
+        assertFalse(firstHash.equals(second.getCodeHash()));
+    }
+
+    @Test
+    void confirm_NewNumberTakenByAnotherAccountMeanwhile_KeepsTheOldOne() {
+        PhoneCode code = service.requestCode(anna, "+12015550199");
+        when(userRepository.isPhoneVerifiedByOther("+12015550199", "anna")).thenReturn(true);
+
+        assertEquals(Outcome.NUMBER_TAKEN, service.confirm(code, lastCode()));
+        assertEquals(PHONE, anna.getPhone());
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.socialpath.entity.PhoneCode;
 import com.socialpath.entity.User;
 import com.socialpath.dto.request.RegistrationForm;
 import com.socialpath.security.SignIn;
+import com.socialpath.service.EmailVerificationService;
 import com.socialpath.service.PhoneVerificationService;
 import com.socialpath.service.PhoneVerificationService.Outcome;
 import com.socialpath.sms.DemoSmsGateway;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,8 +35,10 @@ import java.util.Optional;
  * the entity; the entity is created only after the input has been validated.
  *
  * <p>The account is then pending until the code sent to its phone number is
- * entered on the confirmation page; entering it signs the new user in. The
- * page is found by the code's random id, as the user cannot be signed in yet.
+ * entered on the confirmation page; entering it signs the new user in and
+ * sends a link to confirm the email address. The page is found by the code's
+ * random id, as the user cannot be signed in yet. Accounts from before
+ * numbers were confirmed come to the same page when they sign in.
  */
 @Controller
 @RequestMapping("/registration")
@@ -44,6 +48,7 @@ public class RegistrationController {
     private final UserService userService;
     private final CountryService countryService;
     private final PhoneVerificationService phoneVerification;
+    private final EmailVerificationService emailVerification;
     private final DemoSmsGateway demoSms;
     private final SignIn signIn;
 
@@ -117,9 +122,15 @@ public class RegistrationController {
         if (sent.isEmpty()) {
             return "redirect:/";
         }
+        User user = userService.findByLogin(sent.get().getUserLogin());
+        boolean newAccount = user.getPendingSince() != null;
         Outcome outcome = phoneVerification.confirm(sent.get(), code);
         if (outcome == Outcome.CONFIRMED) {
-            return signIn.complete(sent.get().getUserLogin(), request, response);
+            if (newAccount) {
+                // The account exists now: time to confirm the email address too.
+                emailVerification.sendLink(user, ServletUriComponentsBuilder.fromContextPath(request).toUriString());
+            }
+            return signIn.complete(user.getLogin(), request, response);
         }
         return showConfirmation(sent.get(), model, PhoneCodeMessages.of(outcome, sent.get()));
     }
@@ -155,7 +166,10 @@ public class RegistrationController {
     }
 
     private String showConfirmation(PhoneCode code, Model model, String errorText) {
+        User user = userService.findByLogin(code.getUserLogin());
         model.addAttribute("codeId", code.getId());
+        // Starting over is for a registration; an older account cannot be dropped from here.
+        model.addAttribute("newAccount", user != null && user.getPendingSince() != null);
         model.addAttribute("phone", PhoneNumbers.formatInternational(code.getPhone()));
         model.addAttribute("resendIn", phoneVerification.secondsUntilResend(code));
         model.addAttribute("demoInbox", demoSms.isInboxEnabled() ? DemoSmsController.inboxLink(code.getPhone()) : null);
@@ -164,8 +178,10 @@ public class RegistrationController {
     }
 
     /**
-     * The code of a registration that still waits for it. A code sent to a
-     * finished account (from the Security page) is not accepted here: this
+     * The code of an account whose number is not confirmed yet: a pending
+     * registration, or an account from before numbers were confirmed (sent
+     * here after its password was checked). A code for a new number of a
+     * confirmed account (from the Security page) is not accepted here: this
      * page signs in without the password.
      * @param id the code id from the request
      * @return the code, if its registration is still pending
@@ -173,7 +189,7 @@ public class RegistrationController {
     private Optional<PhoneCode> pendingCode(String id) {
         return phoneVerification.find(id).filter(code -> {
             User user = userService.findByLogin(code.getUserLogin());
-            return user != null && user.getPendingSince() != null;
+            return user != null && (user.getPendingSince() != null || !user.isPhoneVerified());
         });
     }
 

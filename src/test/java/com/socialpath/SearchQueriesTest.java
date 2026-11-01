@@ -46,8 +46,12 @@ class SearchQueriesTest extends MySqlRepositoryTest {
 
     @Test
     void people_AreFoundByPhoneOnlyWhenTheyShowItToEveryone() {
-        jdbc.update("UPDATE users SET phone = '+12015550199', phone_visibility = 'EVERYONE' WHERE login = 'anna'");
-        jdbc.update("UPDATE users SET phone = '+12015550188', phone_visibility = 'FRIENDS' WHERE login = 'ben'");
+        jdbc.update("""
+                UPDATE users SET phone = '+12015550199', phone_verified = TRUE, phone_visibility = 'EVERYONE'
+                WHERE login = 'anna'""");
+        jdbc.update("""
+                UPDATE users SET phone = '+12015550188', phone_verified = TRUE, phone_visibility = 'FRIENDS'
+                WHERE login = 'ben'""");
 
         assertThat(userRepository.findMatchingUsers("2015550199")).extracting(User::getLogin).containsExactly("anna");
         // A hidden number must not tell whose it is.

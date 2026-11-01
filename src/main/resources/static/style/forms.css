@@ -135,6 +135,17 @@
     font-size: 13px;
 }
 
+/* A hint under a field of a long form: in the fields' column, close to the field above. */
+.form-grid .grid-hint {
+    grid-column: 2;
+    margin: -6px 0 0;
+}
+
+.grid-hint a {
+    color: var(--brand-active);
+    font-weight: 600;
+}
+
 .btn-block {
     width: 100%;
     padding: 12px 18px;
@@ -311,6 +322,11 @@ p.errorText-top {
 
     .form-grid .name {
         margin-top: 8px;
+    }
+
+    .form-grid .grid-hint {
+        grid-column: auto;
+        margin: 0;
     }
 
     .form-actions {

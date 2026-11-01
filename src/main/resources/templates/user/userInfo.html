@@ -46,13 +46,30 @@
                 <input class="field" id="phone" th:value="${user.phoneNumber}" type="tel" name="phoneNumber"
                        autocomplete="tel-national" placeholder="Number">
             </div>
+            <p class="form-hint grid-hint">A new number replaces this one once you enter the code sent to it.</p>
             <label class="name" for="phone-visibility">Who sees it</label>
-            <select id="phone-visibility" name="phoneVisibility">
+            <select id="phone-visibility" name="phoneVisibility" th:disabled="${!phoneVerified}"
+                    data-visibility-hint="phone-visibility-hint">
                 <option th:each="v : ${phoneVisibilities}" th:value="${v.name()}" th:text="${v.label}"
-                        th:selected="${v == user.phoneVisibility}"></option>
+                        th:attr="data-hint=${v.hint}" th:selected="${v == user.phoneVisibility}"></option>
             </select>
+            <p class="form-hint grid-hint" id="phone-visibility-hint"
+               th:text="${phoneVerified} ? ${user.phoneVisibility?.hint} : 'Only you see it until the number is confirmed.'"></p>
             <label class="name" for="email">Email</label>
             <input class="field" id="email" th:value="${user.email}" type="text" name="email">
+            <p class="form-hint grid-hint">A new address has to be confirmed again with the link sent to it.</p>
+            <label class="name" for="email-visibility">Who sees it</label>
+            <select id="email-visibility" name="emailVisibility" th:disabled="${!emailVerified}"
+                    data-visibility-hint="email-visibility-hint">
+                <option th:each="v : ${phoneVisibilities}" th:value="${v.name()}" th:text="${v.label}"
+                        th:attr="data-hint=${v.hint}" th:selected="${v == user.emailVisibility}"></option>
+            </select>
+            <p class="form-hint grid-hint" id="email-visibility-hint" th:if="${emailVerified}"
+               th:text="${user.emailVisibility?.hint}"></p>
+            <p class="form-hint grid-hint" id="email-visibility-hint" th:unless="${emailVerified}">
+                Only you see it until it is confirmed.
+                <a href="/security/email">Confirm it on the Security page</a> to choose who else does.
+            </p>
             <label class="name" for="dob-day">Date of birth</label>
             <div class="dob-row">
             <input class="field" id="dob-day" th:value="${user.day}"
@@ -104,5 +121,6 @@
 </footer>
 
 <script src="/script/avatarPreview.js"></script>
+<script src="/script/contactVisibility.js"></script>
 </body>
 </html>

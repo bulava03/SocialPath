@@ -1,6 +1,6 @@
 package com.socialpath.dto.request;
 
-import com.socialpath.entity.PhoneVisibility;
+import com.socialpath.entity.ContactVisibility;
 import com.socialpath.entity.User;
 import com.socialpath.validation.PhoneInput;
 import com.socialpath.validation.PhoneNumbers;
@@ -46,7 +46,11 @@ public class UserUpdate implements DateOfBirthInput, PhoneInput {
     /** The checked number in E.164, set by PhoneNumbers.resolve. */
     private String phone;
 
-    private PhoneVisibility phoneVisibility = PhoneVisibility.FRIENDS;
+    /** Who sees the number; absent while it is unconfirmed (the form disables the choice). */
+    private ContactVisibility phoneVisibility;
+
+    /** Who sees the address; absent while it is unconfirmed (the form disables the choice). */
+    private ContactVisibility emailVisibility;
 
     /** Raw date-of-birth fields as typed; assembled by DateOfBirthResolver. */
     private String day;
@@ -85,6 +89,7 @@ public class UserUpdate implements DateOfBirthInput, PhoneInput {
             form.setPhoneNumber(user.getPhoneLegacy());
         }
         form.setPhoneVisibility(user.getPhoneVisibility());
+        form.setEmailVisibility(user.getEmailVisibility());
         LocalDateTime dateOfBirth = user.getDateOfBirth();
         if (dateOfBirth != null) {
             form.setDay(String.valueOf(dateOfBirth.getDayOfMonth()));

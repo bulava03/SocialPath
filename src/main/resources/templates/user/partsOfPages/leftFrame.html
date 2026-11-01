@@ -11,19 +11,31 @@
 
         <h1 th:text="${user.FirstName + ' ' + (user.LastName ?: '')}"></h1>
 
-        <dl class="profile-info">
+        <dl class="profile-info" th:with="own=${user.login == author.login}">
             <div th:if="${user.phoneVisibleTo(author.login)}">
                 <dt>Phone</dt>
                 <dd>
                     <a th:if="${user.phone != null}" th:href="'tel:' + ${user.phone}" th:text="${user.phoneForDisplay}"></a>
                     <span th:unless="${user.phone != null}" th:text="${user.phoneForDisplay}"></span>
-                    <span class="phone-visibility" th:if="${user.login == author.login}"
-                          th:text="'(' + ${user.phoneVisibility.label} + ')'"></span>
-                    <a class="phone-fix" th:if="${user.phone == null and user.login == author.login}"
+                    <!-- Who else sees it: shown to the owner only. -->
+                    <span class="contact-visibility" th:if="${own}"
+                          th:text="${user.phoneVerified} ? '(' + ${user.phoneVisibility.label} + ')' : '(Only me until confirmed)'"></span>
+                    <a class="phone-fix" th:if="${user.phone == null and own}"
                        href="/user/getUserInfo">Add the country code</a>
                 </dd>
             </div>
-            <div><dt>Email</dt><dd th:text="${user.Email}"></dd></div>
+            <div th:if="${user.emailVisibleTo(author.login)}">
+                <dt>Email</dt>
+                <dd>
+                    <span th:text="${user.email}"></span>
+                    <span class="contact-visibility" th:if="${own}"
+                          th:text="${user.emailVerified} ? '(' + ${user.emailVisibility.label} + ')' : '(Only me until confirmed)'"></span>
+                    <p class="contact-unconfirmed" th:if="${own and !user.emailVerified}">
+                        Not confirmed yet: it cannot be used to sign in or shown to others.
+                        <a href="/security/email">Confirm it on the Security page</a>
+                    </p>
+                </dd>
+            </div>
             <div th:if="${user.DateOfBirth != null}"><dt>Date of birth</dt><dd th:text="${#temporals.format(user.DateOfBirth, 'dd.MM.yyyy')}"></dd></div>
             <div th:if="${user.country != null}"><dt>Country</dt><dd th:text="${user.country.name}"></dd></div>
             <div th:if="${user.Region != null and user.Region != ''}"><dt>Region</dt><dd th:text="${user.Region}"></dd></div>

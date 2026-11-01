@@ -28,6 +28,8 @@ public interface UserService {
 
     /**
      * Validates a profile update against its Bean Validation constraints.
+     * Saving it with {@link #updateUser} leaves the phone number as it is: a
+     * new one takes effect only once its code is entered.
      * @param user the update to validate, with the login of whose profile it is
      * @return success, or a failure carrying the first violation message
      */
@@ -36,12 +38,22 @@ public interface UserService {
     /** Shown when a number is already confirmed by someone else. */
     String PHONE_TAKEN = "This phone number is already linked to another account.";
 
+    /** Shown when an email address is already confirmed by someone else. */
+    String EMAIL_TAKEN = "This email is already linked to another account.";
+
     /**
      * The account a confirmed number signs in.
      * @param phone the number in E.164
      * @return the account, or null when no account has confirmed the number
      */
     User findByVerifiedPhone(String phone);
+
+    /**
+     * The account a confirmed email address signs in.
+     * @param email the address, in any case
+     * @return the account, or null when no account has confirmed the address
+     */
+    User findByVerifiedEmail(String email);
 
     /**
      * Looks up a user by login, which is also the primary key.

@@ -3,6 +3,8 @@ package com.socialpath;
 import com.socialpath.dto.request.ChangePasswordForm;
 import com.socialpath.entity.User;
 import com.socialpath.security.AuthCookie;
+import com.socialpath.config.MailInbox;
+import com.socialpath.service.EmailVerificationService;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.PhoneVerificationService;
 import com.socialpath.sms.DemoSmsGateway;
@@ -43,7 +45,7 @@ class SecurityControllerTest {
         PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
         controller = new SecurityController(userService, sessionService, mock(HandleAvatarService.class),
                 mock(AuthCookie.class), passwordEncoder, mock(PhoneVerificationService.class),
-                new DemoSmsGateway(false));
+                new DemoSmsGateway(false), mock(EmailVerificationService.class), new MailInbox(""));
         anna.setLogin("anna");
         anna.setPassword("hash");
         when(passwordEncoder.matches("current-pass", "hash")).thenReturn(true);

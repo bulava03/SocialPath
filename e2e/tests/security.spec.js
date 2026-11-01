@@ -38,7 +38,7 @@ test.describe("security page", () => {
         await page.goto("/user/authorisation");
 
         await page.getByRole("button", { name: "User menu" }).click();
-        await page.getByRole("link", { name: "Security" }).click();
+        await page.getByRole("link", { name: "Security", exact: true }).click();
         await expect(page).toHaveURL("/security/password");
         await expect(page.getByRole("heading", { name: "Change password" })).toBeVisible();
         await expect(page.getByRole("heading", { name: "Active sessions" })).toHaveCount(0);

@@ -31,25 +31,25 @@ public class PhoneVerificationServiceImpl implements PhoneVerificationService {
     private final Clock clock;
 
     @Override
-    public PhoneCode requestCode(User user) {
-        if (user.getPhone() == null) {
+    public PhoneCode requestCode(User user, String phone) {
+        if (phone == null) {
             throw new IllegalStateException("No phone number to confirm for " + user.getLogin());
         }
         PhoneCode code = codeRepository.findByUserLogin(user.getLogin())
                 .orElseGet(() -> new PhoneCode(user.getLogin()));
-        if (user.getPhone().equals(code.getPhone()) && isUsable(code) && secondsUntilResend(code) > 0) {
+        if (phone.equals(code.getPhone()) && isUsable(code) && secondsUntilResend(code) > 0) {
             return code;
         }
 
         String digits = "%06d".formatted(RANDOM.nextInt(1_000_000));
         LocalDateTime now = now();
-        code.setPhone(user.getPhone());
+        code.setPhone(phone);
         code.setCodeHash(passwordEncoder.encode(digits));
         code.setAttempts(0);
         code.setSentAt(now);
         code.setExpiresAt(now.plus(CODE_LIFETIME));
         PhoneCode saved = codeRepository.save(code);
-        smsGateway.send(user.getPhone(), "SocialPath code: " + digits
+        smsGateway.send(phone, "SocialPath code: " + digits
                 + ". It expires in " + CODE_LIFETIME.toMinutes() + " minutes. Do not share it with anyone.");
         return saved;
     }
@@ -65,10 +65,14 @@ public class PhoneVerificationServiceImpl implements PhoneVerificationService {
     }
 
     @Override
+    public Optional<PhoneCode> findWaiting(String login) {
+        return codeRepository.findByUserLogin(login).filter(this::isUsable);
+    }
+
+    @Override
     public Outcome confirm(PhoneCode code, String typed) {
         User user = userRepository.findByLogin(code.getUserLogin());
-        // A code confirms the number it went to, not one the profile changed to since.
-        if (user == null || !code.getPhone().equals(user.getPhone()) || !isUsable(code)) {
+        if (user == null || !isUsable(code)) {
             return Outcome.EXPIRED;
         }
         String digits = typed == null ? "" : typed.replaceAll("\\s", "");
@@ -77,10 +81,13 @@ public class PhoneVerificationServiceImpl implements PhoneVerificationService {
             codeRepository.save(code);
             return isUsable(code) ? Outcome.WRONG_CODE : Outcome.EXPIRED;
         }
-        if (userRepository.isPhoneVerifiedByOther(user.getPhone(), user.getLogin())) {
+        if (userRepository.isPhoneVerifiedByOther(code.getPhone(), user.getLogin())) {
             return Outcome.NUMBER_TAKEN;
         }
 
+        // The number the code went to: the registered one, or a new one from the profile.
+        user.setPhone(code.getPhone());
+        user.setPhoneLegacy(null);
         user.setPhoneVerified(true);
         user.setPendingSince(null);
         try {

@@ -1,6 +1,6 @@
-/* The Security page: one card with three tabs (forms.css .form-tabs) - the
-   password form, the phone number and the list of active sessions. Each tab
-   is a link to its own address. */
+/* The Security page: one card with four tabs (forms.css .form-tabs) - the
+   password form, the phone number, the email address and the list of
+   active sessions. Each tab is a link to its own address. */
 .security-page {
     width: 100%;
     max-width: 640px;
@@ -37,6 +37,20 @@
 
 .phone-status-number {
     font-variant-numeric: tabular-nums;
+}
+
+.email-status-address {
+    overflow-wrap: anywhere;
+}
+
+/* A new number from the profile, waiting for its code. */
+.phone-pending {
+    margin: 18px 0 0;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    background-color: var(--brand-soft);
+    font-size: 14px;
+    text-align: center;
 }
 
 .phone-badge-pending {

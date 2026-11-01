@@ -16,18 +16,33 @@ and video, and discuss them in threaded comments.
   (contacts, birth date, country, city, education, workplace).
 - **Phone numbers** — chosen country code plus the number, checked with
   Google's libphonenumber, stored in E.164 and shown grouped as a `tel:`
-  link. The owner decides who sees it (everyone, friends, only them); a
-  number is found by search only when it is public.
+  link. The owner decides who sees the number and the email address
+  (everyone, friends, only them), with a note on the page and in the form
+  saying who does now; a contact is found by search only when it is
+  confirmed and public.
 - **Phone confirmation and phone sign-in** — a registration is finished by
   entering the 6-digit code sent to the number (10 minutes, 5 attempts, a
-  new code after 60 s); a confirmed number then signs in instead of the
-  login: it goes in the same field, in the international format (+ and the
-  country code), with the same password. A number can be confirmed by one account
-  only. There is no real SMS operator: messages go to the log and to a demo
-  phone page, `/dev/sms`, on when `SMS_DEMO_INBOX=true` (the default in
-  `docker-compose.yml`, off otherwise). Unconfirmed registrations are
-  removed after a day.
-- **Security page** — password change, confirming the phone number, and
+  new code after 60 s), and a number is never stored unconfirmed: a new one
+  from the profile replaces the old only once its code is entered. The
+  number then signs in instead of the login: it goes in the same field, in
+  the international format (+ and the country code), with the same
+  password. A number can be confirmed by one account only. There is no real
+  SMS operator: messages go to the log and to a demo phone page, `/dev/sms`,
+  on when `SMS_DEMO_INBOX=true` (the default in `docker-compose.yml`, off
+  otherwise). Unconfirmed registrations are removed after a day.
+- **Email confirmation and email sign-in** — a new account, or a new
+  address in the profile, gets a letter with a link that confirms the
+  address (24 hours, one link at a time). Until then the address does not
+  sign in, only its owner sees it, and the owner's page says so with a way
+  to the Security page; once confirmed it signs in like the login, case
+  aside, and the owner chooses who sees it. An address can be confirmed by
+  one account only. Letters go over SMTP: to a local
+  [Mailpit](https://mailpit.axllent.org/) test inbox by default
+  (http://localhost:8025 with `docker compose`), or to a real mailbox such
+  as Gmail with an app password when the `MAIL_*` variables are set (see
+  `application.properties`).
+- **Security page** — password change, confirming the phone number and
+  the email address, and
   the list of active sessions with browser, system, IP and approximate
   location; any other device can be signed out, or all of them at once.
   Sessions last 7 days without use and are extended while used.
@@ -65,7 +80,9 @@ The only prerequisite is Docker:
 docker compose up --build
 ```
 
-Open http://localhost:8080, register a user and explore. To run against
+Open http://localhost:8080, register a user and explore: the SMS codes
+are on http://localhost:8080/dev/sms and the letters in the test inbox on
+http://localhost:8025. To run against
 your own MySQL instead, start MySQL 8 on `localhost:3306` and run
 `./mvnw spring-boot:run`. Flyway creates and versions the schema on first
 start.
@@ -129,7 +146,7 @@ five minutes, not on every request.
 
 ## Data model
 
-Twelve tables around a natural primary key: `users.login` is immutable,
+Thirteen tables around a natural primary key: `users.login` is immutable,
 embedded in JWTs and URLs, and referenced by every relation.
 
 - `friendships` stores mutual friendship as mirrored rows (one per
@@ -163,6 +180,11 @@ embedded in JWTs and URLs, and referenced by every relation.
   `NULL` otherwise - carries a unique key: any number may be typed by
   several accounts but confirmed by one, the one it signs in.
   `phone_codes` keeps the last code sent to each user as a BCrypt hash.
+  Email addresses work the same way (`email_verified`, a unique
+  `verified_email` that ignores case through the column's collation), and
+  `email_links` keeps one link per user as a SHA-256 hash of its token,
+  overwritten in place: replacing it by delete-then-insert made concurrent
+  sign-ups deadlock on InnoDB gap locks.
 - `user_sessions` has one row per signed-in browser; the JWT carries its id,
   so deleting the row signs that browser out. `video_jobs` is the queue of
   uploaded videos waiting to be converted to MP4.
@@ -182,9 +204,12 @@ embedded in JWTs and URLs, and referenced by every relation.
 - **Passwords** — BCrypt (strength 12).
 - **Phone codes** — random 6 digits from `SecureRandom`, stored only as a
   BCrypt hash, valid for 10 minutes and 5 attempts, and only for the number
-  they were sent to. A failed sign-in says "incorrect login or password"
-  whatever was wrong, so it does not reveal which logins or numbers have
-  accounts.
+  they were sent to.
+- **Email links** — 256 random bits from `SecureRandom`, stored only as a
+  SHA-256 hash, valid for 24 hours and once, and only for the address they
+  were sent to; a newer link replaces the older one. A failed sign-in says
+  "incorrect login or password" whatever was wrong, so it does not reveal
+  which logins, numbers or addresses have accounts.
 - **Authorization from stored data only** — permissions never trust ids the
   client sends along. Where a comment lives is read from the top-level post
   of its thread, so a comment cannot be posted to, or deleted from, a feed
@@ -239,7 +264,9 @@ npm run stack:down         # removes it with everything the tests wrote
 
 The browser tests never touch the instance on port 8080: they run against
 a separate Compose project (`docker-compose.e2e.yml`) whose data is thrown
-away with its containers. `BASE_URL` points them at another instance, and
+away with its containers; its letters go to a test inbox of its own on
+port 8026, which the tests read through Mailpit's API, never to a real
+mailbox. `BASE_URL` and `MAILPIT_URL` point them at another instance, and
 `PLAYWRIGHT_OUTPUT_DIR` puts what they write (screenshots, traces, the
 106 MB files of the upload tests; `e2e/test-results` by default) into its
 `socialpath` subfolder. The

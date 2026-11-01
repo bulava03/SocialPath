@@ -6,7 +6,22 @@
 services:
   mysql:
     volumes: !reset []
+  # Its own test inbox on 8026, which the tests read letters from.
+  mailpit:
+    ports: !override
+      - "8026:8025"
   app:
     ports: !override
       - "8081:8080"
     volumes: !reset []
+    # Always the test inbox: a real mailbox set in the shell for the main
+    # stack must never get the tests' letters.
+    environment:
+      MAIL_HOST: mailpit
+      MAIL_PORT: "1025"
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_SMTP_AUTH: "false"
+      MAIL_STARTTLS: "false"
+      MAIL_FROM: SocialPath <no-reply@socialpath.test>
+      MAIL_INBOX_URL: http://localhost:8026

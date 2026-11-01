@@ -12,9 +12,12 @@ import com.socialpath.exception.InvalidImageException;
 import com.socialpath.validation.ValidationResult;
 import com.socialpath.security.CurrentUser;
 import com.socialpath.service.CommentsService;
+import com.socialpath.service.EmailVerificationService;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.ModelAttributesService;
+import com.socialpath.service.PhoneVerificationService;
 import com.socialpath.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,6 +39,8 @@ public class UserController {
     private final CommentsService commentsService;
     private final ModelAttributesService modelAttributesService;
     private final HandleAvatarService handleAvatarService;
+    private final PhoneVerificationService phoneVerification;
+    private final EmailVerificationService emailVerification;
 
     @GetMapping("/authorisation")
     public String getUserPageFirst(@CurrentUser User user, Model model) {
@@ -56,7 +62,8 @@ public class UserController {
 
         User user = userService.findByLogin(foundedUser.getAnotherUserLogin());
 
-        if (user == null) {
+        // A registration still waiting for its phone code is not an account yet.
+        if (user == null || user.getPendingSince() != null) {
             return "redirect:/user/authorisation";
         }
 
@@ -80,13 +87,28 @@ public class UserController {
     @GetMapping("/getUserInfo")
     public String getUserInfo(@CurrentUser User user, Model model) {
         model = modelAttributesService.userInfoModel(model, UserUpdate.from(user));
+        contactStatus(model, user);
         model = handleAvatarService.handleAvatar(user, model, false);
 
         return "user/userInfo";
     }
 
+    /**
+     * Saves the profile. A new phone number is not saved with the rest: a
+     * code goes to it, and the Security page asks for the code, after which
+     * the number replaces the old one. A new email address is saved
+     * unconfirmed and gets a confirmation link.
+     * @param myUser the signed-in user
+     * @param user the submitted form
+     * @param file a new avatar, if one was chosen
+     * @param model the model for showing the form again with an error
+     * @param request the request, for the address in the confirmation link
+     * @return the user's page, the phone tab of the Security page, or the form with an error
+     * @throws IOException when the avatar cannot be stored
+     */
     @PostMapping("/changeUserInfo")
-    public String changeUserInfo(@CurrentUser User myUser, UserUpdate user, MultipartFile file, Model model) throws IOException {
+    public String changeUserInfo(@CurrentUser User myUser, UserUpdate user, MultipartFile file, Model model,
+                                 HttpServletRequest request) throws IOException {
         // Whose profile it is comes from the session, never from the form.
         user.setLogin(myUser.getLogin());
         ValidationResult validation = userService.validateUserUpdate(user);
@@ -100,9 +122,19 @@ public class UserController {
             return showUserInfoWithError(model, user, myUser, e.getMessage());
         }
 
+        boolean newPhone = !user.getPhone().equals(myUser.getPhone());
+        boolean newEmail = !user.getEmail().strip().equalsIgnoreCase(myUser.getEmail());
         userService.updateUser(user);
 
-        return "redirect:/user/authorisation";
+        if (newEmail) {
+            emailVerification.sendLink(userService.findByLogin(myUser.getLogin()),
+                    ServletUriComponentsBuilder.fromContextPath(request).toUriString());
+        }
+        if (newPhone) {
+            phoneVerification.requestCode(myUser, user.getPhone());
+            return "redirect:/security/phone?sent";
+        }
+        return newEmail ? "redirect:/security/email?sent" : "redirect:/user/authorisation";
     }
 
     /**
@@ -118,8 +150,20 @@ public class UserController {
     private String showUserInfoWithError(Model model, UserUpdate user, User myUser, String errorText) {
         model = modelAttributesService.userInfoModel(model, user);
         model = handleAvatarService.handleAvatar(myUser, model, false);
+        contactStatus(model, myUser);
         model.addAttribute("errorText", errorText);
         return "user/userInfo";
+    }
+
+    /**
+     * Whether the stored phone number and email address are confirmed: the
+     * form lets the user choose who sees a contact only once it is.
+     * @param model the form's model
+     * @param user the stored user
+     */
+    private static void contactStatus(Model model, User user) {
+        model.addAttribute("phoneVerified", user.isPhoneVerified());
+        model.addAttribute("emailVerified", user.isEmailVerified());
     }
 
     @GetMapping("/getUsersGroups")

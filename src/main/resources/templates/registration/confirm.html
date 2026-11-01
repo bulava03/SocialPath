@@ -40,7 +40,7 @@
                 <input type="hidden" name="id" th:value="${codeId}">
                 <button class="btn-link" type="submit">Send the code again</button>
             </form>
-            <form method="post" action="/registration/cancel">
+            <form th:if="${newAccount}" method="post" action="/registration/cancel">
                 <input type="hidden" name="id" th:value="${codeId}">
                 <button class="btn-link" type="submit">Wrong number? Start over</button>
             </form>

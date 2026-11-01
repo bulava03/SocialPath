@@ -58,6 +58,8 @@ public class SecurityConfig {
                                 "/registration/confirm",
                                 "/registration/resend",
                                 "/registration/cancel",
+                                // The link in a confirmation letter may be opened on any device.
+                                "/email/confirm",
                                 // Answers 404 unless the demo inbox is on (DemoSmsController).
                                 "/dev/sms",
                                 "/dev/sms/messages",

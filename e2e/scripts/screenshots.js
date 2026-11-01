@@ -12,6 +12,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:8081";
+// The stack's test inbox, where the email confirmation links arrive.
+const MAILPIT_URL = process.env.MAILPIT_URL ?? "http://localhost:8026";
 const OUT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../docs/screenshots");
 const PASSWORD = "password123";
 const VIEWPORT = { width: 1280, height: 900 };
@@ -150,7 +152,26 @@ async function signedInAs(login) {
     });
     check(confirmed.status() === 302 && confirmed.headers()["location"].includes("/user/authorisation"),
         `confirm the phone of ${login}`);
+    await confirmEmail(api, `${login}@example.com`);
     return api;
+}
+
+/** Opens the link from the confirmation letter, so the pages show a confirmed address. */
+async function confirmEmail(api, address) {
+    let link = null;
+    for (let attempt = 0; attempt < 20 && !link; attempt++) {
+        const search = await (await api.get(`${MAILPIT_URL}/api/v1/search`, { params: { query: `to:"${address}"` } })).json();
+        const [latest] = search.messages ?? [];
+        if (latest) {
+            const message = await (await api.get(`${MAILPIT_URL}/api/v1/message/${latest.ID}`)).json();
+            link = message.Text.match(/https?:\/\/\S+\/email\/confirm\?token=[\w-]+/)?.[0] ?? null;
+        }
+        if (!link) {
+            await new Promise(resolve => setTimeout(resolve, 250));
+        }
+    }
+    check(link, `a confirmation letter to ${address}`);
+    check((await api.get(link)).ok(), `confirm ${address}`);
 }
 
 function check(condition, what) {

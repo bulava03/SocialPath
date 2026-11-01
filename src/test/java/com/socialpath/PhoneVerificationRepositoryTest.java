@@ -18,8 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The schema rules behind signing in by phone: one account per confirmed
- * number, and unconfirmed registrations cleaned up with their codes.
+ * The schema rules behind signing in by phone or email: one account per
+ * confirmed number or address, contacts found by search only when confirmed
+ * and public, and unconfirmed registrations cleaned up with their codes.
  */
 class PhoneVerificationRepositoryTest extends MySqlRepositoryTest {
 
@@ -102,6 +103,36 @@ class PhoneVerificationRepositoryTest extends MySqlRepositoryTest {
     void searchLeavesOutPendingRegistrations() {
         jdbc.update("UPDATE users SET pending_since = ? WHERE login = 'anna'", LocalDateTime.now());
 
-        assertEquals(1, users.findMatchingUsers("example.com").size());
+        assertTrue(users.findMatchingUsers("anna").isEmpty());
+        assertEquals(1, users.findMatchingUsers("ben").size());
+    }
+
+    @Test
+    void anAddressMayBeTypedByManyButConfirmedByOne_WhateverItsCase() {
+        jdbc.update("UPDATE users SET email = 'shared@example.com' WHERE login = 'anna'");
+        jdbc.update("UPDATE users SET email = 'Shared@Example.com' WHERE login = 'ben'");
+        jdbc.update("UPDATE users SET email_verified = TRUE WHERE login = 'anna'");
+
+        assertThrows(DataIntegrityViolationException.class,
+                () -> jdbc.update("UPDATE users SET email_verified = TRUE WHERE login = 'ben'"));
+        assertEquals("anna", users.findByVerifiedEmail("SHARED@example.com").getLogin());
+        assertTrue(users.isEmailVerifiedByOther("shared@example.com", "ben"));
+        assertFalse(users.isEmailVerifiedByOther("shared@example.com", "anna"));
+    }
+
+    @Test
+    void anUnconfirmedAddressSignsNobodyIn() {
+        assertNull(users.findByVerifiedEmail("anna@example.com"));
+    }
+
+    @Test
+    void searchFindsAnAddressOnlyWhenConfirmedAndShownToEveryone() {
+        assertTrue(users.findMatchingUsers("anna@example").isEmpty());
+
+        jdbc.update("UPDATE users SET email_verified = TRUE WHERE login = 'anna'");
+        assertTrue(users.findMatchingUsers("anna@example").isEmpty());
+
+        jdbc.update("UPDATE users SET email_visibility = 'EVERYONE' WHERE login = 'anna'");
+        assertEquals(1, users.findMatchingUsers("anna@example").size());
     }
 }

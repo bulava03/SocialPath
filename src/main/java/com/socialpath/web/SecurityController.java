@@ -1,17 +1,22 @@
 package com.socialpath.web;
 
+import com.socialpath.config.MailInbox;
 import com.socialpath.dto.request.ChangePasswordForm;
+import com.socialpath.entity.EmailLink;
 import com.socialpath.entity.PhoneCode;
 import com.socialpath.entity.User;
 import com.socialpath.security.AuthCookie;
 import com.socialpath.security.CurrentSession;
 import com.socialpath.security.CurrentUser;
+import com.socialpath.service.EmailVerificationService;
 import com.socialpath.service.HandleAvatarService;
 import com.socialpath.service.PhoneVerificationService;
 import com.socialpath.service.PhoneVerificationService.Outcome;
 import com.socialpath.service.SessionService;
 import com.socialpath.service.UserService;
 import com.socialpath.sms.DemoSmsGateway;
+import com.socialpath.validation.PhoneNumbers;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,13 +30,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.Optional;
 
 /**
- * The Security page, in three tabs: changing the password, confirming the
- * phone number (a confirmed number can be used to sign in), and the list of
- * signed-in browsers, each of which can be signed out from there. Each tab
+ * The Security page, in four tabs: changing the password, the phone number
+ * (confirming a new one), the email address (sending its confirmation link)
+ * and the list of signed-in browsers, each of which can be signed out from
+ * there. Each tab
  * has its own address, so every action returns to the tab it came from.
  */
 @Controller
@@ -46,6 +53,8 @@ public class SecurityController {
     private final PasswordEncoder passwordEncoder;
     private final PhoneVerificationService phoneVerification;
     private final DemoSmsGateway demoSms;
+    private final EmailVerificationService emailVerification;
+    private final MailInbox mailInbox;
 
     /** The tab that shows the password form. */
     static final String PASSWORD_TAB = "password";
@@ -53,6 +62,8 @@ public class SecurityController {
     static final String SESSIONS_TAB = "sessions";
     /** The tab that confirms the phone number. */
     static final String PHONE_TAB = "phone";
+    /** The tab that confirms the email address. */
+    static final String EMAIL_TAB = "email";
 
     @GetMapping
     public String securityPage() {
@@ -69,6 +80,12 @@ public class SecurityController {
     public String phoneTab(@CurrentUser User user,
                            @RequestAttribute(CurrentSession.ATTRIBUTE) String sessionId, Model model) {
         return page(user, sessionId, model, PHONE_TAB, "");
+    }
+
+    @GetMapping("/" + EMAIL_TAB)
+    public String emailTab(@CurrentUser User user,
+                           @RequestAttribute(CurrentSession.ATTRIBUTE) String sessionId, Model model) {
+        return page(user, sessionId, model, EMAIL_TAB, "");
     }
 
     @GetMapping("/" + SESSIONS_TAB)
@@ -133,8 +150,9 @@ public class SecurityController {
     }
 
     /**
-     * Sends a code to the profile's number, unless the last one went out too
-     * recently or the number is confirmed already.
+     * Sends the code again: to the new number waiting for confirmation, or
+     * to the profile's number while it is unconfirmed. Not sooner than
+     * {@link PhoneVerificationService#RESEND_AFTER} after the last one.
      * @param user the signed-in user
      * @param sessionId the session the request was made with
      * @param model the model for showing the page again with an error
@@ -143,22 +161,23 @@ public class SecurityController {
     @PostMapping("/phone/sendCode")
     public String sendPhoneCode(@CurrentUser User user,
                                 @RequestAttribute(CurrentSession.ATTRIBUTE) String sessionId, Model model) {
-        if (user.getPhone() == null) {
-            return page(user, sessionId, model, PHONE_TAB, "Enter the number in your profile first.");
+        Optional<PhoneCode> waiting = waitingCode(user);
+        String target = waiting.map(PhoneCode::getPhone)
+                .orElse(user.isPhoneVerified() ? null : user.getPhone());
+        if (target == null) {
+            return user.isPhoneVerified() ? "redirect:/security/" + PHONE_TAB
+                    : page(user, sessionId, model, PHONE_TAB, "Enter the number in your profile first.");
         }
-        if (user.isPhoneVerified()) {
-            return "redirect:/security/" + PHONE_TAB;
-        }
-        Optional<PhoneCode> last = currentCode(user);
-        if (last.isPresent() && phoneVerification.secondsUntilResend(last.get()) > 0) {
+        if (waiting.isPresent() && phoneVerification.secondsUntilResend(waiting.get()) > 0) {
             return "redirect:/security/" + PHONE_TAB + "?wait";
         }
-        phoneVerification.requestCode(user);
+        phoneVerification.requestCode(user, target);
         return "redirect:/security/" + PHONE_TAB + "?sent";
     }
 
     /**
-     * Checks the code sent to the profile's number.
+     * Checks the code; the right one makes the number it went to the
+     * profile's confirmed number.
      * @param user the signed-in user
      * @param sessionId the session the request was made with
      * @param code what the user typed
@@ -168,9 +187,9 @@ public class SecurityController {
     @PostMapping("/phone/confirm")
     public String confirmPhone(@CurrentUser User user, @RequestAttribute(CurrentSession.ATTRIBUTE) String sessionId,
                                @RequestParam(required = false) String code, Model model) {
-        Optional<PhoneCode> sent = currentCode(user);
+        Optional<PhoneCode> sent = waitingCode(user);
         if (sent.isEmpty()) {
-            return page(user, sessionId, model, PHONE_TAB, "Send a code first.");
+            return page(user, sessionId, model, PHONE_TAB, "This code can no longer be used. Send a new one.");
         }
         Outcome outcome = phoneVerification.confirm(sent.get(), code);
         if (outcome == Outcome.CONFIRMED) {
@@ -180,13 +199,34 @@ public class SecurityController {
     }
 
     /**
-     * The code last sent, if it went to the number the profile has now.
+     * Sends a link to confirm the profile's email address, not sooner than
+     * {@link EmailVerificationService#RESEND_AFTER} after the last one.
      * @param user the signed-in user
-     * @return the code, if there is one for the current number
+     * @param request the request, for the address in the link
+     * @return the email tab, with a note on what happened
      */
-    private Optional<PhoneCode> currentCode(User user) {
-        return phoneVerification.findFor(user.getLogin())
-                .filter(code -> code.getPhone().equals(user.getPhone()));
+    @PostMapping("/email/sendLink")
+    public String sendEmailLink(@CurrentUser User user, HttpServletRequest request) {
+        if (user.isEmailVerified()) {
+            return "redirect:/security/" + EMAIL_TAB;
+        }
+        Optional<EmailLink> last = emailVerification.findFor(user.getLogin());
+        if (last.isPresent() && emailVerification.secondsUntilResend(last.get()) > 0) {
+            return "redirect:/security/" + EMAIL_TAB + "?wait";
+        }
+        boolean sent = emailVerification.sendLink(user, ServletUriComponentsBuilder.fromContextPath(request).toUriString());
+        return "redirect:/security/" + EMAIL_TAB + (sent ? "?sent" : "?failed");
+    }
+
+    /**
+     * The code waiting to be entered: for a new number from the profile, or
+     * for the profile's number while it is unconfirmed.
+     * @param user the signed-in user
+     * @return the code, if one can still be entered
+     */
+    private Optional<PhoneCode> waitingCode(User user) {
+        return phoneVerification.findWaiting(user.getLogin())
+                .filter(code -> !user.isPhoneVerified() || !code.getPhone().equals(user.getPhone()));
     }
 
     // Every tab gets the sessions: the tab switcher shows how many there are.
@@ -198,11 +238,19 @@ public class SecurityController {
         if (PHONE_TAB.equals(tab)) {
             model.addAttribute("phone", user.getPhoneForDisplay());
             model.addAttribute("phoneVerified", user.isPhoneVerified());
-            Optional<PhoneCode> sent = user.isPhoneVerified() ? Optional.empty() : currentCode(user);
-            model.addAttribute("codeSent", sent.isPresent());
-            model.addAttribute("resendIn", sent.map(phoneVerification::secondsUntilResend).orElse(0L));
-            model.addAttribute("demoInbox", demoSms.isInboxEnabled() && user.getPhone() != null
-                    ? DemoSmsController.inboxLink(user.getPhone()) : null);
+            Optional<PhoneCode> waiting = waitingCode(user);
+            model.addAttribute("pendingPhone", waiting.map(code -> PhoneNumbers.formatInternational(code.getPhone()))
+                    .orElse(null));
+            model.addAttribute("resendIn", waiting.map(phoneVerification::secondsUntilResend).orElse(0L));
+            model.addAttribute("demoInbox", demoSms.isInboxEnabled()
+                    ? waiting.map(code -> DemoSmsController.inboxLink(code.getPhone())).orElse(null) : null);
+        }
+        if (EMAIL_TAB.equals(tab)) {
+            model.addAttribute("email", user.getEmail());
+            model.addAttribute("emailVerified", user.isEmailVerified());
+            Optional<EmailLink> link = emailVerification.findFor(user.getLogin());
+            model.addAttribute("resendIn", link.map(emailVerification::secondsUntilResend).orElse(0L));
+            model.addAttribute("mailInbox", mailInbox.getUrl());
         }
         return "user/security";
     }

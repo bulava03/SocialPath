@@ -16,6 +16,13 @@ services:
       timeout: 5s
       retries: 10
 
+  # A test mail server: takes every letter the app sends and delivers none.
+  # Its inbox is the web page on http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:v1.27.0
+    ports:
+      - "8025:8025"
+
   app:
     build: .
     ports:
@@ -32,6 +39,16 @@ services:
       # No real SMS operator: phone codes show up on the demo phone page,
       # http://localhost:8080/dev/sms. Set to false where others can reach the app.
       SMS_DEMO_INBOX: ${SMS_DEMO_INBOX:-true}
+      # Letters go to Mailpit unless MAIL_* points at a real mailbox
+      # (see application.properties, e.g. Gmail with an app password).
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-false}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      MAIL_FROM: ${MAIL_FROM:-SocialPath <no-reply@socialpath.test>}
+      MAIL_INBOX_URL: ${MAIL_INBOX_URL:-http://localhost:8025}
       # Override in real deployments: JWT_SECRET=<long random string>
       JWT_SECRET: ${JWT_SECRET:-local-dev-only-secret-key-change-me-0123456789abcdef0123456789abcdef}
     volumes:
@@ -40,6 +57,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
 volumes:
   mysql-data:

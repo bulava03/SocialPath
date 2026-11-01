@@ -1,7 +1,7 @@
 package com.socialpath;
 
 import com.socialpath.entity.Country;
-import com.socialpath.entity.PhoneVisibility;
+import com.socialpath.entity.ContactVisibility;
 import com.socialpath.entity.User;
 import com.socialpath.validation.PhoneNumbers;
 import org.junit.jupiter.api.Test;
@@ -56,21 +56,36 @@ class PhoneNumbersTest {
     }
 
     @Test
-    void phone_IsSeenByTheOwnerAndWhomTheVisibilityAllows() {
+    void contacts_AreSeenByTheOwnerAndWhomTheVisibilityAllows() {
+        User owner = new User();
+        owner.setLogin("owner");
+        owner.getFriends().add("friend");
+        owner.setPhoneVerified(true);
+        owner.setEmailVerified(true);
+
+        assertVisible(owner, ContactVisibility.EVERYONE, true, true);
+        assertVisible(owner, ContactVisibility.FRIENDS, true, false);
+        assertVisible(owner, ContactVisibility.NOBODY, false, false);
+    }
+
+    @Test
+    void contacts_Unconfirmed_AreSeenByTheOwnerOnly_WhateverTheVisibility() {
         User owner = new User();
         owner.setLogin("owner");
         owner.getFriends().add("friend");
 
-        assertVisible(owner, PhoneVisibility.EVERYONE, true, true);
-        assertVisible(owner, PhoneVisibility.FRIENDS, true, false);
-        assertVisible(owner, PhoneVisibility.NOBODY, false, false);
+        assertVisible(owner, ContactVisibility.EVERYONE, false, false);
     }
 
-    private static void assertVisible(User owner, PhoneVisibility visibility, boolean friend, boolean stranger) {
+    private static void assertVisible(User owner, ContactVisibility visibility, boolean friend, boolean stranger) {
         owner.setPhoneVisibility(visibility);
-        assertTrue(owner.phoneVisibleTo("owner"), visibility + ": the owner");
-        assertEquals(friend, owner.phoneVisibleTo("friend"), visibility + ": a friend");
-        assertEquals(stranger, owner.phoneVisibleTo("stranger"), visibility + ": a stranger");
+        owner.setEmailVisibility(visibility);
+        assertTrue(owner.phoneVisibleTo("owner"), visibility + ": the owner, phone");
+        assertTrue(owner.emailVisibleTo("owner"), visibility + ": the owner, email");
+        assertEquals(friend, owner.phoneVisibleTo("friend"), visibility + ": a friend, phone");
+        assertEquals(friend, owner.emailVisibleTo("friend"), visibility + ": a friend, email");
+        assertEquals(stranger, owner.phoneVisibleTo("stranger"), visibility + ": a stranger, phone");
+        assertEquals(stranger, owner.emailVisibleTo("stranger"), visibility + ": a stranger, email");
     }
 
     private static Country country(String code, String name) {

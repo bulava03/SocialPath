@@ -69,6 +69,7 @@ class AuthControllerTest {
         anna.setPassword("hash");
         when(userService.findByLogin("anna")).thenReturn(anna);
         when(userService.findByVerifiedPhone("+12015550123")).thenReturn(anna);
+        when(userService.findByVerifiedEmail("anna@example.com")).thenReturn(anna);
         when(passwordEncoder.matches("right", "hash")).thenReturn(true);
         LocalDateTime now = LocalDateTime.now();
         when(sessionService.open("anna", "203.0.113.7", "Mozilla/5.0 Firefox/130.0"))
@@ -147,6 +148,42 @@ class AuthControllerTest {
         }
         assertNull(response.getHeader(HttpHeaders.SET_COOKIE));
         verify(sessionService, never()).open(anyString(), anyString(), any());
+    }
+
+    @Test
+    void login_ConfirmedEmailInTheLoginField_SignsInTheAddressesAccount() {
+        String view = controller.login(" anna@example.com ", "right", new ExtendedModelMap(), request, response);
+
+        assertEquals("redirect:/user/authorisation", view);
+        assertTrue(response.getHeader(HttpHeaders.SET_COOKIE).startsWith("token="));
+    }
+
+    @Test
+    void login_UnconfirmedOrUnknownEmail_GetsTheSameMessageAsAWrongPassword() {
+        // An unconfirmed address is not found by findByVerifiedEmail, the same as one nobody has.
+        for (String[] attempt : new String[][] {{"someone@example.com", "right"}, {"anna@example.com", "wrong"}}) {
+            ExtendedModelMap model = new ExtendedModelMap();
+
+            assertEquals("home/index", controller.login(attempt[0], attempt[1], model, request, response));
+            assertEquals("Incorrect login or password", model.get("errorText"));
+        }
+        assertNull(response.getHeader(HttpHeaders.SET_COOKIE));
+    }
+
+    @Test
+    void login_AccountWithANumberFromBeforeConfirmation_ConfirmsItFirst() {
+        User older = new User();
+        older.setLogin("older");
+        older.setPassword("hash");
+        older.setPhone("+12015550177");
+        when(userService.findByLogin("older")).thenReturn(older);
+        PhoneCode code = new PhoneCode("older");
+        when(phoneVerification.requestCode(older)).thenReturn(code);
+
+        String view = controller.login("older", "right", new ExtendedModelMap(), request, response);
+
+        assertEquals("redirect:/registration/confirm?id=" + code.getId(), view);
+        assertNull(response.getHeader(HttpHeaders.SET_COOKIE));
     }
 
     @Test

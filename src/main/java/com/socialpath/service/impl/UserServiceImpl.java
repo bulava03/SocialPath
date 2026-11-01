@@ -41,12 +41,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ValidationResult validateRegistration(RegistrationForm form) {
-        return validateProfile(form, form.getCountryCode(), null);
+        return validateProfile(form, form.getEmail(), form.getCountryCode(), null);
     }
 
     @Override
     public ValidationResult validateUserUpdate(UserUpdate user) {
-        return validateProfile(user, user.getCountryCode(), user.getLogin());
+        return validateProfile(user, user.getEmail(), user.getCountryCode(), user.getLogin());
     }
 
     @Override
@@ -54,20 +54,26 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByVerifiedPhone(phone);
     }
 
+    @Override
+    public User findByVerifiedEmail(String email) {
+        return userRepository.findByVerifiedEmail(email);
+    }
+
     /**
      * Shared checks of the registration and profile forms: the date of birth
      * is assembled first, so the bean constraints (@Past) see the result, and
-     * the phone number is checked, converted to E.164 and must not be one
-     * that another account has confirmed (that number signs the other
-     * account in).
+     * the phone number is checked and converted to E.164, and neither it nor
+     * the email address may be one that another account has confirmed
+     * (that number or address signs the other account in).
      * @param <F> a form with both a date of birth and a phone number
      * @param form the submitted form
+     * @param email the email address from the form
      * @param countryCode the selected country code, possibly empty
      * @param login whose profile it is, or null for a new account
      * @return the first failure, or success
      */
-    private <F extends DateOfBirthInput & PhoneInput> ValidationResult validateProfile(F form, String countryCode,
-                                                                                      String login) {
+    private <F extends DateOfBirthInput & PhoneInput> ValidationResult validateProfile(F form, String email,
+                                                                                      String countryCode, String login) {
         ValidationResult dateOfBirth = DateOfBirthResolver.resolve(form);
         if (!dateOfBirth.isSuccess()) {
             return dateOfBirth;
@@ -82,6 +88,9 @@ public class UserServiceImpl implements UserService {
         ValidationResult constraints = ValidationResult.of(validator.validate(form));
         if (!constraints.isSuccess()) {
             return constraints;
+        }
+        if (userRepository.isEmailVerifiedByOther(email.strip(), login)) {
+            return ValidationResult.failure(EMAIL_TAKEN);
         }
         if (!countryService.isValidCode(countryCode)) {
             return ValidationResult.failure("Unknown country.");
@@ -114,15 +123,22 @@ public class UserServiceImpl implements UserService {
         }
         user.setFirstName(userUpdate.getFirstName());
         user.setLastName(userUpdate.getLastName());
-        user.setEmail(userUpdate.getEmail());
-        if (!userUpdate.getPhone().equals(user.getPhone())) {
-            // A new number has to be confirmed before it signs in.
-            user.setPhoneVerified(false);
+        String email = userUpdate.getEmail().strip();
+        if (!email.equalsIgnoreCase(user.getEmail())) {
+            // A new address is the owner's only until its link is opened.
+            user.setEmailVerified(false);
         }
-        user.setPhone(userUpdate.getPhone());
-        // Saved with a checked number, an old unreadable one is gone.
-        user.setPhoneLegacy(null);
-        user.setPhoneVisibility(userUpdate.getPhoneVisibility());
+        user.setEmail(email);
+        // The phone number is not set here: a new one replaces the old only
+        // once its code is entered (PhoneVerificationService).
+        // Who sees a contact can be chosen once it is confirmed; the form
+        // leaves the choice out until then.
+        if (userUpdate.getPhoneVisibility() != null && user.isPhoneVerified()) {
+            user.setPhoneVisibility(userUpdate.getPhoneVisibility());
+        }
+        if (userUpdate.getEmailVisibility() != null && user.isEmailVerified()) {
+            user.setEmailVisibility(userUpdate.getEmailVisibility());
+        }
         user.setDateOfBirth(userUpdate.getDateOfBirth());
         user.setCountry(countryService.resolve(userUpdate.getCountryCode()));
         user.setRegion(userUpdate.getRegion());

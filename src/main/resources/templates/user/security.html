@@ -21,6 +21,8 @@
                    th:attr="aria-current=${tab == 'password'} ? 'page'">Password</a>
                 <a href="/security/phone" th:classappend="${tab == 'phone'} ? 'active'"
                    th:attr="aria-current=${tab == 'phone'} ? 'page'">Phone</a>
+                <a href="/security/email" th:classappend="${tab == 'email'} ? 'active'"
+                   th:attr="aria-current=${tab == 'email'} ? 'page'">Email</a>
                 <a href="/security/sessions" th:classappend="${tab == 'sessions'} ? 'active'"
                    th:attr="aria-current=${tab == 'sessions'} ? 'page'">
                     Sessions <span class="security-tab-count" th:text="${#lists.size(sessions)}">1</span>
@@ -48,9 +50,9 @@
 
             <section th:if="${tab == 'phone'}">
                 <h1 class="form-title">Phone number</h1>
-                <p class="form-subtitle">A confirmed number signs you in instead of the login, with the same password.</p>
+                <p class="form-subtitle">Your number signs you in instead of the login, with the same password.</p>
                 <p class="form-notice" th:if="${param.confirmed}">The number is confirmed. You can sign in with it now.</p>
-                <p class="form-notice" th:if="${param.sent}">A code is on its way.</p>
+                <p class="form-notice" th:if="${param.sent != null and pendingPhone != null}">A code is on its way.</p>
                 <p class="form-notice" th:if="${param.wait}"
                    th:text="'You can ask for a new code in ' + ${resendIn} + ' s.'">You can ask for a new code soon.</p>
 
@@ -63,31 +65,68 @@
                     Your profile has no number that can be confirmed. <a href="/user/getUserInfo">Add it</a>
                 </p>
 
-                <div class="security-password" th:if="${phone != null and !phoneVerified}">
-                    <form th:unless="${codeSent}" class="form-stack" method="post" action="/security/phone/sendCode">
+                <div class="security-password" th:if="${pendingPhone != null}">
+                    <p class="phone-pending">
+                        New number <strong th:text="${pendingPhone}">+1 201-555-0199</strong>: enter the code sent to it.
+                        Until then the number above stays.
+                    </p>
+                    <form class="form-stack" method="post" action="/security/phone/confirm">
+                        <label class="name" for="code">Code from the SMS</label>
+                        <input class="field code-field" id="code" name="code" type="text" inputmode="numeric"
+                               autocomplete="one-time-code" maxlength="6" pattern="[0-9 ]*" required>
                         <p class="errortext" th:text="${errorText}"></p>
-                        <button class="btn btn-primary btn-block" type="submit">Send code</button>
+                        <button class="btn btn-primary btn-block" type="submit">Confirm</button>
                     </form>
-                    <th:block th:if="${codeSent}">
-                        <form class="form-stack" method="post" action="/security/phone/confirm">
-                            <label class="name" for="code">Code from the SMS</label>
-                            <input class="field code-field" id="code" name="code" type="text" inputmode="numeric"
-                                   autocomplete="one-time-code" maxlength="6" pattern="[0-9 ]*" required>
-                            <p class="errortext" th:text="${errorText}"></p>
-                            <button class="btn btn-primary btn-block" type="submit">Confirm</button>
+                    <div class="code-actions">
+                        <form method="post" action="/security/phone/sendCode">
+                            <button class="btn-link" type="submit">Send the code again</button>
                         </form>
-                        <div class="code-actions">
-                            <form method="post" action="/security/phone/sendCode">
-                                <button class="btn-link" type="submit">Send the code again</button>
-                            </form>
-                        </div>
-                    </th:block>
+                    </div>
                     <p class="form-hint demo-sms" th:if="${demoInbox}">
                         Demo mode: no real SMS is sent. <a th:href="${demoInbox}" target="_blank" rel="noopener">Open the demo phone</a>
                     </p>
                 </div>
-                <p class="form-hint phone-status-hint" th:if="${phoneVerified}">
-                    To use another number, change it in <a href="/user/getUserInfo">your profile</a> and confirm it here.
+                <th:block th:if="${pendingPhone == null}">
+                    <p class="errortext phone-status-hint" th:if="${errorText}" th:text="${errorText}"></p>
+                    <p class="form-hint phone-status-hint">
+                        To use another number, change it in <a href="/user/getUserInfo">your profile</a>:
+                        a code goes to it, and you enter it here.
+                    </p>
+                </th:block>
+            </section>
+
+            <section th:if="${tab == 'email'}">
+                <h1 class="form-title">Email</h1>
+                <p class="form-subtitle">A confirmed address signs you in instead of the login, with the same password.</p>
+                <p class="form-notice" th:if="${param.sent}">
+                    A confirmation link is on its way. It works for 24 hours.
+                </p>
+                <p class="form-notice" th:if="${param.wait}"
+                   th:text="'You can ask for a new link in ' + ${resendIn} + ' s.'">You can ask for a new link soon.</p>
+                <p class="errortext errortext-top" th:if="${param.failed}">
+                    The letter could not be sent. Try again later.
+                </p>
+
+                <div class="phone-status">
+                    <span class="email-status-address" th:text="${email}">user@example.com</span>
+                    <span class="session-badge" th:if="${emailVerified}">Confirmed</span>
+                    <span class="phone-badge-pending" th:unless="${emailVerified}">Not confirmed</span>
+                </div>
+
+                <th:block th:unless="${emailVerified}">
+                    <p class="form-hint phone-status-hint">
+                        Until it is confirmed the address cannot be used to sign in, and only you see it.
+                        Open the link in the letter to confirm it.
+                    </p>
+                    <form class="form-stack security-password" method="post" action="/security/email/sendLink">
+                        <button class="btn btn-primary btn-block" type="submit">Send confirmation link</button>
+                    </form>
+                    <p class="form-hint demo-sms" th:if="${mailInbox}">
+                        Demo mode: letters go to a test inbox. <a th:href="${mailInbox}" target="_blank" rel="noopener">Open the test inbox</a>
+                    </p>
+                </th:block>
+                <p class="form-hint phone-status-hint" th:if="${emailVerified}">
+                    To use another address, change it in <a href="/user/getUserInfo">your profile</a> and confirm it again.
                 </p>
             </section>
 

@@ -29,7 +29,8 @@ import org.springframework.web.bind.annotation.RequestParam;
  * stays disabled in SecurityConfig.
  *
  * <p>The login field also takes a confirmed phone number in the
- * international format (+ and the country code), with the same password.
+ * international format (+ and the country code) or a confirmed email
+ * address, with the same password.
  */
 @Controller
 @RequestMapping("/auth")
@@ -47,7 +48,7 @@ public class AuthController {
      * Authenticates by login or phone number, and password. On success opens
      * a session, sets the auth cookie and opens the user's page; otherwise
      * shows the login form again with an error and what was typed.
-     * @param login the login, or a phone number starting with +
+     * @param login the login, a phone number starting with +, or an email address
      * @param password the password from the form
      * @param model the model for re-rendering the form
      * @param httpRequest the sign-in request, for the address and browser
@@ -65,8 +66,10 @@ public class AuthController {
             model.addAttribute("errorText", "Incorrect login or password");
             return "home/index";
         }
-        if (user.getPendingSince() != null) {
-            // The registration still waits for its phone code: send one (or keep the recent one) instead.
+        if (user.getPendingSince() != null || !user.isPhoneVerified() && user.getPhone() != null) {
+            // A registration still waiting for its phone code, or an account
+            // from before numbers were confirmed: the number is confirmed
+            // first. A code is sent (or the recent one kept).
             PhoneCode code = phoneVerification.requestCode(user);
             return "redirect:/registration/confirm?id=" + code.getId();
         }
@@ -75,9 +78,10 @@ public class AuthController {
 
     /**
      * The account for what was typed in the login field. Something starting
-     * with + is read as a phone number, which counts only once confirmed (an
-     * unconfirmed one may be typed by several accounts); anything else, or a
-     * number nobody has confirmed, is looked up as a login.
+     * with + is read as a phone number, something with @ as an email
+     * address; either counts only once confirmed (an unconfirmed one may be
+     * typed by several accounts). Anything else, or a number or address
+     * nobody has confirmed, is looked up as a login.
      * @param typed the login field
      * @return the account, or null
      */
@@ -87,6 +91,11 @@ public class AuthController {
             User byPhone = PhoneNumbers.toE164(null, input).map(userService::findByVerifiedPhone).orElse(null);
             if (byPhone != null) {
                 return byPhone;
+            }
+        } else if (input.contains("@")) {
+            User byEmail = userService.findByVerifiedEmail(input);
+            if (byEmail != null) {
+                return byEmail;
             }
         }
         return userService.findByLogin(input);

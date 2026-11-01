@@ -186,10 +186,27 @@ button.leftFrameButton:hover {
     text-decoration: underline;
 }
 
-/* Beside the owner's own phone number: who else sees it, or what to fix. */
-.phone-visibility,
+/* Beside the owner's own phone number and email: who else sees it, or what to fix. */
+.contact-visibility,
 .phone-fix {
     margin-left: 4px;
     color: var(--text-muted);
     font-size: 12px;
+}
+
+/* Under the owner's email while it is unconfirmed. */
+.contact-unconfirmed {
+    margin: 6px 0 0;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background-color: var(--danger-soft);
+    color: var(--danger-pastel-ink);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.profile-info dd .contact-unconfirmed a {
+    display: inline-block;
+    color: var(--danger);
+    font-weight: 600;
 }

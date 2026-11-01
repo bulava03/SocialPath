@@ -9,7 +9,8 @@ import java.util.Optional;
 /**
  * Confirms that a user has the phone they entered: a six-digit code goes to
  * the number by SMS and has to be typed back. Confirming finishes a pending
- * registration and lets the number be used to sign in.
+ * registration, or puts a new number from the profile in place of the old
+ * one: a number is never stored unconfirmed.
  */
 public interface PhoneVerificationService {
 
@@ -28,7 +29,7 @@ public interface PhoneVerificationService {
         CONFIRMED,
         /** Not the code that was sent; it can be tried again. */
         WRONG_CODE,
-        /** The code has run out (time, attempts, or the number changed); a new one is needed. */
+        /** The code has run out (time or attempts); a new one is needed. */
         EXPIRED,
         /** Another account confirmed the same number first. */
         NUMBER_TAKEN
@@ -41,7 +42,19 @@ public interface PhoneVerificationService {
      * @param user a user with a phone number in E.164
      * @return the code now waiting to be entered
      */
-    PhoneCode requestCode(User user);
+    default PhoneCode requestCode(User user) {
+        return requestCode(user, user.getPhone());
+    }
+
+    /**
+     * Sends a code to a number the user wants instead of the current one;
+     * entering it puts the number in the profile. A newer request replaces
+     * an older one.
+     * @param user the user
+     * @param phone the number to confirm, in E.164
+     * @return the code now waiting to be entered
+     */
+    PhoneCode requestCode(User user, String phone);
 
     /**
      * A code by the id in the confirmation page's address.
@@ -58,7 +71,15 @@ public interface PhoneVerificationService {
     Optional<PhoneCode> findFor(String login);
 
     /**
-     * Checks a typed code and, when it is right, confirms the number.
+     * The code last sent to a user, while it can still be entered.
+     * @param login the user's login
+     * @return the code, unless none was sent or it has run out
+     */
+    Optional<PhoneCode> findWaiting(String login);
+
+    /**
+     * Checks a typed code and, when it is right, confirms the number it was
+     * sent to and makes it the user's number.
      * @param code the code that was sent
      * @param typed what the user entered
      * @return the outcome

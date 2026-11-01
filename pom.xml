@@ -55,6 +55,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
+		<!-- Confirmation links for email addresses, sent over SMTP (Mailpit in
+		     development and tests, a real mailbox when MAIL_* is configured). -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
 		<!-- Google's phone number rules: checks that a number exists for its
 		     country and writes it in the international E.164 form. -->
 		<dependency>

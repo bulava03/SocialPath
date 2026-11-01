@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialPath</title>
+    <link rel="stylesheet" href="/style/layout.css">
+    <link rel="stylesheet" href="/style/gradientPage.css">
+    <link rel="stylesheet" href="/style/forms.css">
+</head>
+<body>
+<div th:insert="~{shared/layout :: #layoutHeader}"></div>
+
+<main class="form-page">
+    <div class="form-card form-card-narrow form-card-center">
+        <h1 class="form-title" th:text="${confirmed} ? 'Email confirmed' : 'Link not valid'">Email confirmed</h1>
+        <p th:class="${confirmed} ? 'form-notice' : 'errortext errortext-top'" id="email-result"
+           th:text="${message}">Your email is confirmed.</p>
+        <!-- /user/authorisation opens the user's page, or the sign-in form first. -->
+        <div class="form-footer">
+            <a class="btn btn-primary"
+               th:text="${confirmed} ? 'Continue' : 'To the Security page'"
+               th:href="${confirmed} ? '/user/authorisation' : '/security/email'">Continue</a>
+        </div>
+    </div>
+</main>
+
+<footer id="layoutFooter">
+    <p>&copy; <span th:text="${#dates.year(#dates.createNow())}"></span> - SocialPath</p>
+</footer>
+
+</body>
+</html>

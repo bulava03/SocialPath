@@ -95,27 +95,31 @@ test.describe("registration and sign-in", () => {
         await expect(page.locator("#left h1")).toHaveText("Phoneuser Example");
     });
 
-    test("a changed number signs in only after it is confirmed on the Security page", async ({ page }) => {
-        const { login } = await registerUser(page.request);
+    test("a new number from the profile replaces the old one only once its code is entered", async ({ page }) => {
+        const { login, phone: oldPhone } = await registerUser(page.request);
         await signIn(page, login);
         const newPhone = uniquePhone();
         await page.goto("/user/getUserInfo");
         await page.locator("#phone-region").selectOption(newPhone.region);
         await page.locator("#phone").fill(newPhone.typed);
         await page.getByRole("button", { name: "Save" }).click();
-        await expect(page).toHaveURL(/\/user\/authorisation/);
 
-        await page.goto("/security/phone");
-        await expect(page.locator(".phone-status")).toContainText(newPhone.shown);
-        await expect(page.locator(".phone-status")).toContainText("Not confirmed");
-        await page.getByRole("button", { name: "Send code" }).click();
+        // Saving sends a code and asks for it; the old number stays meanwhile.
+        await expect(page).toHaveURL("/security/phone?sent");
         await expect(page.locator(".form-notice")).toHaveText("A code is on its way.");
+        await expect(page.locator(".phone-status")).toContainText(oldPhone.shown);
+        await expect(page.locator(".phone-status")).toContainText("Confirmed");
+        await expect(page.locator(".phone-pending")).toContainText(newPhone.shown);
+
         await page.locator("#code").fill(await smsCode(page.request, newPhone.e164));
         await page.getByRole("button", { name: "Confirm" }).click();
         await expect(page.locator(".form-notice")).toHaveText("The number is confirmed. You can sign in with it now.");
-        await expect(page.locator(".phone-status")).toContainText("Confirmed");
+        await expect(page.locator(".phone-status")).toContainText(newPhone.shown);
+        await expect(page.locator(".phone-pending")).toHaveCount(0);
 
         await page.context().clearCookies();
+        await signInByPhone(page, oldPhone);
+        await expect(page.locator("#errortext")).toHaveText("Incorrect login or password");
         await signInByPhone(page, newPhone);
         await expect(page).toHaveURL(/\/user\/authorisation/);
     });

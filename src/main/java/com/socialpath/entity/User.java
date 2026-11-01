@@ -74,6 +74,19 @@ public class User {
     private String email;
 
     /**
+     * Whether the owner opened the link sent to the address. Only a
+     * confirmed address signs in or can be shown to others, and only one
+     * account can confirm an address (a unique key on verified_email).
+     */
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified;
+
+    /** Who sees the address once it is confirmed; until then only the owner. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "email_visibility", length = 10, nullable = false)
+    private ContactVisibility emailVisibility = ContactVisibility.FRIENDS;
+
+    /**
      * The phone number in E.164 (+12015550123). Null only for a number kept
      * from before numbers were checked, which then sits in phoneLegacy.
      */
@@ -91,7 +104,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "phone_visibility", length = 10, nullable = false)
-    private PhoneVisibility phoneVisibility = PhoneVisibility.FRIENDS;
+    private ContactVisibility phoneVisibility = ContactVisibility.FRIENDS;
 
     /**
      * Whether the owner entered the code sent to the number. Only a
@@ -144,14 +157,23 @@ public class User {
     private List<String> friendInvites = new ArrayList<>();
 
     /**
-     * Whether someone may see this user's phone number.
+     * Whether someone may see this user's phone number. An unconfirmed
+     * number (kept from before numbers were confirmed) is the owner's only.
      * @param viewerLogin who is looking
      * @return true for the user themselves and for whoever the visibility allows
      */
     public boolean phoneVisibleTo(String viewerLogin) {
-        return login.equals(viewerLogin)
-                || phoneVisibility == PhoneVisibility.EVERYONE
-                || phoneVisibility == PhoneVisibility.FRIENDS && friends.contains(viewerLogin);
+        return login.equals(viewerLogin) || phoneVerified && phoneVisibility.allows(viewerLogin, friends);
+    }
+
+    /**
+     * Whether someone may see this user's email address. Until the address
+     * is confirmed only the owner sees it.
+     * @param viewerLogin who is looking
+     * @return true for the user themselves and for whoever the visibility allows
+     */
+    public boolean emailVisibleTo(String viewerLogin) {
+        return login.equals(viewerLogin) || emailVerified && emailVisibility.allows(viewerLogin, friends);
     }
 
     /**

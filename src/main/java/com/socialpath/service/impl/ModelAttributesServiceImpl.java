@@ -2,7 +2,7 @@ package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import com.socialpath.entity.Country;
-import com.socialpath.entity.PhoneVisibility;
+import com.socialpath.entity.ContactVisibility;
 import com.socialpath.entity.User;
 import com.socialpath.validation.PhoneNumbers;
 import com.socialpath.dto.request.UserUpdate;
@@ -37,7 +37,7 @@ public class ModelAttributesServiceImpl implements ModelAttributesService {
         model.addAttribute("user", form);
         model.addAttribute("countries", countries);
         model.addAttribute("phoneRegions", PhoneNumbers.regions(countries));
-        model.addAttribute("phoneVisibilities", PhoneVisibility.values());
+        model.addAttribute("phoneVisibilities", ContactVisibility.values());
         return model;
     }
 

@@ -55,6 +55,28 @@ export function uniqueName(prefix = "Zq") {
     return `${prefix}${letters(Date.now())}${letters(Math.floor(Math.random() * 26 ** 4))}`;
 }
 
+/** The test inbox of the tests' own stack (Mailpit, docker-compose.e2e.yml). */
+export const MAILPIT_URL = process.env.MAILPIT_URL ?? "http://localhost:8026";
+
+/**
+ * The confirmation link from the last letter sent to an address, read from
+ * the test inbox: the tests' stack sends every letter there.
+ */
+export async function emailLink(request, address) {
+    let link = null;
+    await expect.poll(async () => {
+        const search = await request.get(`${MAILPIT_URL}/api/v1/search`, { params: { query: `to:"${address}"` } });
+        const [latest] = (await search.json()).messages ?? [];
+        if (!latest) {
+            return null;
+        }
+        const message = await (await request.get(`${MAILPIT_URL}/api/v1/message/${latest.ID}`)).json();
+        link = message.Text.match(/https?:\/\/\S+\/email\/confirm\?token=[\w-]+/)?.[0] ?? null;
+        return link;
+    }, { message: `a confirmation letter to ${address}` }).not.toBeNull();
+    return link;
+}
+
 /**
  * Registers a user through the registration endpoints and confirms the phone
  * with the code from the demo phone. The UI forms themselves are covered by
