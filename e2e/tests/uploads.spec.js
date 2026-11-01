@@ -33,28 +33,22 @@ test.describe("upload limits", () => {
         await close();
     });
 
-    test("an avatar over the limit is reported on the profile form", async ({ browser }, testInfo) => {
+    test("an upload over the limit is reported on the form it came from", async ({ browser }, testInfo) => {
         const { page, close } = await newUserSession(browser);
+        const huge = oversizedFile(testInfo);
+
         await page.goto("/user/getUserInfo");
-
-        await page.locator("#file").setInputFiles(oversizedFile(testInfo));
+        await page.locator("#file").setInputFiles(huge);
         await page.getByRole("button", { name: "Save" }).click();
-
         await expect(page).toHaveURL(/\/user\/getUserInfo/);
         await expect(page.locator(".errortext-top")).toHaveText(TOO_LARGE);
         // Nothing was stored: the default picture is still shown.
         await expect(page.locator("#avatar-preview")).toHaveAttribute("src", "/pictures/photo.png");
-        await close();
-    });
 
-    test("a group avatar over the limit is reported on the group form", async ({ browser }, testInfo) => {
-        const { page, close } = await newUserSession(browser);
         const groupId = await createGroup(page, "Big pictures");
         await page.getByRole("link", { name: "Manage group" }).click();
-
-        await page.locator("#file").setInputFiles(oversizedFile(testInfo));
+        await page.locator("#file").setInputFiles(huge);
         await page.getByRole("button", { name: "Save" }).click();
-
         // Back on the same group's form, not on a generic error page.
         await expect(page).toHaveURL(new RegExp(`getGroupUpdatingForm\\?id=${groupId}`));
         await expect(page.locator(".errorText-top")).toHaveText(TOO_LARGE);

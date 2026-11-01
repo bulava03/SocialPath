@@ -34,6 +34,7 @@ test.describe("profile editing", () => {
         await expect(page.locator("#dob-year")).toHaveValue("1999");
     });
 
+    // Every rule for the date is in DateOfBirthResolverTest; here the form shows one and keeps the input.
     test("an impossible date is rejected and the form keeps what was typed", async ({ page }) => {
         await enterDateOfBirth(page, { day: "31", month: "4", year: "2001" });
         await page.locator("#city").fill("Lakeside");
@@ -44,15 +45,6 @@ test.describe("profile editing", () => {
         await expect(page.locator("#dob-month")).toHaveValue("4");
         await expect(page.locator("#dob-year")).toHaveValue("2001");
         await expect(page.locator("#city")).toHaveValue("Lakeside");
-    });
-
-    test("a partly filled date asks for all three fields", async ({ page }) => {
-        await enterDateOfBirth(page, { day: "12" });
-        await page.getByRole("button", { name: "Save" }).click();
-
-        await expect(page.locator(".errortext-top"))
-            .toHaveText("Enter the full date of birth or leave all three fields empty.");
-        await expect(page.locator("#dob-day")).toHaveValue("12");
     });
 
     test("an invalid first name is reported by the server", async ({ page }) => {

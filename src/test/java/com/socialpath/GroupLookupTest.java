@@ -63,14 +63,10 @@ class GroupLookupTest {
         assertTrue(group.isMember("member"));
         assertFalse(group.isModerator("member"));
         assertFalse(group.isMember("stranger"));
-    }
-
-    @Test
-    void roles_WithoutLists_NobodyIsMember() {
-        Group group = new Group();
-
-        assertFalse(group.isMember("anyone"));
-        assertFalse(group.isAdmin("anyone"));
-        assertFalse(group.isOwner("anyone"));
+        // A group read without its lists has no members rather than failing.
+        Group empty = new Group();
+        assertFalse(empty.isMember("anyone"));
+        assertFalse(empty.isAdmin("anyone"));
+        assertFalse(empty.isOwner("anyone"));
     }
 }

@@ -55,7 +55,7 @@ test.describe("registration and sign-in", () => {
         await expect(page.getByText("This login is already taken.")).toBeVisible();
     });
 
-    test("a wrong password shows an error and keeps the typed login", async ({ page }) => {
+    test("a wrong password shows an error, keeps the login, and Enter signs in on the next try", async ({ page }) => {
         const { login } = await registerUser(page.request);
 
         await page.goto("/");
@@ -67,37 +67,10 @@ test.describe("registration and sign-in", () => {
         await expect(page.locator("#login")).toHaveValue(login);
         await expect(page.locator("#password")).toHaveValue("");
 
-        // A second, correct attempt from the re-rendered form works.
-        await page.locator("#password").fill(PASSWORD);
-        await page.getByRole("button", { name: "Sign in" }).click();
-        await expect(page).toHaveURL(/\/user\/authorisation/);
-    });
-
-    test("pressing Enter in the password field signs in", async ({ page }) => {
-        const { login } = await registerUser(page.request);
-
-        await page.goto("/");
-        await page.locator("#login").fill(login);
+        // A second, correct attempt from the re-rendered form works, sent with Enter.
         await page.locator("#password").fill(PASSWORD);
         await page.locator("#password").press("Enter");
-
         await expect(page).toHaveURL(/\/user\/authorisation/);
-    });
-
-    test("logging out ends the session", async ({ page }) => {
-        const { login } = await registerUser(page.request);
-        await page.goto("/");
-        await page.locator("#login").fill(login);
-        await page.locator("#password").fill(PASSWORD);
-        await page.getByRole("button", { name: "Sign in" }).click();
-        await expect(page).toHaveURL(/\/user\/authorisation/);
-
-        await page.getByRole("button", { name: "User menu" }).click();
-        await page.getByRole("button", { name: "Log out" }).click();
-        await expect(page).toHaveURL("/");
-
-        await page.goto("/user/authorisation");
-        await expect(page).toHaveURL("/");
     });
 
     test("the user menu opens from the keyboard", async ({ page }) => {

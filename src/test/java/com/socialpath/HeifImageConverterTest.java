@@ -6,6 +6,8 @@ import com.socialpath.media.BundledFfmpeg;
 import com.socialpath.media.BundledFfmpeg.Tool;
 import com.socialpath.media.HeifImageConverter;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.core.io.FileSystemResource;
 
@@ -23,21 +25,11 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class HeifImageConverterTest {
 
-    @Test
-    void isHeif_IphoneHeicHeader_IsDetected() {
-        assertTrue(HeifImageConverter.isHeif(header("heic")));
-    }
-
-    @Test
-    void isHeif_GenericHeifAndAvifHeaders_AreDetected() {
-        assertTrue(HeifImageConverter.isHeif(header("mif1")));
-        assertTrue(HeifImageConverter.isHeif(header("avif")));
-    }
-
-    @Test
-    void isHeif_Mp4VideoHeader_IsNotAnImage() {
-        // Same container family, but a video brand.
-        assertFalse(HeifImageConverter.isHeif(header("isom")));
+    /** The brand in the file header: iPhone HEIC, generic HEIF and AVIF are photos; MP4 shares the container. */
+    @ParameterizedTest
+    @CsvSource({"heic, true", "mif1, true", "avif, true", "isom, false"})
+    void isHeif_ByTheBrandInTheHeader(String brand, boolean heif) {
+        assertEquals(heif, HeifImageConverter.isHeif(header(brand)));
     }
 
     @Test

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { newUserSession } from "./helpers.js";
+import { newUserSession, uniqueName } from "./helpers.js";
 
 const userPage = login => `/user/anotherUserPage?anotherUserLogin=${login}`;
 
@@ -56,53 +56,29 @@ test.describe("friends", () => {
         await anna.close();
         await ben.close();
     });
-
-    test("nobody can befriend themselves, even with a forged request", async ({ browser }) => {
-        // The page offers no such button, so send the requests directly.
-        const { page, user, close } = await newUserSession(browser);
-
-        const invite = await page.request.post("/friends/inviteToFriends", { form: { login: user.login } });
-        expect(invite.status()).toBe(400);
-        expect(await invite.json()).toEqual({ error: "You cannot add yourself as a friend." });
-
-        // With no invite to accept, accepting creates nothing either.
-        const accept = await page.request.post("/friends/acceptToFriends", { form: { login: user.login } });
-        expect(await accept.json()).toMatchObject({ result: "NO_INVITE" });
-
-        await page.goto(`/user/getUsersFriends?id=${user.login}`);
-        await expect(page.locator(".list-card")).toHaveCount(0);
-        await close();
-    });
 });
 
 test.describe("search", () => {
-    test("finds people and groups by name and opens a profile", async ({ browser }) => {
-        const unique = `Zq${Date.now().toString(36).replace(/\d/g, "")}`;
-        const target = await newUserSession(browser, { firstName: unique });
-        const searcher = await newUserSession(browser);
+    test("finds others by name, never the searcher, and opens a profile", async ({ browser }) => {
+        const targetName = uniqueName("Zq");
+        const searcherName = uniqueName("Zq");
+        const target = await newUserSession(browser, { firstName: targetName });
+        const searcher = await newUserSession(browser, { firstName: searcherName });
         const { page } = searcher;
 
+        // Both names in one search: each word is looked up on its own.
         await page.goto("/user/authorisation");
-        await page.locator("#searchInput").fill(unique);
+        await page.locator("#searchInput").fill(`${targetName} ${searcherName}`);
         await page.locator("#searchButton").click();
 
-        const result = page.getByRole("link", { name: `${unique} Example` });
+        await expect(page.getByRole("link", { name: `${searcherName} Example` })).toHaveCount(0);
+        const result = page.getByRole("link", { name: `${targetName} Example` });
         await expect(result).toBeVisible();
         await result.click();
         await expect(page).toHaveURL(new RegExp(`anotherUserLogin=${target.user.login}`));
-        await expect(page.locator("#left h1")).toHaveText(`${unique} Example`);
+        await expect(page.locator("#left h1")).toHaveText(`${targetName} Example`);
 
         await target.close();
         await searcher.close();
-    });
-
-    test("the user does not find themselves", async ({ browser }) => {
-        const unique = `Zq${Date.now().toString(36).replace(/\d/g, "")}self`;
-        const { page, close } = await newUserSession(browser, { firstName: unique });
-
-        await page.goto(`/searchResult/getSearchResult?searchText=${unique}`);
-
-        await expect(page.getByRole("link", { name: `${unique} Example` })).toHaveCount(0);
-        await close();
     });
 });

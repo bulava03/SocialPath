@@ -33,27 +33,14 @@ class SearchQueriesTest extends MySqlRepositoryTest {
     }
 
     @Test
-    void people_AreFoundByAnyProfileField_IgnoringCase() {
+    void people_AreFoundByAnyProfileFieldOrCountry_IgnoringCase() {
         assertThat(userRepository.findMatchingUsers("ANNA")).extracting(User::getLogin).containsExactly("anna");
         assertThat(userRepository.findMatchingUsers("lakes")).extracting(User::getLogin).containsExactly("ben");
         assertThat(userRepository.findMatchingUsers("side"))
                 .extracting(User::getLogin).containsExactlyInAnyOrder("anna", "ben");
-    }
-
-    @Test
-    void people_AreFoundByCountryName() {
-        assertThat(userRepository.findMatchingUsers("testland"))
-                .extracting(User::getLogin).containsExactly("anna");
-    }
-
-    @Test
-    void peopleWithoutACountry_AreStillFoundByOtherFields() {
-        assertThat(userRepository.findMatchingUsers("benedict"))
-                .extracting(User::getLogin).containsExactly("ben");
-    }
-
-    @Test
-    void people_NoMatch_IsEmpty() {
+        assertThat(userRepository.findMatchingUsers("testland")).extracting(User::getLogin).containsExactly("anna");
+        // ben has no country: the country join must not drop him.
+        assertThat(userRepository.findMatchingUsers("benedict")).extracting(User::getLogin).containsExactly("ben");
         assertThat(userRepository.findMatchingUsers("nobody-like-this")).isEmpty();
     }
 

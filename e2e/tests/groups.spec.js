@@ -69,19 +69,6 @@ test.describe("groups", () => {
         await stranger.close();
     });
 
-    test("the group owner renames the group", async ({ browser }) => {
-        const { page, close } = await newUserSession(browser);
-        const groupId = await createGroup(page, "Old name");
-
-        await page.getByRole("link", { name: "Manage group" }).click();
-        await page.locator("#name").fill("New name");
-        await page.getByRole("button", { name: "Save" }).click();
-
-        await expect(page).toHaveURL(new RegExp(`groupId=${groupId}`));
-        await expect(page.locator("#left h1")).toHaveText("New name");
-        await close();
-    });
-
     test("a missing group shows the not found page", async ({ browser }) => {
         const { page, close } = await newUserSession(browser);
 
@@ -139,7 +126,7 @@ test.describe("group details", () => {
     });
 
     // The rules themselves are checked in GroupFormTest; here the form keeps what was typed and the page follows.
-    test("the owner edits the details: \"Other\" needs its own topic, empty fields disappear", async ({ browser }) => {
+    test("the owner renames the group and edits its details: \"Other\" needs its own topic, empty fields disappear", async ({ browser }) => {
         const { page, close } = await newUserSession(browser);
         await createGroup(page, "Garden club");
         await page.getByRole("link", { name: "Manage group" }).click();
@@ -154,7 +141,9 @@ test.describe("group details", () => {
         await expect(page.locator("#description")).toHaveValue("Weekend planting.");
 
         await ownTopic.fill("Urban gardening");
+        await page.locator("#name").fill("Community garden");
         await page.getByRole("button", { name: "Save" }).click();
+        await expect(page.locator("#left h1")).toHaveText("Community garden");
         await expect(page.locator(".group-topic")).toHaveText("Urban gardening");
         await expect(page.locator(".group-description")).toHaveText("Weekend planting.");
 

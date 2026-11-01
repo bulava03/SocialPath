@@ -43,34 +43,24 @@ test.describe("user page feed", () => {
         await close();
     });
 
-    test("unsupported files are refused as soon as they are picked", async ({ browser }) => {
+    // The server checks the same rules again (PublicationMediaRulesTest); this is the script's side.
+    test("the file picker refuses what the server would, before anything is sent", async ({ browser }) => {
         const { page, close } = await newUserSession(browser);
         await page.goto("/user/authorisation");
+        const picker = page.locator("#publication-media");
 
-        const message = await expectAlert(page, () =>
-            page.locator("#publication-media").setInputFiles({
-                name: "notes.txt",
-                mimeType: "text/plain",
-                buffer: Buffer.from("not a picture"),
-            }));
-
-        expect(message).toBe("Only photos and videos are allowed.");
-        await expect(page.locator("#publication-media")).toHaveValue("");
+        const notAMedia = await expectAlert(page, () =>
+            picker.setInputFiles({ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("not a picture") }));
+        expect(notAMedia).toBe("Only photos and videos are allowed.");
+        await expect(picker).toHaveValue("");
         await expect(page.locator("#publication-media-preview > *")).toHaveCount(0);
-        await close();
-    });
 
-    test("a video cannot be combined with photos", async ({ browser }) => {
-        const { page, close } = await newUserSession(browser);
-        await page.goto("/user/authorisation");
-
-        const message = await expectAlert(page, () =>
-            page.locator("#publication-media").setInputFiles([
+        const videoWithPhoto = await expectAlert(page, () =>
+            picker.setInputFiles([
                 { name: "clip.mp4", mimeType: "video/mp4", buffer: Buffer.from("video") },
                 { name: "photo.png", mimeType: "image/png", buffer: Buffer.from("photo") },
             ]));
-
-        expect(message).toBe("You can attach only a single video without photos.");
+        expect(videoWithPhoto).toBe("You can attach only a single video without photos.");
         await close();
     });
 
