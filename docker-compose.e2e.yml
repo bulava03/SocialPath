@@ -1,0 +1,12 @@
+# The browser tests' own stack: another Compose project on port 8081 whose
+# database and media live only as long as its containers, so test users,
+# groups and posts never land in the instance on port 8080. From e2e/:
+#   npm run stack:up     start it (or rebuild it after code changes)
+#   npm run stack:down   remove it together with everything the tests wrote
+services:
+  mysql:
+    volumes: !reset []
+  app:
+    ports: !override
+      - "8081:8080"
+    volumes: !reset []

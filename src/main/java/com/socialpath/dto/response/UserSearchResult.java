@@ -15,7 +15,6 @@ public class UserSearchResult {
     private String firstName;
     private String lastName;
     private String email;
-    private String phoneNumber;
     private String countryName;
     private String region;
     private String city;
@@ -30,7 +29,6 @@ public class UserSearchResult {
         result.setFirstName(user.getFirstName());
         result.setLastName(user.getLastName());
         result.setEmail(user.getEmail());
-        result.setPhoneNumber(user.getPhoneNumber());
         result.setCountryName(user.getCountry() != null ? user.getCountry().getName() : null);
         result.setRegion(user.getRegion());
         result.setCity(user.getCity());

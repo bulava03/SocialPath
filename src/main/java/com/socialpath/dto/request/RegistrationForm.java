@@ -1,5 +1,7 @@
 package com.socialpath.dto.request;
 
+import com.socialpath.entity.User;
+import com.socialpath.validation.PhoneInput;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
@@ -14,12 +16,11 @@ import java.time.LocalDateTime;
  * live — most importantly the 8–20 character rule for the plaintext
  * password, which must never sit on the entity: the entity stores a BCrypt
  * hash (~60 characters) and is validated again by JPA at persist time.
- * Property names deliberately match the registration form's field names and
- * the {@link com.socialpath.entity.User} entity, so both the form binding
- * and the ModelMapper conversion work without configuration.
+ * Property names match the registration form's field names, so the form
+ * binds without configuration; {@link #toUser()} builds the entity.
  */
 @Data
-public class RegistrationForm implements DateOfBirthInput {
+public class RegistrationForm implements DateOfBirthInput, PhoneInput {
     @NotBlank(message = "{user.login.required}")
     @Size(max = 20, message = "{user.login.size}")
     private String login;
@@ -41,10 +42,15 @@ public class RegistrationForm implements DateOfBirthInput {
     @Size(max = 100, message = "{user.email.size}")
     private String email;
 
-    @NotBlank(message = "{user.phone.required}")
-    @Pattern(regexp = "^[\\d\\s()+-]+$", message = "{user.phone.pattern}")
-    @Size(max = 20, message = "{user.phone.size}")
+    /** The country chosen in the phone code list; not needed for a number typed with +. */
+    private String phoneRegion;
+
+    /** The number as typed; checked and converted by PhoneNumbers.resolve. */
+    @Size(max = 30, message = "{user.phone.size}")
     private String phoneNumber;
+
+    /** The checked number in E.164, set by PhoneNumbers.resolve. */
+    private String phone;
 
     /** Raw date-of-birth fields as typed; assembled by DateOfBirthResolver. */
     private String day;
@@ -59,4 +65,26 @@ public class RegistrationForm implements DateOfBirthInput {
     private String city;
     private String education;
     private String workplace;
+
+    /**
+     * The new account from the checked form. The password is still plain
+     * text here (it is hashed when the user is saved) and the country is
+     * looked up by the caller.
+     * @return an unsaved user
+     */
+    public User toUser() {
+        User user = new User();
+        user.setLogin(login);
+        user.setPassword(password);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email);
+        user.setPhone(phone);
+        user.setDateOfBirth(dateOfBirth);
+        user.setRegion(region);
+        user.setCity(city);
+        user.setEducation(education);
+        user.setWorkplace(workplace);
+        return user;
+    }
 }

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { PASSWORD, registerUser, signIn, uniqueLogin } from "./helpers.js";
+import { PASSWORD, PHONE, profileField, registerUser, signIn, uniqueLogin } from "./helpers.js";
 
 test.describe("registration and sign-in", () => {
     test("a new user signs up through the form and lands on their page after signing in", async ({ page }) => {
@@ -10,7 +10,8 @@ test.describe("registration and sign-in", () => {
         await page.locator("#password").fill(PASSWORD);
         await page.locator("#name").fill("Alex");
         await page.locator("#surname").fill("Morgan");
-        await page.locator("#phone").fill("555-0100");
+        await page.locator("#phone-region").selectOption(PHONE.region);
+        await page.locator("#phone").fill(PHONE.typed);
         await page.locator("#email").fill(`${login}@example.com`);
         await page.getByRole("button", { name: "Sign up" }).click();
 
@@ -21,6 +22,9 @@ test.describe("registration and sign-in", () => {
 
         await expect(page).toHaveURL(/\/user\/authorisation/);
         await expect(page.locator("#left h1")).toHaveText("Alex Morgan");
+        // Stored in the international form and shown grouped, as a link to call.
+        await expect(profileField(page, "Phone").getByRole("link")).toHaveText(PHONE.shown);
+        await expect(profileField(page, "Phone").getByRole("link")).toHaveAttribute("href", `tel:${PHONE.e164}`);
     });
 
     test("an invalid form comes back with the error and the entered values", async ({ page }) => {
@@ -30,11 +34,14 @@ test.describe("registration and sign-in", () => {
         await page.locator("#login").fill(login);
         await page.locator("#password").fill("short");
         await page.locator("#name").fill("Alex");
-        await page.locator("#phone").fill("555-0100");
+        await page.locator("#phone-region").selectOption(PHONE.region);
+        await page.locator("#phone").fill(PHONE.typed);
         await page.locator("#email").fill(`${login}@example.com`);
         await page.getByRole("button", { name: "Sign up" }).click();
 
         await expect(page.locator(".errortext").filter({ hasText: /\S/ })).toContainText("8");
+        await expect(page.locator("#phone-region")).toHaveValue(PHONE.region);
+        await expect(page.locator("#phone")).toHaveValue(PHONE.typed);
         await expect(page.locator("#login")).toHaveValue(login);
         await expect(page.locator("#name")).toHaveValue("Alex");
         // The password is never echoed back.

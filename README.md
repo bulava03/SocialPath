@@ -14,6 +14,10 @@ and video, and discuss them in threaded comments.
 
 - **Accounts** — registration with server-side validation, profile editing
   (contacts, birth date, country, city, education, workplace).
+- **Phone numbers** — chosen country code plus the number, checked with
+  Google's libphonenumber, stored in E.164 and shown grouped as a `tel:`
+  link. The owner decides who sees it (everyone, friends, only them); a
+  number is found by search only when it is public.
 - **Security page** — password change and the list of active sessions with
   browser, system, IP and approximate location; any other device can be
   signed out, or all of them at once. Sessions last 7 days without use and
@@ -41,7 +45,7 @@ and video, and discuss them in threaded comments.
 
 Java 21 · Spring Boot 4.1 (Web MVC, Security, Validation) · MySQL 8.4 ·
 Spring Data JPA (Hibernate) · Flyway · Thymeleaf · vanilla JavaScript ·
-JWT (jjwt) · BCrypt · JUnit 5 + Mockito · Testcontainers · Playwright ·
+JWT (jjwt) · BCrypt · libphonenumber · JUnit 5 + Mockito · Testcontainers · Playwright ·
 Checkstyle · GitHub Actions · Docker
 
 ## Getting started
@@ -141,6 +145,10 @@ embedded in JWTs and URLs, and referenced by every relation.
   removed only after the transaction commits, so a rollback never leaves
   rows pointing at deleted files.
 - `countries` is an ISO 3166 reference table for profile countries.
+- Phone numbers moved from free text to E.164 in a Java Flyway migration
+  (parsing takes libphonenumber): numbers without a country code were read
+  as local numbers of the profile's country, and what still could not be
+  read is kept as typed in `phone_legacy` until the user corrects it.
 - `user_sessions` has one row per signed-in browser; the JWT carries its id,
   so deleting the row signs that browser out. `video_jobs` is the queue of
   uploaded videos waiting to be converted to MP4.
@@ -202,13 +210,16 @@ Running the tests locally:
 ```bash
 ./mvnw verify              # unit + integration tests (needs a Docker daemon)
 
-cd e2e                     # browser tests, with the app up via docker compose
+cd e2e                     # browser tests
 npm ci
 npx playwright install chromium
+npm run stack:up           # their own app + MySQL on port 8081
 npx playwright test
+npm run stack:down         # removes it with everything the tests wrote
 ```
 
-`BASE_URL` points the browser tests at another instance (default
-`http://localhost:8080`). The screenshots above are produced by
-`npm run screenshots` in `e2e/`, which fills an empty instance with demo
-data and captures the pages.
+The browser tests never touch the instance on port 8080: they run against
+a separate Compose project (`docker-compose.e2e.yml`) whose data is thrown
+away with its containers. `BASE_URL` points them at another instance. The
+screenshots above are produced by `npm run screenshots` in `e2e/`, which
+fills that empty instance with demo data and captures the pages.

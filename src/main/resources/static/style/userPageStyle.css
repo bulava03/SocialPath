@@ -185,3 +185,11 @@ button.leftFrameButton:hover {
 .profile-info dd a:hover {
     text-decoration: underline;
 }
+
+/* Beside the owner's own phone number: who else sees it, or what to fix. */
+.phone-visibility,
+.phone-fix {
+    margin-left: 4px;
+    color: var(--text-muted);
+    font-size: 12px;
+}

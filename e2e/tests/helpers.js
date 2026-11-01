@@ -2,6 +2,9 @@ import { expect } from "@playwright/test";
 
 export const PASSWORD = "password123";
 
+/** A real-format number from the range kept for fiction (555-01xx), as typed and as shown. */
+export const PHONE = { region: "US", typed: "201 555 0123", shown: "+1 201-555-0123", e164: "+12015550123" };
+
 /** A login nobody has used yet (the app allows up to 20 characters). */
 export function uniqueLogin(prefix = "u") {
     const random = Math.random().toString(36).slice(2, 8);
@@ -38,7 +41,8 @@ export async function registerUser(request, { prefix, firstName = "Tester" } = {
             firstName,
             lastName: "Example",
             email: `${login}@example.com`,
-            phoneNumber: "555-0100",
+            phoneRegion: PHONE.region,
+            phoneNumber: PHONE.typed,
         },
         maxRedirects: 0,
     });

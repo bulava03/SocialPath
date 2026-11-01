@@ -26,8 +26,9 @@ jobs:
       - name: Build and test
         run: ./mvnw --batch-mode verify
 
-  # Browser tests against the full stack (app + MySQL) as docker compose
-  # runs it: templates, scripts and the cookie login are covered only here.
+  # Browser tests against the full stack (app + MySQL) in the same e2e
+  # setup as locally: templates, scripts and the cookie login are covered
+  # only here.
   e2e:
     runs-on: ubuntu-latest
     needs: build
@@ -39,7 +40,7 @@ jobs:
 
       - name: Start the application
         working-directory: .
-        run: docker compose up --build --detach
+        run: docker compose -p socialpath-e2e -f docker-compose.yml -f docker-compose.e2e.yml up --build --detach
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -52,7 +53,7 @@ jobs:
         run: npm ci && npx playwright install --with-deps chromium
 
       - name: Wait for the application
-        run: timeout 180 bash -c 'until curl -sf http://localhost:8080/ > /dev/null; do sleep 3; done'
+        run: timeout 180 bash -c 'until curl -sf http://localhost:8081/ > /dev/null; do sleep 3; done'
 
       - name: Run browser tests
         run: npx playwright test
@@ -70,4 +71,4 @@ jobs:
       - name: Show application logs
         if: failure()
         working-directory: .
-        run: docker compose logs app
+        run: docker compose -p socialpath-e2e logs app

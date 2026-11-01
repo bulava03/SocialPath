@@ -228,11 +228,10 @@ public class CommentsServiceImpl implements CommentsService {
     }
 
     /**
-     * Builds a fresh publication entity. Explicit construction instead of
-     * ModelMapper on purpose: the request DTOs carry groupId/authorId
-     * properties whose names partially match the entity's Long id, which
-     * makes implicit mapping ambiguous (and it also has nothing sensible to
-     * do with the multipart media list).
+     * Builds a fresh publication entity. Constructed explicitly on purpose:
+     * the request DTOs carry groupId/authorId properties whose names partially
+     * match the entity's Long id, which would make name-based mapping
+     * ambiguous (and it would have nothing sensible to do with the media list).
      * @param text publication text
      * @param authorLogin the author's login
      * @param files uploaded media, may be null

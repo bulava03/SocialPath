@@ -1,6 +1,9 @@
 package com.socialpath.dto.request;
 
+import com.socialpath.entity.PhoneVisibility;
 import com.socialpath.entity.User;
+import com.socialpath.validation.PhoneInput;
+import com.socialpath.validation.PhoneNumbers;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -12,7 +15,7 @@ import java.time.LocalDateTime;
  * rejected, so the user sees exactly what they entered.
  */
 @Data
-public class UserUpdate implements DateOfBirthInput {
+public class UserUpdate implements DateOfBirthInput, PhoneInput {
     private String login;
 
     private String imageId;
@@ -33,10 +36,17 @@ public class UserUpdate implements DateOfBirthInput {
     @Size(max = 100, message = "{user.email.size}")
     private String email;
 
-    @NotBlank(message = "{user.phone.required}")
-    @Pattern(regexp = "^[\\d\\s()+-]+$", message = "{user.phone.pattern}")
-    @Size(max = 20, message = "{user.phone.size}")
+    /** The country chosen in the phone code list; not needed for a number typed with +. */
+    private String phoneRegion;
+
+    /** The number as typed; checked and converted by PhoneNumbers.resolve. */
+    @Size(max = 30, message = "{user.phone.size}")
     private String phoneNumber;
+
+    /** The checked number in E.164, set by PhoneNumbers.resolve. */
+    private String phone;
+
+    private PhoneVisibility phoneVisibility = PhoneVisibility.FRIENDS;
 
     /** Raw date-of-birth fields as typed; assembled by DateOfBirthResolver. */
     private String day;
@@ -65,7 +75,16 @@ public class UserUpdate implements DateOfBirthInput {
         form.setFirstName(user.getFirstName());
         form.setLastName(user.getLastName());
         form.setEmail(user.getEmail());
-        form.setPhoneNumber(user.getPhoneNumber());
+        if (user.getPhone() != null) {
+            form.setPhoneRegion(PhoneNumbers.regionOf(user.getPhone()));
+            form.setPhoneNumber(PhoneNumbers.formatWithoutCountryCode(user.getPhone()));
+        } else {
+            // An old number that could not be read: shown as typed, with the
+            // profile's country as the likely code, for the user to correct.
+            form.setPhoneRegion(user.getCountry() == null ? null : user.getCountry().getCode());
+            form.setPhoneNumber(user.getPhoneLegacy());
+        }
+        form.setPhoneVisibility(user.getPhoneVisibility());
         LocalDateTime dateOfBirth = user.getDateOfBirth();
         if (dateOfBirth != null) {
             form.setDay(String.valueOf(dateOfBirth.getDayOfMonth()));

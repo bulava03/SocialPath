@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { profileField, registerUser, signIn } from "./helpers.js";
+import { newUserSession, PHONE, profileField, registerUser, signIn } from "./helpers.js";
 
 test.describe("profile editing", () => {
+    let login;
+
     test.beforeEach(async ({ page }) => {
-        const { login } = await registerUser(page.request);
+        ({ login } = await registerUser(page.request));
         await signIn(page, login);
         await page.goto("/user/getUserInfo");
     });
@@ -53,5 +55,43 @@ test.describe("profile editing", () => {
 
         await expect(page.locator(".errortext-top")).toBeVisible();
         await expect(page.locator("#name")).toHaveValue("R2-D2");
+    });
+
+    test("the phone is shown only to whom the owner allows, and found by search only when public", async ({ page, browser }) => {
+        const friend = await newUserSession(browser);
+        const stranger = await newUserSession(browser);
+        await friend.page.request.post("/friends/inviteToFriends", { form: { login } });
+        await page.request.post("/friends/acceptToFriends", { form: { login: friend.user.login } });
+        const ownerPage = `/user/anotherUserPage?anotherUserLogin=${login}`;
+        const ownerInSearch = searcher => searcher.locator(`a[href*="anotherUserLogin=${login}"]`);
+
+        // Friends only, the default.
+        await page.goto("/user/authorisation");
+        await expect(profileField(page, "Phone")).toContainText(`${PHONE.shown} (Friends only)`);
+        await friend.page.goto(ownerPage);
+        await expect(profileField(friend.page, "Phone")).toContainText(PHONE.shown);
+        await stranger.page.goto(ownerPage);
+        await expect(profileField(stranger.page, "Phone")).toHaveCount(0);
+        await stranger.page.goto(`/searchResult/getSearchResult?searchText=${PHONE.e164}`);
+        await expect(ownerInSearch(stranger.page)).toHaveCount(0);
+
+        // Only me: not even friends.
+        await page.goto("/user/getUserInfo");
+        await page.locator("#phone-visibility").selectOption({ label: "Only me" });
+        await page.getByRole("button", { name: "Save" }).click();
+        await friend.page.goto(ownerPage);
+        await expect(profileField(friend.page, "Phone")).toHaveCount(0);
+
+        // Everyone: strangers see it and can find the owner by it.
+        await page.goto("/user/getUserInfo");
+        await page.locator("#phone-visibility").selectOption({ label: "Everyone" });
+        await page.getByRole("button", { name: "Save" }).click();
+        await stranger.page.goto(ownerPage);
+        await expect(profileField(stranger.page, "Phone")).toContainText(PHONE.shown);
+        await stranger.page.goto(`/searchResult/getSearchResult?searchText=${PHONE.e164}`);
+        await expect(ownerInSearch(stranger.page)).toHaveCount(1);
+
+        await friend.close();
+        await stranger.close();
     });
 });

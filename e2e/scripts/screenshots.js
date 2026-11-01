@@ -11,7 +11,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const BASE_URL = process.env.BASE_URL ?? "http://localhost:8080";
+const BASE_URL = process.env.BASE_URL ?? "http://localhost:8081";
 const OUT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../docs/screenshots");
 const PASSWORD = "password123";
 const VIEWPORT = { width: 1280, height: 900 };
@@ -133,7 +133,7 @@ async function signedInAs(login) {
     const registered = await api.post("/registration/registration", {
         form: {
             login, password: PASSWORD, firstName: person.first, lastName: person.last,
-            email: `${login}@example.com`, phoneNumber: "555-0100",
+            email: `${login}@example.com`, phoneRegion: "US", phoneNumber: "201 555 0123",
         },
         maxRedirects: 0,
     });
@@ -154,7 +154,7 @@ async function updateProfile(api, login, avatar) {
     const form = new FormData();
     const fields = {
         firstName: person.first, lastName: person.last, email: `${login}@example.com`,
-        phoneNumber: "555-0100", ...person.birth, countryCode: "",
+        phoneRegion: "US", phoneNumber: "201 555 0123", phoneVisibility: "FRIENDS", ...person.birth, countryCode: "",
         education: person.education, workplace: person.workplace, removeImage: "false",
     };
     Object.entries(fields).forEach(([name, value]) => form.append(name, value));

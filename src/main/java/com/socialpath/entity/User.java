@@ -1,9 +1,12 @@
 package com.socialpath.entity;
 
+import com.socialpath.validation.PhoneNumbers;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -70,11 +73,25 @@ public class User {
     @Column(name = "email", length = 100, nullable = false)
     private String email;
 
-    @NotBlank(message = "{user.phone.required}")
-    @Pattern(regexp = "^[\\d\\s()+-]+$", message = "{user.phone.pattern}")
-    @Size(max = 20, message = "{user.phone.size}")
-    @Column(name = "phone_number", length = 20, nullable = false)
-    private String phoneNumber;
+    /**
+     * The phone number in E.164 (+12015550123). Null only for a number kept
+     * from before numbers were checked, which then sits in phoneLegacy.
+     */
+    @Pattern(regexp = "^\\+[1-9]\\d{1,14}$")
+    @Column(name = "phone", length = 16)
+    private String phone;
+
+    /**
+     * A number entered before numbers were checked that could not be read
+     * (no country code and no country to guess it from), kept as typed until
+     * the user saves the profile again. Null for everyone else.
+     */
+    @Column(name = "phone_legacy", length = 20)
+    private String phoneLegacy;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "phone_visibility", length = 10, nullable = false)
+    private PhoneVisibility phoneVisibility = PhoneVisibility.FRIENDS;
 
     @Past(message = "{user.dateOfBirth.past}")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
@@ -109,4 +126,23 @@ public class User {
     @CollectionTable(name = "friend_invites", joinColumns = @JoinColumn(name = "user_login"))
     @Column(name = "inviter_login", length = 20, nullable = false)
     private List<String> friendInvites = new ArrayList<>();
+
+    /**
+     * Whether someone may see this user's phone number.
+     * @param viewerLogin who is looking
+     * @return true for the user themselves and for whoever the visibility allows
+     */
+    public boolean phoneVisibleTo(String viewerLogin) {
+        return login.equals(viewerLogin)
+                || phoneVisibility == PhoneVisibility.EVERYONE
+                || phoneVisibility == PhoneVisibility.FRIENDS && friends.contains(viewerLogin);
+    }
+
+    /**
+     * The number as shown on the page.
+     * @return grouped with its country code, or the old text as it was typed
+     */
+    public String getPhoneForDisplay() {
+        return phone != null ? PhoneNumbers.formatInternational(phone) : phoneLegacy;
+    }
 }

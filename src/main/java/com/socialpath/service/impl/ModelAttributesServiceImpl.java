@@ -1,7 +1,10 @@
 package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import com.socialpath.entity.Country;
+import com.socialpath.entity.PhoneVisibility;
 import com.socialpath.entity.User;
+import com.socialpath.validation.PhoneNumbers;
 import com.socialpath.dto.request.UserUpdate;
 import com.socialpath.dto.response.FeedPage;
 import com.socialpath.service.CountryService;
@@ -30,8 +33,11 @@ public class ModelAttributesServiceImpl implements ModelAttributesService {
 
     @Override
     public Model userInfoModel(Model model, UserUpdate form) {
+        List<Country> countries = countryService.findAll();
         model.addAttribute("user", form);
-        model.addAttribute("countries", countryService.findAll());
+        model.addAttribute("countries", countries);
+        model.addAttribute("phoneRegions", PhoneNumbers.regions(countries));
+        model.addAttribute("phoneVisibilities", PhoneVisibility.values());
         return model;
     }
 

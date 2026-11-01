@@ -3,11 +3,11 @@ package com.socialpath.web;
 import com.socialpath.entity.Country;
 import com.socialpath.entity.User;
 import com.socialpath.dto.request.RegistrationForm;
+import com.socialpath.validation.PhoneNumbers;
 import com.socialpath.validation.ValidationResult;
 import com.socialpath.service.CountryService;
 import com.socialpath.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,12 +28,16 @@ import java.util.List;
 public class RegistrationController {
 
     private final UserService userService;
-    private final ModelMapper modelMapper;
     private final CountryService countryService;
 
     @ModelAttribute("countries")
     public List<Country> countries() {
         return countryService.findAll();
+    }
+
+    @ModelAttribute("phoneRegions")
+    public List<PhoneNumbers.Region> phoneRegions() {
+        return PhoneNumbers.regions(countryService.findAll());
     }
 
     @GetMapping()
@@ -57,7 +61,7 @@ public class RegistrationController {
             return "registration/registration";
         }
 
-        User user = modelMapper.map(form, User.class);
+        User user = form.toUser();
         user.setCountry(countryService.resolve(form.getCountryCode()));
         userService.addUser(user);
 

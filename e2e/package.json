@@ -2,8 +2,10 @@
   "name": "socialpath-e2e",
   "private": true,
   "type": "module",
-  "description": "Browser tests for SocialPath, run against the app started with docker compose.",
+  "description": "Browser tests for SocialPath, run against a stack of their own (docker-compose.e2e.yml, port 8081).",
   "scripts": {
+    "stack:up": "docker compose -p socialpath-e2e -f ../docker-compose.yml -f ../docker-compose.e2e.yml up -d --build",
+    "stack:down": "docker compose -p socialpath-e2e -f ../docker-compose.yml -f ../docker-compose.e2e.yml down -v",
     "test": "playwright test",
     "report": "playwright show-report",
     "screenshots": "node scripts/screenshots.js"

@@ -10,7 +10,8 @@ export default defineConfig({
     retries: process.env.CI ? 1 : 0,
     reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
     use: {
-        baseURL: process.env.BASE_URL ?? "http://localhost:8080",
+        // The tests' own stack (npm run stack:up), never the instance on 8080.
+        baseURL: process.env.BASE_URL ?? "http://localhost:8081",
         trace: "retain-on-failure",
         screenshot: "only-on-failure",
     },

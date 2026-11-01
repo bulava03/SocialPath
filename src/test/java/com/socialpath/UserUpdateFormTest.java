@@ -19,7 +19,7 @@ class UserUpdateFormTest {
         user.setFirstName("Anna");
         user.setLastName("Example");
         user.setEmail("anna@example.com");
-        user.setPhoneNumber("555-0100");
+        user.setPhone("+12015550123");
         user.setCity("Northtown");
         user.setWorkplace("Example Ltd");
         return user;
@@ -39,7 +39,9 @@ class UserUpdateFormTest {
         assertEquals("Anna", form.getFirstName());
         assertEquals("Example", form.getLastName());
         assertEquals("anna@example.com", form.getEmail());
-        assertEquals("555-0100", form.getPhoneNumber());
+        // Back in the two fields of the form: the country code and the local number.
+        assertEquals("US", form.getPhoneRegion());
+        assertEquals("201-555-0123", form.getPhoneNumber());
         assertEquals("7", form.getDay());
         assertEquals("3", form.getMonth());
         assertEquals("1990", form.getYear());
@@ -56,5 +58,20 @@ class UserUpdateFormTest {
         assertNull(form.getMonth());
         assertNull(form.getYear());
         assertNull(form.getCountryCode());
+    }
+
+    @Test
+    void from_AnOldUnreadableNumber_IsOfferedAsTypedWithTheProfileCountry() {
+        User user = anna();
+        user.setPhone(null);
+        user.setPhoneLegacy("555-0100");
+        Country country = new Country();
+        country.setCode("US");
+        user.setCountry(country);
+
+        UserUpdate form = UserUpdate.from(user);
+
+        assertEquals("US", form.getPhoneRegion());
+        assertEquals("555-0100", form.getPhoneNumber());
     }
 }

@@ -37,7 +37,20 @@
             <label class="name" for="surname">Last name</label>
             <input class="field" id="surname" th:value="${user.lastName}" type="text" name="lastName">
             <label class="name" for="phone">Phone number</label>
-            <input class="field" id="phone" th:value="${user.phoneNumber}" type="text" name="phoneNumber">
+            <div class="phone-row">
+                <select id="phone-region" name="phoneRegion" aria-label="Country code">
+                    <option value="" th:selected="${#strings.isEmpty(user.phoneRegion)}">Code</option>
+                    <option th:each="r : ${phoneRegions}" th:value="${r.code}" th:text="${r.label}"
+                            th:selected="${r.code == user.phoneRegion}"></option>
+                </select>
+                <input class="field" id="phone" th:value="${user.phoneNumber}" type="tel" name="phoneNumber"
+                       autocomplete="tel-national" placeholder="Number">
+            </div>
+            <label class="name" for="phone-visibility">Who sees it</label>
+            <select id="phone-visibility" name="phoneVisibility">
+                <option th:each="v : ${phoneVisibilities}" th:value="${v.name()}" th:text="${v.label}"
+                        th:selected="${v == user.phoneVisibility}"></option>
+            </select>
             <label class="name" for="email">Email</label>
             <input class="field" id="email" th:value="${user.email}" type="text" name="email">
             <label class="name" for="dob-day">Date of birth</label>

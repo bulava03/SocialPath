@@ -11,6 +11,8 @@ import com.socialpath.repository.GroupRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.validation.DateOfBirthResolver;
 import com.socialpath.validation.ValidationResult;
+import com.socialpath.validation.PhoneNumbers;
+import com.socialpath.validation.PhoneInput;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.socialpath.service.CountryService;
 import com.socialpath.service.UserService;
@@ -49,15 +51,21 @@ public class UserServiceImpl implements UserService {
 
     /**
      * Shared checks of the registration and profile forms: the date of birth
-     * is assembled first, so the bean constraints (@Past) see the result.
+     * is assembled first, so the bean constraints (@Past) see the result, and
+     * the phone number is checked and converted to E.164.
+     * @param <F> a form with both a date of birth and a phone number
      * @param form the submitted form
      * @param countryCode the selected country code, possibly empty
      * @return the first failure, or success
      */
-    private ValidationResult validateProfile(DateOfBirthInput form, String countryCode) {
+    private <F extends DateOfBirthInput & PhoneInput> ValidationResult validateProfile(F form, String countryCode) {
         ValidationResult dateOfBirth = DateOfBirthResolver.resolve(form);
         if (!dateOfBirth.isSuccess()) {
             return dateOfBirth;
+        }
+        ValidationResult phone = PhoneNumbers.resolve(form);
+        if (!phone.isSuccess()) {
+            return phone;
         }
         ValidationResult constraints = ValidationResult.of(validator.validate(form));
         if (!constraints.isSuccess()) {
@@ -95,7 +103,10 @@ public class UserServiceImpl implements UserService {
         user.setFirstName(userUpdate.getFirstName());
         user.setLastName(userUpdate.getLastName());
         user.setEmail(userUpdate.getEmail());
-        user.setPhoneNumber(userUpdate.getPhoneNumber());
+        user.setPhone(userUpdate.getPhone());
+        // Saved with a checked number, an old unreadable one is gone.
+        user.setPhoneLegacy(null);
+        user.setPhoneVisibility(userUpdate.getPhoneVisibility());
         user.setDateOfBirth(userUpdate.getDateOfBirth());
         user.setCountry(countryService.resolve(userUpdate.getCountryCode()));
         user.setRegion(userUpdate.getRegion());

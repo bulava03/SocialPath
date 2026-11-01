@@ -32,8 +32,8 @@ abstract class MySqlRepositoryTest {
     /** Inserts a user with only the required columns filled. */
     protected void user(String login) {
         jdbc.update("""
-                INSERT INTO users (login, password, first_name, email, phone_number)
-                VALUES (?, 'hash', ?, ?, '555-0100')
+                INSERT INTO users (login, password, first_name, email, phone)
+                VALUES (?, 'hash', ?, ?, '+12015550123')
                 """, login, login, login + "@example.com");
     }
 }

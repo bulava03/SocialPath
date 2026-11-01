@@ -49,7 +49,9 @@ public interface UserRepository extends JpaRepository<User, String> {
      * Case-insensitive substring search across the profile fields, the SQL
      * counterpart of the previous multi-field regex query. A single LIKE-based
      * query keeps it index-unfriendly but simple; a FULLTEXT index would be
-     * the next step if profiles grow large.
+     * the next step if profiles grow large. A phone number is searched only
+     * when its owner shows it to everyone: otherwise search would reveal who
+     * a hidden number belongs to.
      * @param searchValue the substring to look for
      * @return users matching in any profile field
      */
@@ -59,7 +61,8 @@ public interface UserRepository extends JpaRepository<User, String> {
             where lower(u.firstName) like lower(concat('%', :q, '%'))
                or lower(u.lastName) like lower(concat('%', :q, '%'))
                or lower(u.email) like lower(concat('%', :q, '%'))
-               or lower(u.phoneNumber) like lower(concat('%', :q, '%'))
+               or (u.phoneVisibility = com.socialpath.entity.PhoneVisibility.EVERYONE
+                   and u.phone like concat('%', :q, '%'))
                or lower(c.name) like lower(concat('%', :q, '%'))
                or lower(u.region) like lower(concat('%', :q, '%'))
                or lower(u.city) like lower(concat('%', :q, '%'))

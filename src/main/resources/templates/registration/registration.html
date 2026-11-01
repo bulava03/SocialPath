@@ -28,7 +28,15 @@
                 <label class="name" for="surname">Last name</label>
                 <input class="field" id="surname" th:value="${User.lastName}" type="text" name="lastName">
                 <label class="name" for="phone">Phone number</label>
-                <input class="field" id="phone" th:value="${User.phoneNumber}" type="text" name="phoneNumber">
+                <div class="phone-row">
+                    <select id="phone-region" name="phoneRegion" aria-label="Country code">
+                        <option value="" th:selected="${#strings.isEmpty(User.phoneRegion)}">Code</option>
+                        <option th:each="r : ${phoneRegions}" th:value="${r.code}" th:text="${r.label}"
+                                th:selected="${r.code == User.phoneRegion}"></option>
+                    </select>
+                    <input class="field" id="phone" th:value="${User.phoneNumber}" type="tel" name="phoneNumber"
+                           autocomplete="tel-national" placeholder="Number">
+                </div>
                 <label class="name" for="email">Email</label>
                 <input class="field" id="email" th:value="${User.email}" type="text" name="email">
                 <label class="name" for="dob-day">Date of birth</label>
