@@ -103,21 +103,7 @@ test.describe("group details", () => {
         await page.locator("#website").fill(website);
     }
 
-    test("a new group shows who created it, when, and that it has one member", async ({ browser }) => {
-        const { page, close } = await newUserSession(browser);
-
-        await createGroup(page, "Book club");
-
-        await expect(page.locator(".group-stats")).toHaveText("1 member");
-        await expect(profileField(page, "Created by")).toHaveText("Tester Example");
-        await expect(profileField(page, /^Created$/)).toHaveText(/^\d{2}\.\d{2}\.\d{4}$/);
-        // Nothing filled in, nothing shown.
-        await expect(page.locator(".group-description")).toHaveCount(0);
-        await expect(page.locator(".group-topic")).toHaveCount(0);
-        await close();
-    });
-
-    test("topic, description and link are shown to visitors, the topic also in search", async ({ browser }) => {
+    test("a group's details are shown on its page and in search, the member count grows", async ({ browser }) => {
         const owner = await newUserSession(browser);
         const name = uniqueName("Club");
         await owner.page.goto("/group/getGroupCreationForm");
@@ -128,21 +114,21 @@ test.describe("group details", () => {
             website: "https://example.com/club",
         });
         await owner.page.getByRole("button", { name: "Create" }).click();
-        await expect(owner.page).toHaveURL(/getGroupPage\?groupId=\d+/);
+
+        await expect(owner.page.locator(".group-stats")).toHaveText(/Games\s+1 member/);
+        await expect(owner.page.locator(".group-description")).toHaveText("Weekly games.\nBeginners welcome.");
+        await expect(profileField(owner.page, "Created by")).toHaveText("Tester Example");
+        await expect(profileField(owner.page, /^Created$/)).toHaveText(/^\d{2}\.\d{2}\.\d{4}$/);
+        const link = profileField(owner.page, "Website").getByRole("link");
+        await expect(link).toHaveAttribute("href", "https://example.com/club");
+        await expect(link).toHaveAttribute("target", "_blank");
+        await expect(link).toHaveAttribute("rel", /noopener/);
 
         const visitor = await newUserSession(browser);
         await visitor.page.goto(`/searchResult/getSearchResult?searchText=${name}`);
         const card = visitor.page.locator(".list-card").filter({ hasText: name });
         await expect(card).toContainText("Games · 1 member");
         await card.getByRole("link", { name }).click();
-
-        await expect(visitor.page.locator(".group-topic")).toHaveText("Games");
-        await expect(visitor.page.locator(".group-description")).toHaveText("Weekly games.\nBeginners welcome.");
-        const link = profileField(visitor.page, "Website").getByRole("link");
-        await expect(link).toHaveAttribute("href", "https://example.com/club");
-        await expect(link).toHaveAttribute("target", "_blank");
-        await expect(link).toHaveAttribute("rel", /noopener/);
-
         await visitor.page.getByRole("button", { name: "Join group" }).click();
         // The button turns into "Leave group" once the server has taken the join.
         await expect(visitor.page.getByRole("button", { name: "Leave group" })).toBeVisible();
@@ -152,69 +138,32 @@ test.describe("group details", () => {
         await visitor.close();
     });
 
-    test("a link that is not a web address is refused and the typed details stay", async ({ browser }) => {
+    // The rules themselves are checked in GroupFormTest; here the form keeps what was typed and the page follows.
+    test("the owner edits the details: \"Other\" needs its own topic, empty fields disappear", async ({ browser }) => {
         const { page, close } = await newUserSession(browser);
-        const groupId = await createGroup(page, "Film club");
-
+        await createGroup(page, "Garden club");
         await page.getByRole("link", { name: "Manage group" }).click();
-        await fillDetails(page, { topic: "Arts & culture", description: "Old films.", website: "javascript:alert(1)" });
-        // The browser's own check of type="url" would stop the form before the server sees it.
-        await page.locator("#regForm").evaluate(form => form.setAttribute("novalidate", ""));
-        await page.getByRole("button", { name: "Save" }).click();
-
-        await expect(page.locator(".errorText-top")).toHaveText(
-            "The link must be a web address starting with http:// or https://.");
-        await expect(page.locator("#description")).toHaveValue("Old films.");
-        await expect(page.locator("#category")).toHaveValue("ARTS");
-        await expect(page.locator("#name")).toHaveValue("Film club");
-
-        await page.goto(`/searchResult/getGroupPage?groupId=${groupId}`);
-        await expect(page.locator(".group-description")).toHaveCount(0);
-        await close();
-    });
-
-    test("the owner edits the details and can clear them again", async ({ browser }) => {
-        const { page, close } = await newUserSession(browser);
-        await createGroup(page, "Running club");
-
-        await page.getByRole("link", { name: "Manage group" }).click();
-        await fillDetails(page, { topic: "Sports", description: "Morning runs.", website: "https://example.org" });
-        await page.getByRole("button", { name: "Save" }).click();
-        await expect(page.locator(".group-topic")).toHaveText("Sports");
-        await expect(page.locator(".group-description")).toHaveText("Morning runs.");
-
-        await page.getByRole("link", { name: "Manage group" }).click();
-        await expect(page.locator("#description")).toHaveValue("Morning runs.");
-        await fillDetails(page, { topic: "No topic", description: "", website: "" });
-        await page.getByRole("button", { name: "Save" }).click();
-
-        await expect(page.locator(".group-topic")).toHaveCount(0);
-        await expect(page.locator(".group-description")).toHaveCount(0);
-        await expect(profileField(page, "Website")).toHaveCount(0);
-        await close();
-    });
-
-    test("with \"Other\" the owner names the topic, and that name is shown", async ({ browser }) => {
-        const { page, close } = await newUserSession(browser);
-        const name = uniqueName("Club");
-        await page.goto("/group/getGroupCreationForm");
-        await page.locator("#name").fill(name);
         const ownTopic = page.locator("#customCategory");
         await expect(ownTopic).toBeHidden();
 
-        await page.locator("#category").selectOption({ label: "Other" });
+        await fillDetails(page, { topic: "Other", description: "Weekend planting.", website: "" });
         await expect(ownTopic).toBeVisible();
-        await page.getByRole("button", { name: "Create" }).click();
-        // "Other" alone is not enough.
-        await expect(page.getByText("Name the topic, or choose one from the list.")).toBeVisible();
+        await page.getByRole("button", { name: "Save" }).click();
+        await expect(page.locator(".errorText-top")).toHaveText("Name the topic, or choose one from the list.");
         await expect(page.locator("#category")).toHaveValue("OTHER");
+        await expect(page.locator("#description")).toHaveValue("Weekend planting.");
 
         await ownTopic.fill("Urban gardening");
-        await page.getByRole("button", { name: "Create" }).click();
+        await page.getByRole("button", { name: "Save" }).click();
         await expect(page.locator(".group-topic")).toHaveText("Urban gardening");
+        await expect(page.locator(".group-description")).toHaveText("Weekend planting.");
 
-        await page.goto(`/searchResult/getSearchResult?searchText=${name}`);
-        await expect(page.locator(".list-card").filter({ hasText: name })).toContainText("Urban gardening · 1 member");
+        await page.getByRole("link", { name: "Manage group" }).click();
+        await fillDetails(page, { topic: "No topic", description: "", website: "" });
+        await page.getByRole("button", { name: "Save" }).click();
+        await expect(page.locator(".group-topic")).toHaveCount(0);
+        await expect(page.locator(".group-description")).toHaveCount(0);
+        await expect(profileField(page, "Website")).toHaveCount(0);
         await close();
     });
 });

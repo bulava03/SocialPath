@@ -17,6 +17,7 @@ import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,7 +36,6 @@ class GroupControllerHeaderAvatarTest {
     private GroupService groupService;
     private GroupController controller;
     private final User viewer = new User();
-    private final Model model = new ExtendedModelMap();
     private final LeftFrameRequest request = new LeftFrameRequest();
 
     @BeforeEach
@@ -58,37 +58,22 @@ class GroupControllerHeaderAvatarTest {
     }
 
     @Test
-    void groupCreationForm_ShowsTheViewersAvatar() {
-        controller.getGroupCreationForm(viewer, model);
-
-        assertEquals(AVATAR, model.getAttribute("avatar"));
-    }
-
-    @Test
-    void groupCreationForm_RejectedName_StillShowsTheViewersAvatar() {
+    void everyGroupPage_ShowsTheViewersAvatarInTheHeader() {
         when(groupService.validateGroup(any())).thenReturn(ValidationResult.failure("Name is required"));
-
-        controller.createGroup(viewer, new GroupForm(), model);
-
-        assertEquals(AVATAR, model.getAttribute("avatar"));
-    }
-
-    @Test
-    void membersPage_ShowsTheViewersAvatar() {
         when(groupService.findGroupsMembers(20L)).thenReturn(List.of());
         when(groupService.findGroupsAdmins(20L)).thenReturn(List.of());
-
-        controller.getGroupsMembers(viewer, request, model);
-
-        assertEquals(AVATAR, model.getAttribute("avatar"));
-    }
-
-    @Test
-    void adminsPage_ShowsTheViewersAvatar() {
         when(groupService.findGroupsAdminsPresentable(20L)).thenReturn(List.of());
 
-        controller.getGroupsAdmins(viewer, request, model);
-
-        assertEquals(AVATAR, model.getAttribute("avatar"));
+        // The creation form, also when shown again after a rejected name, and both member lists.
+        List<Consumer<Model>> pages = List.of(
+                model -> controller.getGroupCreationForm(viewer, model),
+                model -> controller.createGroup(viewer, new GroupForm(), model),
+                model -> controller.getGroupsMembers(viewer, request, model),
+                model -> controller.getGroupsAdmins(viewer, request, model));
+        for (Consumer<Model> page : pages) {
+            Model model = new ExtendedModelMap();
+            page.accept(model);
+            assertEquals(AVATAR, model.getAttribute("avatar"));
+        }
     }
 }

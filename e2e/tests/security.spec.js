@@ -17,6 +17,21 @@ async function expectSignedOut(page) {
 
 const sessions = page => page.locator(".session");
 
+/** Fills in and sends the password form. */
+async function changePassword(page, oldPassword, password, confirmPassword) {
+    await page.goto("/security/password");
+    await page.locator("#oldPassword").fill(oldPassword);
+    await page.locator("#password").fill(password);
+    await page.locator("#confirmPassword").fill(confirmPassword);
+    await page.getByRole("button", { name: "Save" }).click();
+}
+
+/** Signs in through the endpoint without following the redirect: 302 on success, 200 with the form on failure. */
+async function signInStatus(request, login, password) {
+    const response = await request.post("/auth/login", { form: { login, password }, maxRedirects: 0 });
+    return response.status();
+}
+
 test.describe("security page", () => {
     test("the user menu opens the password tab, the other tab lists this device", async ({ browser }) => {
         const { page, close } = await newUserSession(browser);
@@ -48,59 +63,56 @@ test.describe("security page", () => {
         await close();
     });
 
-    test("a session ended from another device is signed out", async ({ browser }) => {
-        const first = await newUserSession(browser);
-        const second = await anotherDevice(browser, first.user.login);
-
-        await first.page.goto("/security/sessions");
-        await expect(sessions(first.page)).toHaveCount(2);
-        await sessions(first.page).filter({ hasNotText: "This device" })
-            .getByRole("button", { name: "End" }).click();
-
-        await expect(sessions(first.page)).toHaveCount(1);
-        await expectSignedOut(second.page);
-        // The device that ended it stays signed in.
-        await first.page.goto("/user/authorisation");
-        await expect(first.page).toHaveURL(/\/user\/authorisation/);
-        await first.close();
-        await second.close();
-    });
-
-    test("ending all other sessions keeps only this device", async ({ browser }) => {
+    test("other devices are signed out one by one or all at once", async ({ browser }) => {
         const first = await newUserSession(browser);
         const second = await anotherDevice(browser, first.user.login);
         const third = await anotherDevice(browser, first.user.login);
-
         await first.page.goto("/security/sessions");
         await expect(sessions(first.page)).toHaveCount(3);
-        await first.page.getByRole("button", { name: "End all other sessions" }).click();
 
+        await sessions(first.page).filter({ hasNotText: "This device" }).first()
+            .getByRole("button", { name: "End" }).click();
+        await expect(sessions(first.page)).toHaveCount(2);
+
+        await first.page.getByRole("button", { name: "End all other sessions" }).click();
         await expect(sessions(first.page)).toHaveCount(1);
         await expect(sessions(first.page).first()).toContainText("This device");
         await expectSignedOut(second.page);
         await expectSignedOut(third.page);
+        // The device that ended them stays signed in.
+        await first.page.goto("/user/authorisation");
+        await expect(first.page).toHaveURL(/\/user\/authorisation/);
         await first.close();
         await second.close();
         await third.close();
     });
 
-    test("a password change signs every other device out", async ({ browser }) => {
+    test("a new password replaces the old one and signs every other device out", async ({ browser }) => {
         const first = await newUserSession(browser);
         const second = await anotherDevice(browser, first.user.login);
 
-        await first.page.goto("/security/password");
-        await first.page.locator("#oldPassword").fill(PASSWORD);
-        await first.page.locator("#password").fill("brand-new-pass");
-        await first.page.locator("#confirmPassword").fill("brand-new-pass");
-        await first.page.getByRole("button", { name: "Save" }).click();
+        await changePassword(first.page, PASSWORD, "brand-new-pass", "brand-new-pass");
 
         await expect(first.page).toHaveURL(/\/security\/password/);
-        await expect(first.page.getByText("Other sessions were ended.")).toBeVisible();
+        await expect(first.page.getByText("The password has been changed. Other sessions were ended.")).toBeVisible();
         // The tab switcher counts the sessions left: only this one.
         await expect(first.page.locator(".security-tab-count")).toHaveText("1");
         await expectSignedOut(second.page);
+        expect(await signInStatus(first.page.request, first.user.login, "brand-new-pass")).toBe(302);
+        expect(await signInStatus(first.page.request, first.user.login, PASSWORD)).toBe(200);
         await first.close();
         await second.close();
+    });
+
+    // Every reason to refuse is checked in SecurityControllerTest; here only that the page shows it.
+    test("a refused password change shows why and keeps the old password", async ({ browser }) => {
+        const { page, user, close } = await newUserSession(browser);
+
+        await changePassword(page, PASSWORD, "brand-new-pass", "brand-new-pas");
+
+        await expect(page.locator(".errortext")).toHaveText("The new passwords do not match.");
+        expect(await signInStatus(page.request, user.login, PASSWORD)).toBe(302);
+        await close();
     });
 
     test("after logging out a copy of the old token no longer works", async ({ browser }) => {

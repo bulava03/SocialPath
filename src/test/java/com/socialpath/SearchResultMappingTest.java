@@ -44,50 +44,21 @@ class SearchResultMappingTest {
     }
 
     @Test
-    void groupFrom_ConvertsIdToString() {
+    void groupFrom_CopiesTheCardDetails() {
         Group group = new Group();
         group.setId(42L);
         group.setName("Hiking");
         group.setImageId("abc.jpg");
+        group.setCategory(GroupCategory.TRAVEL);
+        group.setMembers(List.of("anna", "ben", "cara"));
 
         GroupSearchResult result = GroupSearchResult.from(group);
 
         assertEquals("42", result.getId());
         assertEquals("Hiking", result.getName());
         assertEquals("abc.jpg", result.getImageId());
-    }
-
-    @Test
-    void groupFrom_ShowsTheTopicNameAndHowManyMembers() {
-        Group group = new Group();
-        group.setId(42L);
-        group.setName("Hiking");
-        group.setCategory(GroupCategory.TRAVEL);
-        group.setMembers(List.of("anna", "ben", "cara"));
-
-        GroupSearchResult result = GroupSearchResult.from(group);
-
+        // The topic as Group#getTopic shows it (its cases are in GroupFormTest).
         assertEquals("Travel", result.getCategory());
         assertEquals(3, result.getMemberCount());
-    }
-
-    @Test
-    void groupFrom_WithoutTopic_LeavesItEmpty() {
-        Group group = new Group();
-        group.setId(42L);
-        group.setMembers(List.of("anna"));
-
-        assertNull(GroupSearchResult.from(group).getCategory());
-    }
-
-    @Test
-    void groupFrom_WithItsOwnTopic_ShowsThatInsteadOfOther() {
-        Group group = new Group();
-        group.setId(42L);
-        group.setCategory(GroupCategory.OTHER);
-        group.setCustomCategory("Urban gardening");
-        group.setMembers(List.of("anna"));
-
-        assertEquals("Urban gardening", GroupSearchResult.from(group).getCategory());
     }
 }

@@ -16,42 +16,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ValidationResultTest {
 
     @Test
-    void success_HasNoMessages() {
-        ValidationResult result = ValidationResult.success();
+    void success_HasNoMessages_FailureShowsItsFirst() {
+        ValidationResult success = ValidationResult.success();
+        assertTrue(success.isSuccess());
+        assertEquals("", success.getMessage());
 
-        assertTrue(result.isSuccess());
-        assertTrue(result.getErrorMessages().isEmpty());
-        assertEquals("", result.getMessage());
+        ValidationResult failure = ValidationResult.failure(List.of("first", "second"));
+        assertFalse(failure.isSuccess());
+        assertEquals("first", failure.getMessage());
+        assertEquals(2, failure.getErrorMessages().size());
     }
 
     @Test
-    void failure_WithSingleMessage_ExposesIt() {
-        ValidationResult result = ValidationResult.failure("bad input");
-
-        assertFalse(result.isSuccess());
-        assertEquals("bad input", result.getMessage());
-    }
-
-    @Test
-    void failure_WithSeveralMessages_ReturnsFirstAsMessage() {
-        ValidationResult result = ValidationResult.failure(List.of("first", "second"));
-
-        assertFalse(result.isSuccess());
-        assertEquals("first", result.getMessage());
-        assertEquals(2, result.getErrorMessages().size());
-    }
-
-    @Test
-    void of_WithoutViolations_IsSuccess() {
-        assertTrue(ValidationResult.of(Set.of()).isSuccess());
-    }
-
-    @Test
-    void of_WithViolation_FailsWithItsMessage() {
+    void of_ConstraintViolations_FailsWithTheirMessage() {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        GroupForm form = new GroupForm();
+        assertTrue(ValidationResult.of(Set.of()).isSuccess());
 
-        ValidationResult result = ValidationResult.of(validator.validate(form));
+        // A group form without a name breaks exactly one rule.
+        ValidationResult result = ValidationResult.of(validator.validate(new GroupForm()));
 
         assertFalse(result.isSuccess());
         assertEquals(1, result.getErrorMessages().size());
