@@ -258,12 +258,18 @@ async function seed(art) {
     await comment(api.riley, nightCity, "Can't wait to see the whole series!");
 
     // A group.
-    const created = await api.jordan.post("/group/createGroup", { form: { Name: "Seaside Photographers" }, maxRedirects: 0 });
-    const groupId = new URL(created.headers()["location"], BASE_URL).searchParams.get("groupId");
+    const group = {
+        name: "Seaside Photographers", category: "ARTS",
+        description: "Early mornings, long exposures and a lot of sand in the camera bag. "
+            + "A weekly theme, friendly critique, and a walk along the coast once a month.",
+        website: "https://example.com/seaside-photographers",
+    };
+    const created = await api.jordan.post("/group/createGroup", { form: group, maxRedirects: 0 });
+    const groupId = new URL(created.headers()["location"] ?? "/", BASE_URL).searchParams.get("groupId");
     check(groupId, "create group");
     const groupForm = new FormData();
     groupForm.append("groupId", groupId);
-    groupForm.append("Name", "Seaside Photographers");
+    Object.entries(group).forEach(([name, value]) => groupForm.append(name, value));
     groupForm.append("removeImage", "false");
     groupForm.append("file", png("group.png", await paint(art, 256, 256, "avatar",
         { colors: ["#2aa6c9", "#14627f"], initials: "SP" })), "group.png");
@@ -278,17 +284,36 @@ async function seed(art) {
     const alexOnSea = await comment(api.alex, sea, "This light is gorgeous. What lens?", { groupId });
     await comment(api.jordan, alexOnSea, "35mm, f/8, tripod and a lot of patience.", { groupId });
 
-    await Promise.all(Object.values(api).filter(Boolean).map(context => context.dispose()));
+    // Sign the seeding clients out, so the Security page lists only real browsers.
+    for (const context of Object.values(api)) {
+        await context.post("/auth/logout", { maxRedirects: 0 });
+        await context.dispose();
+    }
     return { groupId };
 }
 
 // ---------- screenshots ----------
 
-async function shoot(browser, login, url, file, { scrollTo } = {}) {
+// Browsers Alex is also signed in from, for the list of active sessions.
+const OTHER_BROWSERS = [
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0",
+];
+
+async function signInFrom(userAgent, login) {
+    const api = await playwrightRequest.newContext({ baseURL: BASE_URL, userAgent });
+    const response = await api.post("/auth/login", { form: { login, password: PASSWORD }, maxRedirects: 0 });
+    check(response.status() === 302, `sign ${login} in from another browser`);
+    await api.dispose();
+}
+
+async function shoot(browser, login, url, file, { scrollTo, signIn = true } = {}) {
     const context = await browser.newContext({ baseURL: BASE_URL, viewport: VIEWPORT });
     const page = await context.newPage();
-    const response = await page.request.post("/auth/login", { form: { login, password: PASSWORD }, maxRedirects: 0 });
-    check(response.status() === 302, `screenshot login ${login}`);
+    if (signIn) {
+        const response = await page.request.post("/auth/login", { form: { login, password: PASSWORD }, maxRedirects: 0 });
+        check(response.status() === 302, `screenshot login ${login}`);
+    }
     await page.goto(url);
     await page.waitForLoadState("networkidle");
     if (scrollTo) {
@@ -304,6 +329,25 @@ try {
     const art = await browser.newPage();
     const { groupId } = await seed(art);
     await mkdir(OUT_DIR, { recursive: true });
+
+    // The sessions first, while Alex is signed in from the browsers above only.
+    for (const userAgent of OTHER_BROWSERS) {
+        await signInFrom(userAgent, "alex");
+    }
+    await shoot(browser, "alex", "/security/sessions", "security-sessions.png");
+
+    // A registration waiting for the code from the phone.
+    const newcomer = await playwrightRequest.newContext({ baseURL: BASE_URL });
+    const registered = await newcomer.post("/registration/registration", {
+        form: {
+            login: "casey", password: PASSWORD, firstName: "Casey", lastName: "Brooks",
+            email: "casey@example.com", phoneRegion: "US", phoneNumber: "201 555 0105",
+        },
+        maxRedirects: 0,
+    });
+    check(registered.status() === 302, "register casey");
+    await newcomer.dispose();
+    await shoot(browser, null, registered.headers()["location"], "phone-confirmation.png", { signIn: false });
 
     await shoot(browser, "alex", "/user/authorisation", "user-page.png");
     await shoot(browser, "alex", "/user/authorisation", "feed.png", { scrollTo: "#publications" });
