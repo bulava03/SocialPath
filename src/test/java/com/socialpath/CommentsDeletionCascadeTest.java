@@ -1,5 +1,6 @@
 package com.socialpath;
 
+import com.socialpath.config.FeedProperties;
 import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.FileStorageService;
@@ -40,7 +41,7 @@ class CommentsDeletionCascadeTest {
                 mock(UserRepository.class),
                 commentsRepository,
                 fileStorageService,
-                mock(VideoService.class));
+                mock(VideoService.class), new FeedProperties(20, 10, 1));
     }
 
     @Test

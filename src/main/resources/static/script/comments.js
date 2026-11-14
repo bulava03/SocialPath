@@ -133,24 +133,44 @@ function feedUrl(before) {
     return url;
 }
 
-function threadUrl(id) {
-    const url = new URL("/comments/view/thread", window.location.origin);
+/** One post or comment, rendered with its replies only counted. */
+function publicationUrl(id) {
+    const url = new URL("/comments/view/publication", window.location.origin);
     url.searchParams.append("id", id);
     return url;
 }
 
-/** The top-level post an element belongs to. */
-function postOf(element) {
-    return element.closest("#publications > .comment");
+/** A portion of the direct replies of a post or comment. */
+function repliesUrl(parentId, before) {
+    const url = new URL("/comments/view/replies", window.location.origin);
+    url.searchParams.append("parentId", parentId);
+    if (before) {
+        url.searchParams.append("before", before);
+    }
+    return url;
 }
 
-/** Re-renders one post with its whole comment tree, in place. */
-function refreshPost(post) {
-    fetchHtml(threadUrl(post.id))
+/** The replies container of a post or comment. */
+function repliesOf(comment) {
+    return comment.querySelector(":scope > .replies");
+}
+
+/**
+ * Re-renders one post or comment in place. Its replies are not part of the
+ * answer: the ones already on the page are moved over as they are, opened
+ * branches and drafts in them included.
+ */
+function refreshPublication(comment) {
+    fetchHtml(publicationUrl(comment.id))
         .then(html => {
-            if (html) {
-                post.outerHTML = html;
+            if (!html) {
+                return;
             }
+            const template = document.createElement("template");
+            template.innerHTML = html;
+            const fresh = template.content.querySelector(".comment");
+            repliesOf(fresh).replaceWith(repliesOf(comment));
+            comment.replaceWith(fresh);
         })
         .catch(error => {
             console.error("Request failed:", error);
@@ -158,9 +178,70 @@ function refreshPost(post) {
         });
 }
 
+/**
+ * Opens the next portion of replies in place of its button: the first
+ * portion of a collapsed branch, or the older replies below loaded ones.
+ * Each portion ends with a new button while there is more.
+ */
+function loadMoreReplies(button) {
+    if (button.disabled) {
+        return;
+    }
+    button.disabled = true;
+    const label = button.textContent;
+    button.textContent = "Loading…";
+
+    fetchHtml(repliesUrl(button.dataset.parent, button.dataset.before))
+        .then(html => {
+            if (html !== null) {
+                button.insertAdjacentHTML("beforebegin", html);
+                button.remove();
+            }
+        })
+        .catch(error => {
+            console.error("Request failed:", error);
+            button.textContent = label;
+            button.disabled = false;
+            alert("Could not load the replies. Try again.");
+        });
+}
+
+/**
+ * Shows a new reply in its branch. A branch that is still collapsed opens
+ * with its newest portion, which has the reply on top; in an open branch the
+ * reply is put above the others, newest first as they are.
+ */
+function showNewReply(parent, id) {
+    const replies = repliesOf(parent);
+    const collapsed = replies.querySelector(":scope > .replies-more:not([data-before])");
+    if (collapsed) {
+        loadMoreReplies(collapsed);
+        return;
+    }
+    fetchHtml(publicationUrl(id))
+        .then(html => {
+            if (html) {
+                replies.insertAdjacentHTML("afterbegin", '<div class="comment-divider"></div>' + html);
+            }
+        })
+        .catch(error => {
+            console.error("Request failed:", error);
+            alert("The comment is published, but could not be shown. Reload the page.");
+        });
+}
+
+/** Removes a deleted reply together with the divider above it. */
+function removeReply(comment) {
+    const divider = comment.previousElementSibling;
+    if (divider?.classList.contains("comment-divider")) {
+        divider.remove();
+    }
+    comment.remove();
+}
+
 /** Puts a newly published post on top of the feed. */
 function prependPost(id) {
-    fetchHtml(threadUrl(id))
+    fetchHtml(publicationUrl(id))
         .then(html => {
             if (html) {
                 document.querySelector("#publications > .feed-empty")?.remove();
@@ -300,12 +381,14 @@ function submitComment(parentId) {
         formData.append(config.targetParam, target);
     }
 
-    // Only this post is re-rendered (its reply form comes back empty); drafts
-    // in other posts stay as they are.
-    const post = postOf(document.getElementById(parentId));
+    // Only the new reply is added; everything else on the page, drafts and
+    // opened branches included, stays as it is.
+    const parent = document.getElementById(parentId);
     send(config.comment, formData).then(result => {
         if (result) {
-            refreshPost(post);
+            clearPostForm("-" + parentId);
+            parent.querySelector(":scope > .reply-section").style.display = "none";
+            showNewReply(parent, result.id);
         }
     });
 }
@@ -319,15 +402,14 @@ function submitRemoveComment(commentId) {
     }
 
     const comment = document.getElementById(commentId);
-    const post = postOf(comment);
     send(config.remove, formData).then(result => {
         if (!result) {
             return;
         }
-        if (comment === post) {
-            removePost(post);
+        if (comment.parentElement.id === "publications") {
+            removePost(comment);
         } else {
-            refreshPost(post);
+            removeReply(comment);
         }
     });
 }
@@ -390,13 +472,15 @@ function renderPreview(input) {
 }
 
 // Videos still being converted show a placeholder. While there are any, the
-// server is asked every few seconds; a post whose video is done (or failed)
-// is re-rendered in place, unless a reply is being written under it.
+// server is asked every few seconds; a post or comment whose video is done
+// (or failed) is re-rendered in place, unless a reply to it is being written.
+// Its replies are kept as they are on the page.
 const VIDEO_CHECK_MS = 5_000;
 
-function hasDraftIn(post) {
-    return [...post.querySelectorAll(".reply-field")].some(field => field.value.trim() !== "")
-        || [...post.querySelectorAll("input[type='file']")].some(input => input.files.length > 0);
+function hasDraftIn(comment) {
+    const section = comment.querySelector(":scope > .reply-section");
+    return section.querySelector(".reply-field").value.trim() !== ""
+        || section.querySelector("input[type='file']").files.length > 0;
 }
 
 function checkVideos() {
@@ -414,9 +498,9 @@ function checkVideos() {
                 return;
             }
             for (const placeholder of pending) {
-                const post = postOf(placeholder);
-                if (statuses[placeholder.dataset.videoId] !== "PROCESSING" && post && !hasDraftIn(post)) {
-                    refreshPost(post);
+                const comment = placeholder.closest(".comment");
+                if (statuses[placeholder.dataset.videoId] !== "PROCESSING" && comment && !hasDraftIn(comment)) {
+                    refreshPublication(comment);
                 }
             }
         })
@@ -547,6 +631,10 @@ watchFeedEnd();
 // new-post form lives outside the feed.
 document.addEventListener("click", event => {
     const target = event.target;
+
+    if (target.classList.contains("replies-more")) {
+        loadMoreReplies(target);
+    }
 
     if (target.classList.contains("publication-add-media-btn")) {
         const idSuffix = target.id.replace("publication-add-media-btn", "");

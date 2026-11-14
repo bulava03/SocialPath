@@ -5,6 +5,7 @@ import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
 import com.socialpath.dto.response.FeedPage;
 import com.socialpath.dto.response.PublicationPresentable;
+import com.socialpath.dto.response.RepliesPage;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,9 +16,6 @@ import java.util.List;
  * the same operations serve both a top-level post and a nested comment.
  */
 public interface CommentsService {
-
-    /** How many posts a feed portion holds. */
-    int FEED_PAGE_SIZE = 20;
 
     /**
      * Creates a publication on a user's page.
@@ -34,27 +32,38 @@ public interface CommentsService {
     Long addNewGroupPublication(NewPublication newPublication) throws IOException;
 
     /**
-     * Loads a portion of a user page's feed with nested comments.
+     * Loads a portion of a user page's feed with the first portions of its
+     * replies, as many levels deep as app.feed.replies-preload-depth says.
      * @param login the page owner
      * @param before continue below this post id; null for the newest posts
-     * @return up to {@link #FEED_PAGE_SIZE} posts, newest first
+     * @return up to app.feed.page-size posts, newest first
      */
     FeedPage loadUserFeed(String login, Long before);
 
     /**
-     * Loads a portion of a group page's feed with nested comments.
+     * Loads a portion of a group page's feed, like {@link #loadUserFeed}.
      * @param groupId the group id
      * @param before continue below this post id; null for the newest posts
-     * @return up to {@link #FEED_PAGE_SIZE} posts, newest first
+     * @return up to app.feed.page-size posts, newest first
      */
     FeedPage loadGroupFeed(Long groupId, Long before);
 
     /**
-     * Loads one post with its whole comment tree, to refresh it in place.
-     * @param post the post itself or any comment under it
-     * @return the top-level post as a view model
+     * Loads a portion of the direct replies of a post or comment. Their own
+     * replies are only counted: each further level opens on request.
+     * @param parentId the post or comment
+     * @param before continue below this reply id; null for the newest replies
+     * @return up to app.feed.replies-page-size replies, newest first
      */
-    PublicationPresentable loadThread(Publication post);
+    RepliesPage loadReplies(Long parentId, Long before);
+
+    /**
+     * Loads a single post or comment, to show a new one or refresh one in
+     * place. Its replies are only counted.
+     * @param publication the post or comment
+     * @return its view model
+     */
+    PublicationPresentable loadPublication(Publication publication);
 
     /**
      * The newest activity by others in a user page's feed, posts and
@@ -93,8 +102,9 @@ public interface CommentsService {
     /**
      * Adds a comment under an existing publication.
      * @param newComment the comment content and parent
+     * @return the id of the new comment
      */
-    void addNewComment(NewComment newComment) throws IOException;
+    Long addNewComment(NewComment newComment) throws IOException;
 
     /**
      * Deletes a publication or a comment, together with its whole reply

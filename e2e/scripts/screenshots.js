@@ -216,17 +216,7 @@ async function comment(api, parentId, text, { groupId } = {}) {
     }
     const response = await api.post(groupId ? "/comments/addCommentGroup" : "/comments/addCommentUser", { multipart: form });
     check(response.ok(), `comment "${text}"`);
-    return findCommentId(api, parentId, text);
-}
-
-/** Comment endpoints answer "OK" only; the id is read back from the rendered thread. */
-async function findCommentId(api, postId, text) {
-    const html = await (await api.get(`/comments/view/thread?id=${postId}`)).text();
-    const decode = body => body.replace(/&#39;/g, "'").replace(/&quot;/g, "\"").replace(/&amp;/g, "&");
-    const ids = [...html.matchAll(/class="comment" id="(\d+)"[\s\S]*?class="commentText">([^<]*)</g)];
-    const match = ids.find(([, , body]) => decode(body) === text);
-    check(match, `find comment "${text}"`);
-    return Number(match[1]);
+    return (await response.json()).id;
 }
 
 async function seed(art) {
@@ -307,7 +297,7 @@ async function signInFrom(userAgent, login) {
     await api.dispose();
 }
 
-async function shoot(browser, login, url, file, { scrollTo, signIn = true } = {}) {
+async function shoot(browser, login, url, file, { scrollTo, signIn = true, expandReplies = false } = {}) {
     const context = await browser.newContext({ baseURL: BASE_URL, viewport: VIEWPORT });
     const page = await context.newPage();
     if (signIn) {
@@ -316,6 +306,11 @@ async function shoot(browser, login, url, file, { scrollTo, signIn = true } = {}
     }
     await page.goto(url);
     await page.waitForLoadState("networkidle");
+    // Deeper replies open with a button, a level at a time.
+    while (expandReplies && await page.locator(".replies-more").count() > 0) {
+        await page.locator(".replies-more").first().click();
+        await page.waitForLoadState("networkidle");
+    }
     if (scrollTo) {
         await page.locator(scrollTo).first().evaluate(element => window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY - 20));
     }
@@ -350,8 +345,8 @@ try {
     await shoot(browser, null, registered.headers()["location"], "phone-confirmation.png", { signIn: false });
 
     await shoot(browser, "alex", "/user/authorisation", "user-page.png");
-    await shoot(browser, "alex", "/user/authorisation", "feed.png", { scrollTo: "#publications" });
-    await shoot(browser, "alex", `/searchResult/getGroupPage?groupId=${groupId}`, "group.png");
+    await shoot(browser, "alex", "/user/authorisation", "feed.png", { scrollTo: "#publications", expandReplies: true });
+    await shoot(browser, "alex", `/searchResult/getGroupPage?groupId=${groupId}`, "group.png", { expandReplies: true });
     await shoot(browser, "alex", "/user/anotherUserPage?anotherUserLogin=jordan", "friend-request.png");
 } finally {
     await browser.close();

@@ -27,12 +27,34 @@
         <p th:replace="~{shared/mediaLimits :: hint}"></p>
       </div>
 
-      <th:block th:if="${comment.publications != null and comment.publications.size() > 0}">
-        <th:block th:each="i : ${#numbers.sequence(comment.publications.size() - 1, 0, -1)}">
-          <div th:class="'comment-divider' + (${i == comment.publications.size() - 1} ? ' first' : '')"></div>
-          <div th:replace="~{renderComment/renderCommentUser :: renderComment(comment=${comment.publications[i]})}"></div>
+      <!-- The loaded replies, newest first; the rest stay behind a button. -->
+      <div class="replies" th:data-parent="${comment.id}">
+        <th:block th:with="replies=${comment.publications}, parentId=${comment.id}, hidden=${comment.hiddenReplies}, next=${comment.nextReplies}, before=${comment.repliesBefore}">
+          <th:block th:replace="~{renderComment/renderCommentUser :: replies}"></th:block>
         </th:block>
-      </th:block>
+      </div>
     </div>
+  </th:block>
+
+  <!-- A portion of replies to one post or comment (variables: replies,
+       parentId, hidden, next, before), also returned on its own by
+       /comments/view/replies. A button stands for the replies not loaded:
+       all of them when none are shown yet, otherwise the older ones. It says
+       how many the click brings (next), out of how many are left (hidden). -->
+  <th:block th:fragment="replies">
+    <th:block th:each="reply : ${replies}">
+      <div class="comment-divider"></div>
+      <div th:replace="~{renderComment/renderCommentUser :: renderComment(comment=${reply})}"></div>
+    </th:block>
+    <button type="button" class="replies-more" th:if="${hidden > 0}"
+            th:data-parent="${parentId}" th:data-before="${before}"
+            th:with="all=${next >= hidden}, count=${#numbers.formatInteger(hidden, 1, 'COMMA')}"
+            th:text="${#lists.isEmpty(replies)
+                ? (hidden == 1 ? 'Show 1 reply'
+                    : (all ? 'Show ' + count + ' replies'
+                        : 'Show ' + next + ' of ' + count + ' replies'))
+                : (hidden == 1 ? 'Show the last reply'
+                    : (all ? 'Show the last ' + count + ' replies'
+                        : 'Show next ' + next + ' of ' + count + ' remaining replies'))}"></button>
   </th:block>
 </html>

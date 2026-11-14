@@ -1,5 +1,6 @@
 package com.socialpath;
 
+import com.socialpath.config.FeedProperties;
 import com.socialpath.dto.request.NewComment;
 import com.socialpath.media.PublicationMediaRules;
 import com.socialpath.repository.CommentsRepository;
@@ -39,7 +40,7 @@ class PublicationUploadTest {
         commentsRepository = mock(CommentsRepository.class);
         fileStorageService = mock(FileStorageService.class);
         service = new CommentsServiceImpl(mock(UserRepository.class), commentsRepository, fileStorageService,
-                mock(VideoService.class));
+                mock(VideoService.class), new FeedProperties(20, 10, 1));
     }
 
     private static NewComment comment(MultipartFile... media) {
@@ -70,6 +71,7 @@ class PublicationUploadTest {
     void storedFile_GetsTheExtensionOfItsContent_NotOfItsName() throws Exception {
         MultipartFile png = new MockMultipartFile("media", "picture.html", "text/html", PNG);
         when(fileStorageService.storeFile(any(MultipartFile.class), anyString())).thenReturn("id.png");
+        when(commentsRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         service.addNewComment(comment(png));
 

@@ -49,8 +49,7 @@
 .comment > .commentText,
 .comment > .commentMedia,
 .comment > .reply-section,
-.comment > .comment-divider,
-.comment > .comment {
+.comment > .replies {
     flex: 0 0 100%;
 }
 
@@ -131,6 +130,31 @@
 
 .delete-btn {
     --icon: var(--icon-trash);
+}
+
+/* Replies that are not loaded yet: a quiet link-like button under the
+   comment, or under the last loaded reply. */
+.replies-more {
+    display: block;
+    margin: 8px 0 0 -10px;
+    padding: 4px 10px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--brand);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.replies-more:hover {
+    background-color: var(--line);
+}
+
+.replies-more:disabled {
+    color: var(--text-muted);
+    cursor: default;
 }
 
 /* Line the first button's icon up with the text above it. */

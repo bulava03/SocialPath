@@ -1,16 +1,19 @@
 package com.socialpath.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import com.socialpath.config.FeedProperties;
 import com.socialpath.entity.Publication;
 import com.socialpath.dto.request.NewComment;
 import com.socialpath.dto.request.NewPublication;
 import com.socialpath.dto.response.FeedPage;
 import com.socialpath.dto.response.PublicationPresentable;
+import com.socialpath.dto.response.RepliesPage;
 import com.socialpath.entity.VideoJob;
 import com.socialpath.media.PublicationMediaRules;
 import com.socialpath.media.PublicationMediaType;
 import com.socialpath.repository.AuthorView;
 import com.socialpath.repository.CommentsRepository;
+import com.socialpath.repository.ReplyCount;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.FileStorageService;
@@ -25,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +51,7 @@ public class CommentsServiceImpl implements CommentsService {
     private final CommentsRepository commentsRepository;
     private final FileStorageService fileStorageService;
     private final VideoService videoService;
+    private final FeedProperties feed;
 
     @Override
     public Long addNewUserPublication(NewPublication newPublication) throws IOException {
@@ -65,17 +70,29 @@ public class CommentsServiceImpl implements CommentsService {
 
     @Override
     public FeedPage loadUserFeed(String login, Long before) {
-        return toPage(commentsRepository.findUserFeed(login, before, Limit.of(FEED_PAGE_SIZE + 1)));
+        return toPage(commentsRepository.findUserFeed(login, before, Limit.of(feed.pageSize() + 1)));
     }
 
     @Override
     public FeedPage loadGroupFeed(Long groupId, Long before) {
-        return toPage(commentsRepository.findGroupFeed(groupId, before, Limit.of(FEED_PAGE_SIZE + 1)));
+        return toPage(commentsRepository.findGroupFeed(groupId, before, Limit.of(feed.pageSize() + 1)));
     }
 
     @Override
-    public PublicationPresentable loadThread(Publication post) {
-        return buildFeed(List.of(findRoot(post))).get(0);
+    public RepliesPage loadReplies(Long parentId, Long before) {
+        List<Publication> rows = commentsRepository.findReplies(parentId, before, Limit.of(feed.repliesPageSize()));
+        if (rows.isEmpty()) {
+            return new RepliesPage(List.of(), null, 0, 0);
+        }
+        Long oldest = rows.get(rows.size() - 1).getId();
+        long hidden = commentsRepository.countByParentIdAndIdLessThan(parentId, oldest);
+        return new RepliesPage(present(rows, 0), hidden > 0 ? oldest : null, hidden,
+                Math.min(hidden, feed.repliesPageSize()));
+    }
+
+    @Override
+    public PublicationPresentable loadPublication(Publication publication) {
+        return present(List.of(publication), 0).get(0);
     }
 
     @Override
@@ -93,14 +110,14 @@ public class CommentsServiceImpl implements CommentsService {
     /**
      * Cuts a portion from posts queried with one extra row: that row only
      * tells whether anything older exists and is not shown.
-     * @param rows up to FEED_PAGE_SIZE + 1 posts, newest first
+     * @param rows up to page-size + 1 posts, newest first
      * @return the portion and where to continue
      */
     private FeedPage toPage(List<Publication> rows) {
-        boolean hasMore = rows.size() > FEED_PAGE_SIZE;
-        List<Publication> posts = hasMore ? rows.subList(0, FEED_PAGE_SIZE) : rows;
+        boolean hasMore = rows.size() > feed.pageSize();
+        List<Publication> posts = hasMore ? rows.subList(0, feed.pageSize()) : rows;
         Long nextBefore = hasMore ? posts.get(posts.size() - 1).getId() : null;
-        return new FeedPage(buildFeed(posts), nextBefore);
+        return new FeedPage(present(posts, feed.repliesPreloadDepth()), nextBefore);
     }
 
     @Override
@@ -122,61 +139,86 @@ public class CommentsServiceImpl implements CommentsService {
     }
 
     /**
-     * Turns the posts of a page into view models with their whole comment
-     * trees. The size of the page does not change the number of queries:
-     * one for all comments, one for all authors (media come batched with
-     * the publications), one for the conversion status of any videos, and
-     * the tree is assembled in memory.
-     * @param posts the portion's top-level publications, newest first
-     * @return the posts as view models
+     * Turns posts or comments into view models with the first portions of
+     * their replies, a given number of levels deep. Every level is bounded:
+     * at most repliesPageSize replies under each parent, the rest only
+     * counted. The number of queries depends on the depth only, not on how
+     * many publications there are: one per level of replies, one counting
+     * the replies of everything loaded, one for the authors (media come
+     * batched with the publications) and one for the conversion status of
+     * any videos; the tree is assembled in memory.
+     * @param nodes the publications to present, in display order
+     * @param depth how many levels of replies to load under them
+     * @return the publications as view models
      */
-    private List<PublicationPresentable> buildFeed(List<Publication> posts) {
-        if (posts.isEmpty()) {
+    private List<PublicationPresentable> present(List<Publication> nodes, int depth) {
+        if (nodes.isEmpty()) {
             return List.of();
         }
-        List<Publication> replies = commentsRepository.findReplies(posts.stream().map(Publication::getId).toList());
+        Map<Long, List<Publication>> repliesByParent = new HashMap<>();
+        List<Publication> loaded = new ArrayList<>(nodes);
+        List<Publication> level = nodes;
+        for (int i = 0; i < depth && !level.isEmpty(); i++) {
+            level = commentsRepository.findNewestReplies(idsOf(level), feed.repliesPageSize());
+            for (Publication reply : level) {
+                repliesByParent.computeIfAbsent(reply.getParentId(), parent -> new ArrayList<>()).add(reply);
+            }
+            loaded.addAll(level);
+        }
 
-        Map<Long, List<Publication>> repliesByParent = replies.stream()
-                .collect(Collectors.groupingBy(Publication::getParentId));
-        Set<String> authorLogins = Stream.concat(posts.stream(), replies.stream())
+        Map<Long, Long> replyCounts = commentsRepository.countReplies(idsOf(loaded)).stream()
+                .collect(Collectors.toMap(ReplyCount::getParentId, ReplyCount::getTotal));
+        Set<String> authorLogins = loaded.stream()
                 .map(Publication::getAuthorId)
                 .collect(Collectors.toSet());
         Map<String, AuthorView> authors = userRepository.findAuthors(authorLogins).stream()
                 .collect(Collectors.toMap(AuthorView::getLogin, Function.identity()));
-        Set<String> videoIds = Stream.concat(posts.stream(), replies.stream())
+        Set<String> videoIds = loaded.stream()
                 .flatMap(publication -> mediaOf(publication).stream())
                 .filter(CommentsServiceImpl::isVideo)
                 .collect(Collectors.toSet());
         Map<String, VideoJob.Status> videoStatuses = videoService.statusOf(videoIds);
 
-        FeedParts parts = new FeedParts(repliesByParent, authors, videoStatuses);
-        return posts.stream()
-                .map(post -> toPresentable(post, parts))
+        FeedParts parts = new FeedParts(repliesByParent, replyCounts, authors, videoStatuses);
+        return nodes.stream()
+                .map(node -> toPresentable(node, parts))
                 .toList();
     }
 
+    private static List<Long> idsOf(List<Publication> publications) {
+        return publications.stream().map(Publication::getId).toList();
+    }
+
     /**
-     * What a feed's view models are assembled from.
-     * @param repliesByParent all replies of the feed, grouped by parent id
-     * @param authors the feed's authors by login
-     * @param videoStatuses conversion status of the feed's queued videos
+     * What view models are assembled from.
+     * @param repliesByParent the loaded replies, grouped by parent id, newest first
+     * @param replyCounts how many direct replies each loaded publication has
+     * @param authors the authors by login
+     * @param videoStatuses conversion status of queued videos
      */
     private record FeedParts(Map<Long, List<Publication>> repliesByParent,
+                             Map<Long, Long> replyCounts,
                              Map<String, AuthorView> authors,
                              Map<String, VideoJob.Status> videoStatuses) {
     }
 
     /**
-     * Builds the view model for one publication and, recursively, its replies.
+     * Builds the view model for one publication and, recursively, its loaded
+     * replies. Replies that are not loaded are left behind a button: counted,
+     * with the id they continue below when part of them is shown.
      * @param publication the stored publication
-     * @param parts the feed's replies, authors and video statuses
+     * @param parts the loaded replies, reply counts, authors and video statuses
      * @return the presentable form of the publication
      */
     private PublicationPresentable toPresentable(Publication publication, FeedParts parts) {
-        List<PublicationPresentable> replies = parts.repliesByParent()
-                .getOrDefault(publication.getId(), List.of()).stream()
+        List<Publication> loadedReplies = parts.repliesByParent().getOrDefault(publication.getId(), List.of());
+        List<PublicationPresentable> replies = loadedReplies.stream()
                 .map(reply -> toPresentable(reply, parts))
                 .toList();
+        long hiddenReplies = Math.max(0, parts.replyCounts().getOrDefault(publication.getId(), 0L)
+                - loadedReplies.size());
+        Long repliesBefore = hiddenReplies > 0 && !loadedReplies.isEmpty()
+                ? loadedReplies.get(loadedReplies.size() - 1).getId() : null;
         List<String> media = mediaOf(publication);
         AuthorView author = parts.authors().get(publication.getAuthorId());
         boolean video = media.stream().anyMatch(CommentsServiceImpl::isVideo);
@@ -192,7 +234,10 @@ public class CommentsServiceImpl implements CommentsService {
                 media,
                 video,
                 video ? VideoService.displayStatus(parts.videoStatuses().get(media.get(0))) : null,
-                replies
+                replies,
+                hiddenReplies,
+                Math.min(hiddenReplies, feed.repliesPageSize()),
+                repliesBefore
         );
     }
 
@@ -220,11 +265,11 @@ public class CommentsServiceImpl implements CommentsService {
     }
 
     @Override
-    public void addNewComment(NewComment newComment) throws IOException {
+    public Long addNewComment(NewComment newComment) throws IOException {
         Publication comment = newPublication(newComment.getText(), newComment.getAuthorLogin(),
                 newComment.getMedia());
         comment.setParentId(newComment.getIdPublication());
-        commentsRepository.save(comment);
+        return commentsRepository.save(comment).getId();
     }
 
     /**

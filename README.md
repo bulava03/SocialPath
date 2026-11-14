@@ -39,8 +39,10 @@ GitHub Actions · Docker
   a description and a website link.
 - **Feed** — posts with up to five photos or one video, on a user page or
   in a group, with comments nested to any depth. The feed loads 20 posts
-  at a time with infinite scroll, and new posts and comments from others
-  appear without a page reload.
+  at a time with infinite scroll, each with its 10 newest replies; more
+  replies and replies to replies open with a button, one portion and one
+  level at a time. New posts and comments from others appear without a
+  page reload.
 - **Media** — avatars in any common format, HEIC and AVIF included, are
   cropped to a square and stored in two sizes. Videos in formats browsers
   can't play (MOV, AVI, MKV, …) are converted to MP4 by ffmpeg in a
@@ -83,10 +85,13 @@ Configuration comes from environment variables:
   small JavaScript modules load and swap in; there is no front-end
   framework. Controllers are thin and pass work to services, which own
   validation, permission checks and transactions.
-- **Feed queries** — a page of the feed takes a fixed number of queries:
-  posts, the whole comment tree under them in one recursive CTE, authors,
-  and media. Pagination is by id (`id < last shown`), so new posts don't
-  shift what has already been loaded.
+- **Feed queries** — a page of the feed takes a fixed number of queries
+  and a bounded number of rows: posts, the newest replies of each post
+  (a window function, at most N per post), reply counts, authors, and
+  media. Posts and replies are paged by id (`id < last shown`), so new
+  ones don't shift what has already been loaded. Page sizes and how many
+  reply levels come with the feed are set in `application.properties`
+  (`app.feed.*`).
 - **Media** — files live on disk under generated names. The type is
   detected from the file's first bytes, not from its name, and file paths
   are checked so that a crafted id can't leave the media folder.

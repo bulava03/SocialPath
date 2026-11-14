@@ -2,6 +2,7 @@ package com.socialpath;
 
 import com.socialpath.entity.Publication;
 import com.socialpath.repository.CommentsRepository;
+import com.socialpath.repository.ReplyCount;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 /**
  * The feed and deletion queries on the self-referencing publications table:
@@ -98,19 +100,50 @@ class CommentsRepositoryTest extends MySqlRepositoryTest {
     }
 
     @Test
-    void findReplies_ReturnsEveryDepthOfSeveralPosts_OldestFirst() {
+    void findNewestReplies_TakesAtMostThatManyDirectRepliesOfEachParent_NewestFirst() {
         Long first = publish("anna", null, null);
         Long second = publish("anna", null, null);
-        Long a = publish("ben", first, null);
-        Long b = publish("anna", second, null);
-        Long c = publish("ben", a, null);
-        Long d = publish("anna", c, null);
-        Long unrelated = publish("ben", publish("ben", null, null), null);
+        Long a1 = publish("ben", first, null);
+        Long a2 = publish("ben", first, null);
+        Long a3 = publish("ben", first, null);
+        Long b1 = publish("anna", second, null);
+        publish("anna", a3, null);                              // a reply to a reply is a level deeper
+        publish("ben", publish("ben", null, null), null);       // another post's reply
 
-        List<Long> replies = commentsRepository.findReplies(List.of(first, second)).stream()
+        List<Long> replies = commentsRepository.findNewestReplies(List.of(first, second), 2).stream()
                 .map(Publication::getId).toList();
 
-        assertThat(replies).containsExactly(a, b, c, d).doesNotContain(unrelated);
+        assertThat(replies).containsExactly(b1, a3, a2).doesNotContain(a1);
+    }
+
+    @Test
+    void findReplies_PagesThroughTheDirectRepliesOfOneParent_NewestFirst() {
+        Long post = publish("anna", null, null);
+        Long r1 = publish("ben", post, null);
+        Long r2 = publish("anna", post, null);
+        Long r3 = publish("ben", post, null);
+        publish("anna", r3, null);                              // not a direct reply
+
+        List<Publication> firstPortion = commentsRepository.findReplies(post, null, Limit.of(2));
+        assertThat(firstPortion).extracting(Publication::getId).containsExactly(r3, r2);
+        assertThat(commentsRepository.countByParentIdAndIdLessThan(post, r2)).isEqualTo(1);
+
+        assertThat(commentsRepository.findReplies(post, r2, Limit.of(2)))
+                .extracting(Publication::getId).containsExactly(r1);
+        assertThat(commentsRepository.countByParentIdAndIdLessThan(post, r1)).isZero();
+    }
+
+    @Test
+    void countReplies_CountsOnlyDirectReplies_AndLeavesOutParentsWithout() {
+        Long post = publish("anna", null, null);
+        Long comment = publish("ben", post, null);
+        publish("anna", post, null);
+        publish("anna", comment, null);
+        Long lonely = publish("ben", null, null);
+
+        assertThat(commentsRepository.countReplies(List.of(post, comment, lonely)))
+                .extracting(ReplyCount::getParentId, ReplyCount::getTotal)
+                .containsExactlyInAnyOrder(tuple(post, 2L), tuple(comment, 1L));
     }
 
     @Test

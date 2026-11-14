@@ -28,5 +28,12 @@ public class PublicationPresentable {
     private boolean isVideo;
     /** One of the VIDEO_* values for a video, null otherwise. */
     private String videoStatus;
+    /** The loaded portion of direct replies, newest first; possibly not all of them. */
     private List<PublicationPresentable> publications;
+    /** Direct replies not loaded yet, shown behind a button. */
+    private long hiddenReplies;
+    /** How many of the hidden replies the next portion brings. */
+    private long nextReplies;
+    /** Where the hidden replies continue (below this id); null when none are loaded yet. */
+    private Long repliesBefore;
 }

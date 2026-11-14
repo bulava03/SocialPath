@@ -52,8 +52,7 @@ public class CommentsController {
         requireContent(newComment.getText(), newComment.getMedia());
 
         newComment.setAuthorLogin(myUser.getLogin());
-        commentsService.addNewComment(newComment);
-        return OperationResult.of("OK");
+        return OperationResult.created(commentsService.addNewComment(newComment));
     }
 
     @PostMapping("/removeCommentUser")
@@ -91,8 +90,7 @@ public class CommentsController {
         requireContent(newComment.getText(), newComment.getMedia());
 
         newComment.setAuthorLogin(myUser.getLogin());
-        commentsService.addNewComment(newComment);
-        return OperationResult.of("OK");
+        return OperationResult.created(commentsService.addNewComment(newComment));
     }
 
     @PostMapping("/removeCommentGroup")

@@ -13,8 +13,8 @@ import java.util.List;
 /**
  * Repository for publications and comments (one table, self-referencing
  * parent_id). Where the document model kept arrays of child ids, the SQL
- * model derives the same lists with ordered queries; insertion order is
- * reproduced by sorting on (created_at, id).
+ * model derives the same lists with ordered queries; the id gives the order
+ * of insertion.
  */
 @Repository
 public interface CommentsRepository extends JpaRepository<Publication, Long> {
@@ -72,21 +72,60 @@ public interface CommentsRepository extends JpaRepository<Publication, Long> {
     List<Publication> findGroupFeed(@Param("groupId") Long groupId, @Param("before") Long before, Limit limit);
 
     /**
-     * Loads every comment under the given posts, at any depth, in one round
-     * trip (recursive CTE, MySQL 8). The caller builds the tree from
-     * parent_id; rows come oldest first, so siblings keep insertion order.
-     * @param rootIds ids of the top-level publications; must not be empty
-     * @return all comments and replies below them
+     * Loads the newest direct replies of several posts or comments at once,
+     * at most a given number per parent (a window function, MySQL 8). One
+     * level of the tree per call, however many parents it has.
+     * @param parentIds the posts or comments; must not be empty
+     * @param perParent how many replies of each parent at most
+     * @return the replies, newest first
      */
     @Query(value = """
-            WITH RECURSIVE tree AS (
-                SELECT * FROM publications WHERE parent_id IN (:rootIds)
-                UNION ALL
-                SELECT p.* FROM publications p JOIN tree t ON p.parent_id = t.id
-            )
-            SELECT * FROM tree ORDER BY created_at, id
+            SELECT p.* FROM publications p
+            JOIN (
+                SELECT id, ROW_NUMBER() OVER (PARTITION BY parent_id ORDER BY id DESC) AS position
+                FROM publications WHERE parent_id IN (:parentIds)
+            ) ranked ON ranked.id = p.id
+            WHERE ranked.position <= :perParent
+            ORDER BY p.id DESC
             """, nativeQuery = true)
-    List<Publication> findReplies(@Param("rootIds") Collection<Long> rootIds);
+    List<Publication> findNewestReplies(@Param("parentIds") Collection<Long> parentIds,
+                                        @Param("perParent") int perParent);
+
+    /**
+     * Loads a portion of the direct replies of one post or comment, newest
+     * first, continuing by id like the feed itself.
+     * @param parentId the post or comment
+     * @param before only replies with a smaller id; null for the newest
+     * @param limit how many replies at most
+     * @return the replies, newest first
+     */
+    @Query("""
+            select p from Publication p
+            where p.parentId = :parentId and (:before is null or p.id < :before)
+            order by p.id desc
+            """)
+    List<Publication> findReplies(@Param("parentId") Long parentId, @Param("before") Long before, Limit limit);
+
+    /**
+     * Counts the direct replies of several posts or comments at once.
+     * @param parentIds the posts or comments; must not be empty
+     * @return a count for each parent that has replies; parents without
+     *         replies are left out
+     */
+    @Query("""
+            select p.parentId as parentId, count(p) as total from Publication p
+            where p.parentId in :parentIds
+            group by p.parentId
+            """)
+    List<ReplyCount> countReplies(@Param("parentIds") Collection<Long> parentIds);
+
+    /**
+     * Counts the direct replies of a post or comment older than a given one.
+     * @param parentId the post or comment
+     * @param id the reply to count below
+     * @return how many replies are left below it
+     */
+    long countByParentIdAndIdLessThan(Long parentId, Long id);
 
     /**
      * The newest post or comment anywhere in a user page's feed that someone

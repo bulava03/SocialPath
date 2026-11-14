@@ -1,5 +1,6 @@
 package com.socialpath;
 
+import com.socialpath.config.FeedProperties;
 import com.socialpath.entity.Publication;
 import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.UserRepository;
@@ -28,7 +29,7 @@ class PublicationRootTest {
                 mock(UserRepository.class),
                 commentsRepository,
                 mock(FileStorageService.class),
-                mock(VideoService.class));
+                mock(VideoService.class), new FeedProperties(20, 10, 1));
     }
 
     private Publication publication(Long id, Long parentId) {
