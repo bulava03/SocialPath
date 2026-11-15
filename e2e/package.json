@@ -8,7 +8,8 @@
     "stack:down": "docker compose -p socialpath-e2e -f ../docker-compose.yml -f ../docker-compose.e2e.yml down -v",
     "test": "playwright test",
     "report": "playwright show-report",
-    "screenshots": "node scripts/screenshots.js"
+    "screenshots": "node scripts/screenshots.js",
+    "db-schema": "node scripts/db-schema.js"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1"

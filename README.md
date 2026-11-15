@@ -177,7 +177,8 @@ npm run stack:down         # removes it together with the test data
 The browser tests use their own Compose project (`docker-compose.e2e.yml`),
 so they never touch the data on port 8080. The screenshots above are made
 by `npm run screenshots` in `e2e/`, which fills that empty stack with demo
-data and captures the pages.
+data and captures the pages. The database diagram is drawn from
+`docs/db-schema.html` by `npm run db-schema`.
 
 ## License
 

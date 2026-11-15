@@ -1,0 +1,90 @@
+<!doctype html>
+<!-- The database diagram in the README. Tables, their columns and keys are in T;
+     relations are the link(...) calls below it (the table with the foreign key
+     first). Render it to db-schema.png with `npm run db-schema` in e2e/. -->
+<html><head><meta charset="utf-8"><style>
+body{margin:0;background:#fff;font-family:"Segoe UI",Arial,sans-serif}
+#c{position:relative;width:1360px;height:884px;background:#fbf8f5}
+.t{position:absolute;width:260px;background:#fff;border:1px solid #e3d6ca;border-radius:8px;box-shadow:0 2px 6px rgba(80,50,20,.08);overflow:hidden;z-index:2;box-sizing:border-box}
+.t h{display:block;height:35px;line-height:35px;background:#e8832a;color:#fff;font-weight:600;font-size:15px;padding:0 12px;box-sizing:border-box}
+.t.ref h{background:#9a8f86}.t.lone{border-style:dashed}
+.r{display:flex;height:24.5px;line-height:24.5px;font-size:13px;padding:0 12px;border-top:1px solid #f1e9e2;color:#2b2b2b;box-sizing:border-box}
+.r span.n{flex:1}
+.k{font-size:10px;font-weight:700;border-radius:4px;padding:0 4px;margin-left:6px;align-self:center;line-height:16px}
+.PK{background:#fde3c8;color:#a14c00}.FK{background:#dde9f7;color:#2c5aa0}.UK{background:#e3f2e6;color:#2e7d4b}
+.note{font-size:11px;color:#8a8079;padding:4px 12px 6px;border-top:1px solid #f1e9e2;font-style:italic}
+svg#s{position:absolute;inset:0;z-index:3;pointer-events:none}
+#legend{position:absolute;left:40px;bottom:20px;font-size:13px;color:#6b625b;display:flex;gap:22px;align-items:center}
+#legend span{display:flex;align-items:center;gap:6px}
+</style></head><body><div id="c"><svg id="s" width="1360" height="884"></svg>
+<div id="legend"></div></div>
+<script>
+const T={
+ friendships:{x:40,y:30,cols:[["user_login","PK FK"],["friend_login","PK FK"]],note:"two mirrored rows per friendship"},
+ friend_invites:{x:40,y:160,cols:[["user_login","PK FK"],["inviter_login","PK FK"]]},
+ countries:{x:40,y:265,ref:1,cols:[["code","PK"],["name","UK"]]},
+ users:{x:380,y:30,cols:[["login","PK"],["password"],["first_name, last_name"],["email"],["phone"],["phone_verified, email_verified"],["verified_phone","UK"],["verified_email","UK"],["phone_visibility, email_visibility"],["country_code","FK"],["region, city"],["date_of_birth"],["education, workplace"],["image_id"],["ban, pending_since"]]},
+ user_sessions:{x:720,y:30,cols:[["id","PK"],["user_login","FK"],["ip, user_agent, location"],["last_seen_at, expires_at"]]},
+ phone_codes:{x:720,y:177,cols:[["id","PK"],["user_login","FK UK"],["phone"],["code_hash"],["attempts, expires_at"]]},
+ email_links:{x:720,y:348,cols:[["user_login","PK FK"],["token_hash","UK"],["email"],["expires_at"]]},
+ video_jobs:{x:1060,y:30,lone:1,cols:[["id","PK"],["file_id","UK"],["source_file_id"],["status, attempts"]],note:"conversion queue, no relations"},
+ group_members:{x:40,y:540,cols:[["group_id","PK FK"],["member_login","PK FK"]]},
+ group_admins:{x:40,y:660,cols:[["group_id","PK FK"],["admin_login","PK FK"]]},
+ social_groups:{x:380,y:540,cols:[["id","PK"],["owner_login","FK"],["name"],["category, custom_category"],["description, website"],["image_id"],["created_at"]]},
+ publications:{x:720,y:540,cols:[["id","PK"],["author_login","FK"],["group_id","FK"],["parent_id","FK"],["root_id","FK"],["text"],["created_at"]],note:"posts and comments"},
+ publication_media:{x:1060,y:540,cols:[["publication_id","PK FK"],["media_order","PK"],["file_id"]]},
+};
+const c=document.getElementById("c");
+for(const [n,t] of Object.entries(T)){const d=document.createElement("div");d.className="t"+(t.ref?" ref":"")+(t.lone?" lone":"");d.id="t-"+n;d.style.left=t.x+"px";d.style.top=t.y+"px";
+ let h=`<h>${n}</h>`;for(const [col,k] of t.cols){h+=`<div class="r" id="r-${n}-${col.split(",")[0]}"><span class="n">${col}</span>${(k||"").split(" ").filter(Boolean).map(x=>`<span class="k ${x}">${x}</span>`).join("")}</div>`}
+ if(t.note)h+=`<div class="note">${t.note}</div>`;d.innerHTML=h;c.appendChild(d)}
+const o=c.getBoundingClientRect();
+const B=n=>{const r=document.getElementById("t-"+n).getBoundingClientRect();return{l:r.left-o.left,r:r.right-o.left,t:r.top-o.top,b:r.bottom-o.top}};
+const Y=(n,col)=>{const r=document.getElementById(`r-${n}-${col}`).getBoundingClientRect();return (r.top+r.bottom)/2-o.top};
+const NS="http://www.w3.org/2000/svg",s=document.getElementById("s"),INK="#7d6a5a";
+function el(tag,a,parent=s){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);parent.appendChild(e);return e}
+function line(x1,y1,x2,y2,g){el("line",{x1,y1,x2,y2,stroke:INK,"stroke-width":1.6},g)}
+function end(P,u,kind,g=s){ // P on the box edge, u: unit vector pointing away from the box
+ const v=[-u[1],u[0]],at=d=>[P[0]+u[0]*d,P[1]+u[1]*d],bar=d=>{const q=at(d);line(q[0]+v[0]*7,q[1]+v[1]*7,q[0]-v[0]*7,q[1]-v[1]*7,g)},
+ circ=d=>{const q=at(d);el("circle",{cx:q[0],cy:q[1],r:4.5,fill:"#fff",stroke:INK,"stroke-width":1.6},g)},
+ crow=()=>{const q=at(13);line(P[0]+v[0]*8,P[1]+v[1]*8,q[0],q[1],g);line(P[0]-v[0]*8,P[1]-v[1]*8,q[0],q[1],g)};
+ if(kind==="one"){bar(7);bar(13)} if(kind==="zeroOne"){bar(7);circ(18)}
+ if(kind==="oneMany"){crow();bar(17)} if(kind==="zeroMany"){crow();circ(21)}
+}
+function link(pts,from,to){
+ let d=`M${pts[0]}`;const R=7;
+ for(let i=1;i<pts.length-1;i++){const [a,b,n]=[pts[i-1],pts[i],pts[i+1]];
+  const u1=[Math.sign(b[0]-a[0]),Math.sign(b[1]-a[1])],u2=[Math.sign(n[0]-b[0]),Math.sign(n[1]-b[1])];
+  d+=` L${b[0]-u1[0]*R},${b[1]-u1[1]*R} Q${b} ${b[0]+u2[0]*R},${b[1]+u2[1]*R}`}
+ d+=` L${pts.at(-1)}`;el("path",{d,fill:"none",stroke:INK,"stroke-width":1.6});
+ const dir=(p,q)=>{const dx=q[0]-p[0],dy=q[1]-p[1],m=Math.hypot(dx,dy);return[dx/m,dy/m]};
+ end(pts[0],dir(pts[0],pts[1]),from);end(pts.at(-1),dir(pts.at(-1),pts.at(-2)),to);
+}
+const b=Object.fromEntries(Object.keys(T).map(n=>[n,B(n)]));
+// the table with the foreign key first, the referenced one last
+for(const col of ["user_login","friend_login"]){const y=Y("friendships",col);link([[b.friendships.r,y],[b.users.l,y]],"zeroMany","one")}
+for(const col of ["user_login","inviter_login"]){const y=Y("friend_invites",col);link([[b.friend_invites.r,y],[b.users.l,y]],"zeroMany","one")}
+{const y=Y("users","country_code");link([[b.users.l,y],[b.countries.r,y]],"zeroMany","zeroOne")}
+{const y=Y("user_sessions","user_login");link([[b.user_sessions.l,y],[b.users.r,y]],"zeroMany","one")}
+{const y=Y("phone_codes","user_login");link([[b.phone_codes.l,y],[b.users.r,y]],"zeroOne","one")}
+{const y=Y("email_links","user_login");link([[b.email_links.l,y],[b.users.r,y]],"zeroOne","one")}
+link([[540,b.social_groups.t],[540,b.users.b]],"zeroMany","one");
+{const y=Y("group_members","group_id");link([[b.group_members.r,y],[b.social_groups.l,y]],"oneMany","one")}
+{const y=Y("group_admins","group_id");link([[b.group_admins.r,y],[b.social_groups.l,y]],"oneMany","one")}
+link([[250,b.group_members.t],[250,505],[440,505],[440,b.users.b]],"zeroMany","one");
+{const y=Y("group_admins","admin_login");link([[b.group_admins.l,y],[18,y],[18,470],[410,470],[410,b.users.b]],"zeroMany","one")}
+link([[760,b.publications.t],[760,505],[610,505],[610,b.users.b]],"zeroMany","one");
+{const y=Y("publications","group_id");link([[b.publications.l,y],[b.social_groups.r,y]],"zeroMany","zeroOne")}
+{const y=Y("publications","parent_id"),yb=b.publications.b+30;link([[b.publications.r,y],[1015,y],[1015,yb],[930,yb],[930,b.publications.b]],"zeroMany","zeroOne")}
+{const y=Y("publications","root_id"),yb=b.publications.b+30;link([[b.publications.l,y],[690,y],[690,yb],[770,yb],[770,b.publications.b]],"zeroMany","zeroOne")}
+{const y=Y("publication_media","publication_id");link([[b.publication_media.l,y],[b.publications.r,y]],"zeroMany","one")}
+const lab=(x,y,t)=>{const e=el("text",{x,y,"font-size":12,fill:"#8a7765","font-style":"italic"});e.textContent=t};
+lab(1025,b.publications.b+34,"replies");
+lab(780,b.publications.b+34,"post of the thread");
+const lg=document.getElementById("legend");
+for(const [k,t] of [["one","exactly one"],["zeroOne","zero or one"],["oneMany","one or many"],["zeroMany","zero or many"]]){
+ const sp=document.createElement("span");const sv=document.createElementNS(NS,"svg");sv.setAttribute("width",44);sv.setAttribute("height",20);
+ el("line",{x1:0,y1:10,x2:44,y2:10,stroke:INK,"stroke-width":1.6},sv);end([44,10],[-1,0],k,sv);sp.appendChild(sv);sp.append(t);lg.appendChild(sp)}
+for(const [k,t] of [["PK","primary key"],["FK","foreign key"],["UK","unique"]]){const sp=document.createElement("span");sp.innerHTML=`<span class="k ${k}" style="margin:0">${k}</span>${t}`;lg.appendChild(sp)}
+window.done=1;
+</script></body></html>
