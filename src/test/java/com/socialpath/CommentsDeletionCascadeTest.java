@@ -1,15 +1,18 @@
 package com.socialpath;
 
 import com.socialpath.config.FeedProperties;
+import com.socialpath.entity.Publication;
 import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.FileStorageService;
+import com.socialpath.service.GroupService;
 import com.socialpath.service.VideoService;
 import com.socialpath.service.impl.CommentsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -40,14 +43,19 @@ class CommentsDeletionCascadeTest {
                 mock(UserRepository.class),
                 commentsRepository,
                 fileStorageService,
-                mock(VideoService.class), new FeedProperties(20, 10, 1));
+                mock(VideoService.class), new FeedProperties(20, 10, 1), mock(GroupService.class));
+        // Alex deletes his own post: the permission check lets it through.
+        Publication post = new Publication();
+        post.setId(1L);
+        post.setAuthorId("alex");
+        when(commentsRepository.findById(1L)).thenReturn(Optional.of(post));
     }
 
     @Test
-    void deletePublication_RemovesTheFilesOfTheWholeDeletedTree() {
+    void deleting_RemovesTheFilesOfTheWholeDeletedTree() {
         when(commentsRepository.deleteThread(1L)).thenReturn(List.of("photo1", "photo2", "photo3"));
 
-        service.deletePublication(1L);
+        service.deleteFromUserPage("alex", 1L);
 
         verify(commentsRepository).deleteThread(1L);
         verify(fileStorageService).deleteFileById("photo1");
@@ -56,10 +64,10 @@ class CommentsDeletionCascadeTest {
     }
 
     @Test
-    void deletePublication_WithoutMedia_RemovesNoFiles() {
+    void deleting_WithoutMedia_RemovesNoFiles() {
         when(commentsRepository.deleteThread(1L)).thenReturn(List.of());
 
-        service.deletePublication(1L);
+        service.deleteFromUserPage("alex", 1L);
 
         verify(fileStorageService, never()).deleteFileById(anyString());
     }

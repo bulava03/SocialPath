@@ -10,6 +10,7 @@ import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.ReplyCount;
 import com.socialpath.repository.UserRepository;
 import com.socialpath.service.FileStorageService;
+import com.socialpath.service.GroupService;
 import com.socialpath.service.VideoService;
 import com.socialpath.service.impl.CommentsServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +64,7 @@ class FeedAssemblyTest {
 
     private CommentsServiceImpl service(int preloadDepth) {
         return new CommentsServiceImpl(userRepository, commentsRepository, mock(FileStorageService.class),
-                mock(VideoService.class), new FeedProperties(PAGE_SIZE, REPLIES_PAGE_SIZE, preloadDepth));
+                mock(VideoService.class), new FeedProperties(PAGE_SIZE, REPLIES_PAGE_SIZE, preloadDepth), mock(GroupService.class));
     }
 
     private Publication publication(Long id, Long parentId, String author, String text) {

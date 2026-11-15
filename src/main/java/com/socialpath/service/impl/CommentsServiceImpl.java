@@ -15,8 +15,12 @@ import com.socialpath.repository.AuthorView;
 import com.socialpath.repository.CommentsRepository;
 import com.socialpath.repository.ReplyCount;
 import com.socialpath.repository.UserRepository;
+import com.socialpath.entity.Group;
+import com.socialpath.exception.ForbiddenOperationException;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.FileStorageService;
+import com.socialpath.service.GroupService;
+import com.socialpath.service.ThreadPlace;
 import com.socialpath.service.VideoService;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
@@ -37,11 +41,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Publications and comments over one self-referencing table. Where the
- * document model attached publications to a user/group array and comments to
- * a parent's comments array, here placement is expressed by the row itself:
- * author_login for user pages, group_id for group pages, parent_id for
- * comments. Creating and deleting therefore touch a single aggregate.
+ * Publications and comments over one self-referencing table. Placement is
+ * expressed by the rows themselves: author_login for user pages, group_id for
+ * group pages, parent_id and root_id for comments. Permission checks for
+ * writing and deleting live here too, based on that stored placement.
  */
 @Service
 @RequiredArgsConstructor
@@ -52,20 +55,119 @@ public class CommentsServiceImpl implements CommentsService {
     private final FileStorageService fileStorageService;
     private final VideoService videoService;
     private final FeedProperties feed;
+    private final GroupService groupService;
 
     @Override
-    public Long addNewUserPublication(NewPublication newPublication) throws IOException {
-        Publication publication = newPublication(newPublication.getText(), newPublication.getAuthorId(),
-                newPublication.getMedia());
+    public Long publishOnUserPage(String author, NewPublication request) throws IOException {
+        requireContent(request.getText(), request.getMedia());
+
+        return commentsRepository.save(newPublication(request.getText(), author, request.getMedia())).getId();
+    }
+
+    @Override
+    public Long publishInGroup(String author, NewPublication request) throws IOException {
+        Group group = groupService.getGroup(request.getGroupId());
+        requireMember(group, author);
+        requireContent(request.getText(), request.getMedia());
+
+        Publication publication = newPublication(request.getText(), author, request.getMedia());
+        publication.setGroupId(group.getId());
         return commentsRepository.save(publication).getId();
     }
 
     @Override
-    public Long addNewGroupPublication(NewPublication newPublication) throws IOException {
-        Publication publication = newPublication(newPublication.getText(), newPublication.getAuthorId(),
-                newPublication.getMedia());
-        publication.setGroupId(Long.valueOf(newPublication.getGroupId()));
-        return commentsRepository.save(publication).getId();
+    public Long commentOnUserPage(String author, NewComment request) throws IOException {
+        Publication parent = requirePublication(request.getIdPublication());
+        // Group threads are commented through commentInGroup, which checks membership.
+        if (rootOf(parent).getGroupId() != null) {
+            throw new ForbiddenOperationException("Not a user page publication");
+        }
+        requireContent(request.getText(), request.getMedia());
+
+        return saveComment(author, parent, request);
+    }
+
+    @Override
+    public Long commentInGroup(String author, NewComment request) throws IOException {
+        Group group = groupService.getGroup(request.getGroupId());
+        requireMember(group, author);
+        Publication parent = requirePublication(request.getIdPublication());
+        requireInGroup(parent, group);
+        requireContent(request.getText(), request.getMedia());
+
+        return saveComment(author, parent, request);
+    }
+
+    @Override
+    @Transactional
+    public void deleteFromUserPage(String login, Long id) {
+        Publication target = requirePublication(id);
+        Publication root = rootOf(target);
+        if (root.getGroupId() != null) {
+            throw new ForbiddenOperationException("Not a user page publication");
+        }
+        // The root's author owns the page: they may delete anything in their
+        // threads, everyone else only their own posts and comments.
+        if (!isAuthor(target, login) && !isAuthor(root, login)) {
+            throw new ForbiddenOperationException("Not allowed to delete this comment");
+        }
+        deleteThread(target.getId());
+    }
+
+    @Override
+    @Transactional
+    public void deleteFromGroup(String login, String groupId, Long id) {
+        Group group = groupService.getGroup(groupId);
+        Publication target = requirePublication(id);
+        requireInGroup(target, group);
+        // In groups, deletion is allowed for the author, the owner and admins.
+        if (!isAuthor(target, login) && !group.isModerator(login)) {
+            throw new ForbiddenOperationException("Not allowed to delete this comment");
+        }
+        deleteThread(target.getId());
+    }
+
+    @Override
+    public ThreadPlace placeOf(Publication publication) {
+        Publication root = rootOf(publication);
+        return new ThreadPlace(root.getGroupId(), root.getAuthorId());
+    }
+
+    private Publication requirePublication(Long id) {
+        Publication publication = id == null ? null : findById(id);
+        if (publication == null) {
+            throw new IllegalArgumentException("Empty content or missing target");
+        }
+        return publication;
+    }
+
+    /**
+     * Makes sure a publication or comment belongs to the given group's page.
+     * @param publication a publication or a comment at any depth
+     * @param group the group named in the request
+     */
+    private void requireInGroup(Publication publication, Group group) {
+        if (!group.getId().equals(rootOf(publication).getGroupId())) {
+            throw new ForbiddenOperationException("The publication is not in this group");
+        }
+    }
+
+    private static void requireMember(Group group, String login) {
+        if (!group.isMember(login)) {
+            throw new ForbiddenOperationException("Only group members can publish here");
+        }
+    }
+
+    private static boolean isAuthor(Publication publication, String login) {
+        return publication.getAuthorId() != null && publication.getAuthorId().equals(login);
+    }
+
+    private static void requireContent(String text, List<MultipartFile> media) {
+        boolean hasText = text != null && !text.isBlank();
+        boolean hasMedia = media != null && !media.isEmpty();
+        if (!hasText && !hasMedia) {
+            throw new IllegalArgumentException("Empty content or missing target");
+        }
     }
 
     @Override
@@ -125,17 +227,19 @@ public class CommentsServiceImpl implements CommentsService {
         return commentsRepository.findById(id).orElse(null);
     }
 
-    @Override
-    public Publication findRoot(Publication publication) {
-        Publication current = publication;
-        while (current.getParentId() != null) {
-            Publication parent = findById(current.getParentId());
-            if (parent == null) {
-                break;
-            }
-            current = parent;
+    /**
+     * The post at the top of a comment's thread, which tells where the thread
+     * lives: a group (groupId set) or a user page (owned by its author).
+     * @param publication a post or a comment at any depth
+     * @return the post; the argument itself when it is the post
+     */
+    private Publication rootOf(Publication publication) {
+        if (publication.getRootId() == null) {
+            return publication;
         }
-        return current;
+        // The foreign key keeps the root while any comment of its thread exists.
+        return commentsRepository.findById(publication.getRootId())
+                .orElseThrow(() -> new IllegalStateException("Thread root is missing: " + publication.getRootId()));
     }
 
     /**
@@ -264,11 +368,19 @@ public class CommentsServiceImpl implements CommentsService {
         return author.getLogin();
     }
 
-    @Override
-    public Long addNewComment(NewComment newComment) throws IOException {
-        Publication comment = newPublication(newComment.getText(), newComment.getAuthorLogin(),
-                newComment.getMedia());
-        comment.setParentId(newComment.getIdPublication());
+    /**
+     * Saves a reply once every check has passed; the media is stored only
+     * now, so a refused request leaves no files behind.
+     * @param author the signed-in user
+     * @param parent the post or comment replied to
+     * @param request the text and media
+     * @return the id of the new comment
+     */
+    private Long saveComment(String author, Publication parent, NewComment request) throws IOException {
+        Publication comment = newPublication(request.getText(), author, request.getMedia());
+        comment.setParentId(parent.getId());
+        // The thread's post: the parent's own root, or the parent when it is the post.
+        comment.setRootId(parent.getRootId() != null ? parent.getRootId() : parent.getId());
         return commentsRepository.save(comment).getId();
     }
 
@@ -325,12 +437,11 @@ public class CommentsServiceImpl implements CommentsService {
      * database cannot remove; they go only after the transaction commits, as
      * a rollback must never leave rows pointing at already-deleted files.
      * Videos still waiting to be converted leave the queue, and their
-     * uploads are deleted with the rest.
+     * uploads are deleted with the rest. Called within the deleting
+     * method's transaction, after its permission checks.
      * @param rootId id of the publication or comment to delete
      */
-    @Override
-    @Transactional
-    public void deletePublication(Long rootId) {
+    private void deleteThread(Long rootId) {
         List<String> mediaIds = commentsRepository.deleteThread(rootId);
         List<String> fileIds = Stream.concat(mediaIds.stream(), videoService.discard(mediaIds).stream()).toList();
 

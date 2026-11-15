@@ -57,6 +57,14 @@ public class Publication {
     @Column(name = "parent_id")
     private Long parentId;
 
+    /**
+     * The post at the top of a comment's thread, null for top-level
+     * publications. It tells where the thread lives (a user page or a group)
+     * without walking up the tree.
+     */
+    @Column(name = "root_id")
+    private Long rootId;
+
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

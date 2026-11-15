@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
 /**
@@ -41,6 +42,11 @@ class CommentsRepositoryTest extends MySqlRepositoryTest {
         Publication publication = new Publication();
         publication.setAuthorId(author);
         publication.setParentId(parentId);
+        if (parentId != null) {
+            // As the service does: the parent's root, or the parent when it is the post.
+            publication.setRootId(jdbc.queryForObject(
+                    "SELECT COALESCE(root_id, id) FROM publications WHERE id = ?", Long.class, parentId));
+        }
         publication.setGroupId(groupId);
         publication.setText("text");
         publication.setCreatedAt(LocalDateTime.of(2026, 1, 1, 0, 0).plusSeconds(clock.incrementAndGet()));
@@ -116,6 +122,20 @@ class CommentsRepositoryTest extends MySqlRepositoryTest {
         assertThat(count("SELECT COUNT(*) FROM publications")).isEqualTo(1);
         assertThat(commentsRepository.findById(otherPost)).isPresent();
         assertThat(count("SELECT COUNT(*) FROM publication_media")).isZero();
+    }
+
+    @Test
+    void aComment_MustHaveARoot_AndAPostMustNot() {
+        Long post = publish("anna", null, null);
+
+        assertThatThrownBy(() -> jdbc.update("""
+                INSERT INTO publications (author_login, parent_id, text, created_at)
+                VALUES ('ben', ?, 'no root', NOW())
+                """, post)).hasMessageContaining("chk_publications_root");
+        assertThatThrownBy(() -> jdbc.update("""
+                INSERT INTO publications (author_login, root_id, text, created_at)
+                VALUES ('ben', ?, 'a post with a root', NOW())
+                """, post)).hasMessageContaining("chk_publications_root");
     }
 
     @Test

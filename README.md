@@ -109,7 +109,9 @@ Hibernate never changes it (`ddl-auto=none`).
   and their roles; the composite primary keys make joining and leaving
   a single `INSERT` or `DELETE`.
 - **`publications`** — posts and comments in one table. A comment is a
-  publication with a `parent_id`, so threads can be nested to any depth;
+  publication with a `parent_id`, so threads can be nested to any depth,
+  and a `root_id` pointing at the post of its thread, so where a comment
+  lives (a user page or a group) is one lookup away at any depth;
   attached files are ordered rows in `publication_media`. A post or comment
   is deleted with its whole reply tree by the stored procedure
   `delete_thread`: it collects the tree with a recursive query and deletes

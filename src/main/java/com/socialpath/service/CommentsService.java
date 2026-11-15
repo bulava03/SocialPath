@@ -8,28 +8,80 @@ import com.socialpath.dto.response.PublicationPresentable;
 import com.socialpath.dto.response.RepliesPage;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * The publication/comment feed. Publications and comments share one
  * self-referencing table (a {@link Publication} with an optional parent), so
  * the same operations serve both a top-level post and a nested comment.
+ * <p>
+ * Writing and deleting check permissions here, on stored data: where a
+ * comment lives is read from the post at the top of its thread, never from
+ * ids the client sends along. A refused operation throws
+ * {@link com.socialpath.exception.ForbiddenOperationException}; a request
+ * with nothing to publish or a missing target, IllegalArgumentException.
  */
 public interface CommentsService {
 
     /**
-     * Creates a publication on a user's page.
-     * @param newPublication the publication content and target
-     * @return the id of the new publication
+     * Publishes a post on the author's own page.
+     * @param author the signed-in user
+     * @param request the text and media
+     * @return the id of the new post
      */
-    Long addNewUserPublication(NewPublication newPublication) throws IOException;
+    Long publishOnUserPage(String author, NewPublication request) throws IOException;
 
     /**
-     * Creates a publication on a group's page.
-     * @param newPublication the publication content and target
-     * @return the id of the new publication
+     * Publishes a post in a group; only members may.
+     * @param author the signed-in user
+     * @param request the group, text and media
+     * @return the id of the new post
      */
-    Long addNewGroupPublication(NewPublication newPublication) throws IOException;
+    Long publishInGroup(String author, NewPublication request) throws IOException;
+
+    /**
+     * Replies to a post or comment on a user page; anyone signed in may.
+     * Threads in groups are refused here: they go through
+     * {@link #commentInGroup}, which checks membership.
+     * @param author the signed-in user
+     * @param request the post or comment replied to, text and media
+     * @return the id of the new comment
+     */
+    Long commentOnUserPage(String author, NewComment request) throws IOException;
+
+    /**
+     * Replies to a post or comment in a group; only members may, and only
+     * to what is in that group.
+     * @param author the signed-in user
+     * @param request the group, the post or comment replied to, text and media
+     * @return the id of the new comment
+     */
+    Long commentInGroup(String author, NewComment request) throws IOException;
+
+    /**
+     * Deletes a post or comment on a user page with all of its replies. The
+     * page owner may delete anything in their threads, everyone else only
+     * their own posts and comments.
+     * @param login the signed-in user
+     * @param id the post or comment
+     */
+    void deleteFromUserPage(String login, Long id);
+
+    /**
+     * Deletes a post or comment in a group with all of its replies. Allowed
+     * for its author and for the group's owner and admins.
+     * @param login the signed-in user
+     * @param groupId the group named in the request
+     * @param id the post or comment
+     */
+    void deleteFromGroup(String login, String groupId, Long id);
+
+    /**
+     * Where a post or comment lives, read from the post at the top of its
+     * thread: to render it as on its page.
+     * @param publication a post or a comment at any depth
+     * @return its group, or the user whose page it is
+     */
+    ThreadPlace placeOf(Publication publication);
 
     /**
      * Loads a portion of a user page's feed with the first portions of its
@@ -89,29 +141,4 @@ public interface CommentsService {
      * @return the publication, or null if none exists
      */
     Publication findById(Long id);
-
-    /**
-     * Walks up from a comment to the top-level publication it belongs to.
-     * The root tells where the thread lives: a group (groupId set) or a user
-     * page (owned by the root's author).
-     * @param publication a publication or a comment at any depth
-     * @return the top-level publication; the argument itself when it has no parent
-     */
-    Publication findRoot(Publication publication);
-
-
-    /**
-     * Adds a comment under an existing publication.
-     * @param newComment the comment content and parent
-     * @return the id of the new comment
-     */
-    Long addNewComment(NewComment newComment) throws IOException;
-
-    /**
-     * Deletes a publication or a comment, together with its whole reply
-     * subtree and all associated media files. Permission checks are the
-     * caller's job.
-     * @param id the publication or comment id
-     */
-    void deletePublication(Long id);
 }

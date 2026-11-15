@@ -11,6 +11,7 @@ import com.socialpath.security.CurrentUser;
 import com.socialpath.service.CommentsService;
 import com.socialpath.service.GroupService;
 import com.socialpath.service.ModelAttributesService;
+import com.socialpath.service.ThreadPlace;
 import com.socialpath.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -139,12 +140,12 @@ public class CommentsViewController {
      * @return "group" or "user", the templates' folder
      */
     private String placeOf(Publication publication, Model model) {
-        Publication root = commentsService.findRoot(publication);
-        if (root.getGroupId() != null) {
-            model.addAttribute("group", groupService.getGroup(root.getGroupId().toString()));
+        ThreadPlace place = commentsService.placeOf(publication);
+        if (place.inGroup()) {
+            model.addAttribute("group", groupService.getGroup(place.groupId().toString()));
             return "group";
         }
-        model.addAttribute("user", userService.findByLogin(root.getAuthorId()));
+        model.addAttribute("user", userService.findByLogin(place.pageOwner()));
         return "user";
     }
 }
