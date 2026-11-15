@@ -1,8 +1,9 @@
 # SocialPath
 
-A small social network built with Spring Boot and MySQL. Users create profiles, add friends, join groups, publish posts with photos
-or video and discuss them in threaded comments. Accounts are confirmed by
-phone and email, and every signed-in device can be seen and signed out.
+A small social network built with Spring Boot and MySQL. Users create
+profiles, add friends, join groups, publish posts with photos or video and
+discuss them in threaded comments. Accounts are confirmed by phone and
+email, and every signed-in device can be seen and signed out.
 
 | Own page | Comment thread |
 |---|---|
@@ -39,9 +40,9 @@ GitHub Actions · Docker
   a description and a website link.
 - **Feed** — posts with up to five photos or one video, on a user page or
   in a group, with comments nested to any depth. The feed loads 20 posts
-  at a time with infinite scroll, each with its 10 newest replies; more
-  replies and replies to replies open with a button, one portion and one
-  level at a time. New posts from others show up without a page reload.
+  at a time as you scroll, each with its 10 newest replies; older replies
+  and replies to replies open with a button. When someone else publishes
+  a post, the page offers to show it without a reload.
 - **Media** — avatars in any common format, HEIC and AVIF included, are
   cropped to a square and stored in two sizes. Videos in formats browsers
   can't play (MOV, AVI, MKV, …) are converted to MP4 by ffmpeg in a
@@ -84,13 +85,12 @@ Configuration comes from environment variables:
   small JavaScript modules load and swap in; there is no front-end
   framework. Controllers are thin and pass work to services, which own
   validation, permission checks and transactions.
-- **Feed queries** — a page of the feed takes a fixed number of queries
-  and a bounded number of rows: posts, the newest replies of each post
-  (a window function, at most N per post), reply counts, authors, and
-  media. Posts and replies are paged by id (`id < last shown`), so new
-  ones don't shift what has already been loaded. Page sizes and how many
-  reply levels come with the feed are set in `application.properties`
-  (`app.feed.*`).
+- **Feed queries** — the feed is loaded in portions: a few posts and at
+  most a few replies under each, so a long discussion is never pulled in
+  whole. A portion takes the same number of queries however many posts
+  and replies it shows. Paging goes by id (`id < last shown`), so new
+  posts don't shift what has already been loaded. The portion sizes are
+  set in `application.properties` (`app.feed.*`).
 - **Media** — files live on disk under generated names. The type is
   detected from the file's first bytes, not from its name, and file paths
   are checked so that a crafted id can't leave the media folder.
@@ -108,16 +108,17 @@ Hibernate never changes it (`ddl-auto=none`).
 - **`social_groups`**, **`group_members`**, **`group_admins`** — groups
   and their roles; the composite primary keys make joining and leaving
   a single `INSERT` or `DELETE`.
-- **`publications`** — posts and comments in one table. A comment is a
-  publication with a `parent_id`, so threads can be nested to any depth,
-  and a `root_id` pointing at the post of its thread, so where a comment
-  lives (a user page or a group) is one lookup away at any depth;
-  attached files are ordered rows in `publication_media`. A post or comment
-  is deleted with its whole reply tree by the stored procedure
-  `delete_thread`: it collects the tree with a recursive query and deletes
-  the rows newest first, so `ON DELETE CASCADE` never nests past InnoDB's
-  limit of 15 levels. It returns the media file ids, and the files on disk
-  are removed after the transaction commits.
+- **`publications`** — posts and comments in one table. A comment has
+  a `parent_id` (what it answers), so threads can be nested to any depth,
+  and a `root_id` (the post of its thread), which tells at once whether
+  the thread is on a user page or in a group. Attached files are ordered
+  rows in `publication_media`.
+- **Deleting a thread** — a post or comment goes together with all its
+  replies through the stored procedure `delete_thread`. MySQL's
+  `ON DELETE CASCADE` stops at 15 nested levels, so the procedure deletes
+  the replies itself, newest first. It returns the ids of the attached
+  files, and the application removes them from disk after the
+  transaction commits.
 - **Confirmed phone and email** — a number or address may be typed by
   several accounts but confirmed by only one: a generated column holds it
   while it is confirmed (`NULL` otherwise) and has a unique key.
@@ -151,9 +152,9 @@ Hibernate never changes it (`ddl-auto=none`).
 - **Unit tests** (JUnit 5 + Mockito) — authentication and sessions,
   permission rules for groups and comments, feed assembly, media
   processing, validation.
-- **Integration tests** (Testcontainers + MySQL) — repository queries and
-  Flyway migrations, including one test that checks how a migration fills
-  in data on an existing database.
+- **Integration tests** (Testcontainers + MySQL) — repository queries,
+  the thread-deleting procedure and Flyway migrations, including tests
+  that check how a migration fills in data on an existing database.
 - **Browser tests** (Playwright, `e2e/`) — sign-up with phone and email
   confirmation, profile, feed, comments, groups and roles, friends,
   search, sessions and uploads.
