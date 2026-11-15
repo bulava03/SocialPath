@@ -272,8 +272,8 @@ class FeedAssemblyTest {
 
     @Test
     void latestActivity_WithoutActivityByOthers_IsZero() {
-        when(commentsRepository.findLatestGroupFeedActivity(7L, "alex")).thenReturn(null);
-        when(commentsRepository.findLatestUserFeedActivity("alex", "sam")).thenReturn(42L);
+        when(commentsRepository.findLatestGroupPost(7L, "alex")).thenReturn(null);
+        when(commentsRepository.findLatestUserPost("alex", "sam")).thenReturn(42L);
 
         assertEquals(0, service.latestGroupFeedActivity(7L, "alex"));
         assertEquals(42, service.latestUserFeedActivity("alex", "sam"));

@@ -8,9 +8,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.mysql.MySQLContainer;
 
 /**
- * Base for repository tests that run the real SQL against MySQL 8 (the
- * recursive CTEs and ON DELETE CASCADE are MySQL features an in-memory
- * database would not reproduce). The schema comes from the Flyway
+ * Base for repository tests that run the real SQL against MySQL 8 (window
+ * functions, ON DELETE CASCADE and its limits are MySQL behaviour an
+ * in-memory database would not reproduce). The schema comes from the Flyway
  * migrations, exactly as in production. One container serves every test
  * class; each test runs in a transaction that is rolled back afterwards.
  */

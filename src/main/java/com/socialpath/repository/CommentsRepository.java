@@ -37,26 +37,6 @@ public interface CommentsRepository extends JpaRepository<Publication, Long> {
     List<Publication> findUserFeed(@Param("login") String login, @Param("before") Long before, Limit limit);
 
     /**
-     * Collects the media file ids of a publication and of every comment in
-     * its subtree in one round trip, using a recursive CTE (MySQL 8). Used
-     * before deletion: the rows are removed by the database's ON DELETE
-     * CASCADE, but the files live outside the database and must be cleaned
-     * up by the application.
-     * @param rootId id of the subtree root
-     * @return media file ids of the whole subtree
-     */
-    @Query(value = """
-            WITH RECURSIVE tree AS (
-                SELECT id FROM publications WHERE id = :rootId
-                UNION ALL
-                SELECT p.id FROM publications p JOIN tree t ON p.parent_id = t.id
-            )
-            SELECT pm.file_id FROM publication_media pm
-            JOIN tree t ON pm.publication_id = t.id
-            """, nativeQuery = true)
-    List<String> findSubtreeMediaFileIds(@Param("rootId") Long rootId);
-
-    /**
      * Loads a portion of a group page's posts, newest first.
      * @param groupId the group id
      * @param before only posts with a smaller id; null for the newest
@@ -128,39 +108,40 @@ public interface CommentsRepository extends JpaRepository<Publication, Long> {
     long countByParentIdAndIdLessThan(Long parentId, Long id);
 
     /**
-     * The newest post or comment anywhere in a user page's feed that someone
-     * other than the viewer wrote. Lets an open page notice new activity
-     * without the viewer's own posts and comments counting as news.
+     * The newest post on a user page that someone other than the viewer
+     * wrote. Lets an open page notice new posts without the viewer's own
+     * counting as news; comments are not watched.
      * @param owner the page owner's login
      * @param viewer the viewer's login
      * @return the largest such id, or null when there is none
      */
-    @Query(value = """
-            WITH RECURSIVE tree AS (
-                SELECT id, author_login FROM publications
-                WHERE author_login = :owner AND parent_id IS NULL AND group_id IS NULL
-                UNION ALL
-                SELECT p.id, p.author_login FROM publications p JOIN tree t ON p.parent_id = t.id
-            )
-            SELECT MAX(id) FROM tree WHERE author_login <> :viewer
-            """, nativeQuery = true)
-    Long findLatestUserFeedActivity(@Param("owner") String owner, @Param("viewer") String viewer);
+    @Query("""
+            select max(p.id) from Publication p
+            where p.authorId = :owner and p.parentId is null and p.groupId is null
+              and p.authorId <> :viewer
+            """)
+    Long findLatestUserPost(@Param("owner") String owner, @Param("viewer") String viewer);
 
     /**
-     * The newest post or comment anywhere in a group's feed that someone
-     * other than the viewer wrote.
+     * The newest post in a group that someone other than the viewer wrote.
      * @param groupId the group id
      * @param viewer the viewer's login
      * @return the largest such id, or null when there is none
      */
-    @Query(value = """
-            WITH RECURSIVE tree AS (
-                SELECT id, author_login FROM publications
-                WHERE group_id = :groupId AND parent_id IS NULL
-                UNION ALL
-                SELECT p.id, p.author_login FROM publications p JOIN tree t ON p.parent_id = t.id
-            )
-            SELECT MAX(id) FROM tree WHERE author_login <> :viewer
-            """, nativeQuery = true)
-    Long findLatestGroupFeedActivity(@Param("groupId") Long groupId, @Param("viewer") String viewer);
+    @Query("""
+            select max(p.id) from Publication p
+            where p.groupId = :groupId and p.parentId is null and p.authorId <> :viewer
+            """)
+    Long findLatestGroupPost(@Param("groupId") Long groupId, @Param("viewer") String viewer);
+
+    /**
+     * Deletes a post or comment together with its whole reply tree, however
+     * deep, through the stored procedure delete_thread (migration V13), which
+     * also explains how it gets around the database's depth limits.
+     * @param rootId the post or comment
+     * @return the media file ids of every deleted row, for the caller to
+     *         remove the files; empty when there was nothing to delete
+     */
+    @Query(value = "CALL delete_thread(:rootId)", nativeQuery = true)
+    List<String> deleteThread(@Param("rootId") Long rootId);
 }

@@ -68,7 +68,7 @@ test.describe("new activity in an open feed", () => {
         await closeAll();
     });
 
-    test("a new comment under a post that is not even loaded counts as activity", async ({ browser }) => {
+    test("a new comment is not news: only posts are watched", async ({ browser }) => {
         const { owner, other, viewer, groupId, closeAll } = await groupWithMembers(browser);
         const ids = await publishMany(owner.page.request, 25, { groupId });
         const { page } = viewer;
@@ -76,13 +76,17 @@ test.describe("new activity in an open feed", () => {
         await scrollToEnd(page);
         await expect(posts(page)).not.toHaveCount(0);
 
-        // "post 1" is the oldest one, far below the first portion.
         const response = await other.page.request.post("/comments/addCommentGroup", {
-            multipart: { groupId, idPublication: String(ids[0]), text: "late comment" },
+            multipart: { groupId, idPublication: String(ids.at(-1)), text: "a comment" },
         });
         expect(response.ok()).toBeTruthy();
         await page.clock.runFor(CHECK_INTERVAL);
+        await page.clock.runFor(CHECK_INTERVAL);
+        await expect(banner(page)).toHaveCount(0);
 
+        // The check itself is running: a post by someone else is noticed.
+        await publishMany(other.page.request, 1, { groupId, prefix: "a new post" });
+        await page.clock.runFor(CHECK_INTERVAL);
         await expect(banner(page)).toBeVisible();
         await closeAll();
     });

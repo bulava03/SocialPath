@@ -97,13 +97,13 @@ public class CommentsServiceImpl implements CommentsService {
 
     @Override
     public long latestUserFeedActivity(String owner, String viewer) {
-        Long latest = commentsRepository.findLatestUserFeedActivity(owner, viewer);
+        Long latest = commentsRepository.findLatestUserPost(owner, viewer);
         return latest == null ? 0 : latest;
     }
 
     @Override
     public long latestGroupFeedActivity(Long groupId, String viewer) {
-        Long latest = commentsRepository.findLatestGroupFeedActivity(groupId, viewer);
+        Long latest = commentsRepository.findLatestGroupPost(groupId, viewer);
         return latest == null ? 0 : latest;
     }
 
@@ -318,23 +318,21 @@ public class CommentsServiceImpl implements CommentsService {
     }
 
     /**
-     * Deletes a publication together with its whole comment subtree. The
-     * database owns the row cascade: deleting the root row lets ON DELETE
-     * CASCADE atomically remove the subtree and its publication_media rows.
-     * The application's job is the part the database cannot do — the media
-     * files on disk. Their ids are collected up front for the whole subtree
-     * with one recursive CTE, and the files are removed only after the
-     * transaction commits: a rollback must never leave rows pointing at
-     * already-deleted files. Videos still waiting to be converted leave the
-     * queue, and their uploads are deleted with the rest.
+     * Deletes a publication together with its whole comment subtree, however
+     * deep. The rows are the database's job: the stored procedure
+     * delete_thread (migration V13) removes the tree and returns the media
+     * file ids of what it removed. The files on disk are the part the
+     * database cannot remove; they go only after the transaction commits, as
+     * a rollback must never leave rows pointing at already-deleted files.
+     * Videos still waiting to be converted leave the queue, and their
+     * uploads are deleted with the rest.
      * @param rootId id of the publication or comment to delete
      */
     @Override
     @Transactional
     public void deletePublication(Long rootId) {
-        List<String> mediaIds = commentsRepository.findSubtreeMediaFileIds(rootId);
+        List<String> mediaIds = commentsRepository.deleteThread(rootId);
         List<String> fileIds = Stream.concat(mediaIds.stream(), videoService.discard(mediaIds).stream()).toList();
-        commentsRepository.deleteById(rootId);
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {

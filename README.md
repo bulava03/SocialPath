@@ -41,8 +41,7 @@ GitHub Actions · Docker
   in a group, with comments nested to any depth. The feed loads 20 posts
   at a time with infinite scroll, each with its 10 newest replies; more
   replies and replies to replies open with a button, one portion and one
-  level at a time. New posts and comments from others appear without a
-  page reload.
+  level at a time. New posts from others show up without a page reload.
 - **Media** — avatars in any common format, HEIC and AVIF included, are
   cropped to a square and stored in two sizes. Videos in formats browsers
   can't play (MOV, AVI, MKV, …) are converted to MP4 by ffmpeg in a
@@ -111,9 +110,12 @@ Hibernate never changes it (`ddl-auto=none`).
   a single `INSERT` or `DELETE`.
 - **`publications`** — posts and comments in one table. A comment is a
   publication with a `parent_id`, so threads can be nested to any depth;
-  attached files are ordered rows in `publication_media`. Deleting a post
-  is one `DELETE`: `ON DELETE CASCADE` removes all replies and their media
-  rows, and the files on disk are removed after the transaction commits.
+  attached files are ordered rows in `publication_media`. A post or comment
+  is deleted with its whole reply tree by the stored procedure
+  `delete_thread`: it collects the tree with a recursive query and deletes
+  the rows newest first, so `ON DELETE CASCADE` never nests past InnoDB's
+  limit of 15 levels. It returns the media file ids, and the files on disk
+  are removed after the transaction commits.
 - **Confirmed phone and email** — a number or address may be typed by
   several accounts but confirmed by only one: a generated column holds it
   while it is confirmed (`NULL` otherwise) and has a unique key.

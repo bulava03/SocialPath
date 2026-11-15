@@ -11,27 +11,26 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Guards the delete invariant of the publication tree. Rows are removed by
- * the database's ON DELETE CASCADE from a single root delete; the service is
- * responsible for the part the database cannot do — collecting the media
- * file ids of the whole subtree (recursive CTE) and removing those files.
- * Without an active transaction (as in these unit tests) the files are
+ * The application's part of deleting a thread: the rows are removed by the
+ * stored procedure delete_thread, which returns the media file ids of the
+ * whole tree; the service removes those files, which the database cannot
+ * do. Without an active transaction (as in these unit tests) the files are
  * removed immediately; inside a transaction the cleanup runs after commit.
- * The SQL side (the CTE and the cascade) is tested against MySQL in
- * CommentsRepositoryTest.
+ * The procedure itself, a thread deeper than the database's limits
+ * included, is tested against MySQL in CommentsRepositoryTest.
  */
 class CommentsDeletionCascadeTest {
 
     private CommentsRepository commentsRepository;
     private FileStorageService fileStorageService;
     private CommentsServiceImpl service;
-
-    private final Long publicationId = 1L;
 
     @BeforeEach
     void setUp() {
@@ -45,18 +44,23 @@ class CommentsDeletionCascadeTest {
     }
 
     @Test
-    void deletePublication_DeletesRootRowAndMediaOfWholeSubtree() {
-        // publication (photo1) -> comment (photo2) -> reply (photo3)
-        when(commentsRepository.findSubtreeMediaFileIds(publicationId))
-                .thenReturn(List.of("photo1", "photo2", "photo3"));
+    void deletePublication_RemovesTheFilesOfTheWholeDeletedTree() {
+        when(commentsRepository.deleteThread(1L)).thenReturn(List.of("photo1", "photo2", "photo3"));
 
-        service.deletePublication(publicationId);
+        service.deletePublication(1L);
 
-        // One root delete; the database cascade removes the subtree rows.
-        verify(commentsRepository).deleteById(publicationId);
-        // Media files of every node in the subtree are cleaned up.
+        verify(commentsRepository).deleteThread(1L);
         verify(fileStorageService).deleteFileById("photo1");
         verify(fileStorageService).deleteFileById("photo2");
         verify(fileStorageService).deleteFileById("photo3");
+    }
+
+    @Test
+    void deletePublication_WithoutMedia_RemovesNoFiles() {
+        when(commentsRepository.deleteThread(1L)).thenReturn(List.of());
+
+        service.deletePublication(1L);
+
+        verify(fileStorageService, never()).deleteFileById(anyString());
     }
 }

@@ -509,8 +509,8 @@ function checkVideos() {
 
 setInterval(checkVideos, VIDEO_CHECK_MS);
 
-// New activity by others. The page carries the newest post or comment id by
-// someone else (data-latest); every 30 seconds while the tab is visible, and
+// New posts by others (comments are not watched). The page carries the newest
+// post id by someone else (data-latest); every 30 seconds while the tab is visible, and
 // when it becomes visible again, the server is asked for the current one.
 // At the top of the feed with nothing typed, the first portion is reloaded
 // on the spot; anywhere else a banner offers it instead, so content never
@@ -572,7 +572,7 @@ function showNewsBanner() {
     banner.setAttribute("role", "status");
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = "New posts and comments · Refresh";
+    button.textContent = "New posts · Refresh";
     button.addEventListener("click", () => {
         reloadFeed();
         document.getElementById("publications").scrollIntoView();

@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.tuple;
 
 /**
  * The feed and deletion queries on the self-referencing publications table:
- * recursive CTEs and the ON DELETE CASCADE the deletion relies on.
+ * window functions, paging by id, and deleting threads of any depth.
  */
 class CommentsRepositoryTest extends MySqlRepositoryTest {
 
@@ -57,46 +57,73 @@ class CommentsRepositoryTest extends MySqlRepositoryTest {
         return jdbc.queryForObject(sql, Integer.class, args);
     }
 
+    /** Runs the stored procedure delete_thread and forgets what Hibernate had loaded. */
+    private List<String> deleteThread(Long id) {
+        List<String> mediaIds = commentsRepository.deleteThread(id);
+        entityManager.clear();
+        return mediaIds;
+    }
+
     @Test
-    void deletingAPost_RemovesTheWholeThreadWithItsMedia_AndNothingElse() {
+    void deleteThread_RemovesThePostWithItsWholeTree_AndReturnsItsMedia() {
         Long post = publish("anna", null, null, "post.jpg");
         Long comment = publish("ben", post, null, "comment.jpg");
         Long reply = publish("anna", comment, null, "reply-1.jpg", "reply-2.jpg");
         Long otherPost = publish("anna", null, null, "other.jpg");
 
-        // The files to clean up are collected from the whole subtree first.
-        assertThat(commentsRepository.findSubtreeMediaFileIds(post))
+        assertThat(deleteThread(post))
                 .containsExactlyInAnyOrder("post.jpg", "comment.jpg", "reply-1.jpg", "reply-2.jpg");
 
-        commentsRepository.deleteById(post);
-        entityManager.flush();
-        entityManager.clear();
-
-        // One delete of the root; the database cascade took the replies and media rows.
         assertThat(count("SELECT COUNT(*) FROM publications WHERE id IN (?, ?, ?)", post, comment, reply)).isZero();
         assertThat(count("SELECT COUNT(*) FROM publication_media WHERE publication_id IN (?, ?, ?)",
                 post, comment, reply)).isZero();
         assertThat(commentsRepository.findById(otherPost)).isPresent();
-        assertThat(commentsRepository.findSubtreeMediaFileIds(otherPost)).containsExactly("other.jpg");
+        assertThat(count("SELECT COUNT(*) FROM publication_media WHERE publication_id = ?", otherPost)).isEqualTo(1);
     }
 
     @Test
-    void deletingAComment_KeepsThePostAndTheOtherComments() {
+    void deleteThread_OfAComment_KeepsThePostAndTheOtherComments() {
         Long post = publish("anna", null, null);
         Long comment = publish("ben", post, null, "comment.jpg");
         Long reply = publish("anna", comment, null, "reply.jpg");
         Long sibling = publish("ben", post, null);
 
-        assertThat(commentsRepository.findSubtreeMediaFileIds(comment))
-                .containsExactlyInAnyOrder("comment.jpg", "reply.jpg");
-
-        commentsRepository.deleteById(comment);
-        entityManager.flush();
-        entityManager.clear();
+        assertThat(deleteThread(comment)).containsExactlyInAnyOrder("comment.jpg", "reply.jpg");
 
         assertThat(commentsRepository.findById(post)).isPresent();
         assertThat(commentsRepository.findById(sibling)).isPresent();
+        assertThat(commentsRepository.findById(comment)).isEmpty();
         assertThat(commentsRepository.findById(reply)).isEmpty();
+    }
+
+    @Test
+    void deleteThread_DeeperThanAnyDatabaseLimit_RemovesEverything() {
+        // Deeper than InnoDB's 15 nested cascades, and three steps of the
+        // procedure's walk, each of which stays under MySQL's 1000 recursion steps.
+        Long post = publish("anna", null, null, "post.jpg");
+        Long parent = post;
+        for (int depth = 1; depth <= 2500; depth++) {
+            String author = depth % 2 == 0 ? "anna" : "ben";
+            parent = depth % 500 == 0
+                    ? publish(author, parent, null, "deep-" + depth + ".jpg")
+                    : publish(author, parent, null);
+        }
+        Long otherPost = publish("ben", null, null);
+
+        assertThat(deleteThread(post)).containsExactlyInAnyOrder("post.jpg",
+                "deep-500.jpg", "deep-1000.jpg", "deep-1500.jpg", "deep-2000.jpg", "deep-2500.jpg");
+
+        assertThat(count("SELECT COUNT(*) FROM publications")).isEqualTo(1);
+        assertThat(commentsRepository.findById(otherPost)).isPresent();
+        assertThat(count("SELECT COUNT(*) FROM publication_media")).isZero();
+    }
+
+    @Test
+    void deleteThread_OfAPublicationThatIsGone_DeletesNothing() {
+        Long post = publish("anna", null, null);
+
+        assertThat(deleteThread(post + 1000)).isEmpty();
+        assertThat(commentsRepository.findById(post)).isPresent();
     }
 
     @Test
@@ -178,12 +205,16 @@ class CommentsRepositoryTest extends MySqlRepositoryTest {
     }
 
     @Test
-    void latestActivity_CountsOthersAtAnyDepth_ButNotTheViewer() {
-        Long post = publish("anna", null, null);
-        Long comment = publish("ben", post, null);
-        publish("anna", comment, null);     // the viewer's own reply is newer, but not news
+    void latestPost_IsTheNewestPostByOthers_CommentsAreNotCounted() {
+        Long groupId = group("anna");
+        Long userPost = publish("anna", null, null);
+        publish("ben", userPost, null);                 // a comment is not news
+        Long groupPost = publish("ben", null, groupId);
+        publish("anna", null, groupId);                 // the viewer's own post is not news
+        publish("ben", groupPost, null);
 
-        assertThat(commentsRepository.findLatestUserFeedActivity("anna", "anna")).isEqualTo(comment);
-        assertThat(commentsRepository.findLatestUserFeedActivity("ben", "anna")).isNull();
+        assertThat(commentsRepository.findLatestUserPost("anna", "ben")).isEqualTo(userPost);
+        assertThat(commentsRepository.findLatestUserPost("anna", "anna")).isNull();
+        assertThat(commentsRepository.findLatestGroupPost(groupId, "anna")).isEqualTo(groupPost);
     }
 }

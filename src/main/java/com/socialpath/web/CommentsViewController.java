@@ -56,7 +56,7 @@ public class CommentsViewController {
 
     /**
      * Newest activity by others in a user page's feed; the open page polls
-     * it to notice new posts and comments.
+     * it to notice new posts.
      * @param me the signed-in user
      * @param login the page owner
      * @return the largest publication id by someone else, 0 when none

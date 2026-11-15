@@ -66,19 +66,20 @@ public interface CommentsService {
     PublicationPresentable loadPublication(Publication publication);
 
     /**
-     * The newest activity by others in a user page's feed, posts and
-     * comments alike.
+     * The newest activity by others in a user page's feed: new posts only.
+     * Comments are not watched; a reload of the feed would not even show
+     * most of them, as replies open on request.
      * @param owner the page owner
-     * @param viewer the signed-in user, whose own activity is not news
-     * @return the largest such publication id, 0 when there is none
+     * @param viewer the signed-in user, whose own posts are not news
+     * @return the largest such post id, 0 when there is none
      */
     long latestUserFeedActivity(String owner, String viewer);
 
     /**
-     * The newest activity by others in a group's feed.
+     * The newest activity by others in a group's feed: new posts only.
      * @param groupId the group id
-     * @param viewer the signed-in user, whose own activity is not news
-     * @return the largest such publication id, 0 when there is none
+     * @param viewer the signed-in user, whose own posts are not news
+     * @return the largest such post id, 0 when there is none
      */
     long latestGroupFeedActivity(Long groupId, String viewer);
 
